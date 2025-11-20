@@ -318,7 +318,9 @@ private:
         }
 
         // The pure mapping offset between local and remote time
-        const int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
+        int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
+        if (ni < 0)
+            ni = 0;
 
         // Make sure we immediately discard any frames that are way out of range
         if (abs(ni) > MAX_VOICE_FRAME_DIFF_MS)
@@ -331,8 +333,6 @@ private:
         // then use it to make an initial estimate of the delay. This can float
         // during the rest of the talkspurt.
         if (_voiceConsumedCount == 0) {
-            if (ni < 0)
-                ni = 0;
             _di = ni;
             _di_1 = ni;
             // Since we have no history from which to construct a network 
@@ -347,15 +347,17 @@ private:
         // For subsequent frames look to see whether the delay needs to be
         // extended outward to accommodate this frame.
         else {
-            // Current window parameters
-            const int32_t playOutWindowEnd = (int32_t)localTime - (int32_t)_delay;
-            const int32_t playOutWindowStart = playOutWindowEnd - (int32_t)_voiceTickSize;
-            // If the new frame is arriving two late to fall in the window 
-            // then extend the delay to capture it
-            if (ni < playOutWindowStart) {
-                int32_t oldDelay = _delay;
-                _delay = ni;
-                cout << "Extended delay from " << oldDelay << " to " << delay << endl;
+            if (!_delayLocked) {
+                // Current window parameters
+                const int32_t playOutWindowEnd = (int32_t)localTime - (int32_t)_delay;
+                const int32_t playOutWindowStart = playOutWindowEnd - (int32_t)_voiceTickSize;
+                // If the new frame is arriving too late to fall in the window 
+                // then extend the delay to capture it
+                if ((int32_t)remoteTime < playOutWindowStart && ni > (int32_t)_delay) {
+                    uint32_t oldDelay = _delay;
+                    _delay = ni;
+                    cout << "Extended delay from " << oldDelay << " to " << _delay << endl;
+                }
             }
         }
 
