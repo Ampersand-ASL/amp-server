@@ -318,7 +318,7 @@ private:
         }
 
         // The pure mapping offset between local and remote time
-        int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
+        const int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
 
         // Make sure we immediately discard any frames that are way out of range
         if (abs(ni) > MAX_VOICE_FRAME_DIFF_MS)
@@ -342,6 +342,20 @@ private:
             _vi_1 = _vi;
             if (!_delayLocked) {
                 _delay = std::max(_di + (4.0f * _vi), _delayMin);
+            }
+        }
+        // For subsequent frames look to see whether the delay needs to be
+        // extended outward to accommodate this frame.
+        else {
+            // Current window parameters
+            const int32_t playOutWindowEnd = (int32_t)localTime - (int32_t)_delay;
+            const int32_t playOutWindowStart = playOutWindowEnd - (int32_t)_voiceTickSize;
+            // If the new frame is arriving two late to fall in the window 
+            // then extend the delay to capture it
+            if (ni < playOutWindowStart) {
+                int32_t oldDelay = _delay;
+                _delay = ni;
+                cout << "Extended delay from " << oldDelay << " to " << delay << endl;
             }
         }
 
