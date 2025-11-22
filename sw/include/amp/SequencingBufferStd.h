@@ -314,17 +314,22 @@ private:
     
         if (!_buffer.hasCapacity()) {
             _overflowCount++;
+            cout << "Buffer overflow" << endl;
             return false;
         }
 
         // The pure mapping offset between local and remote time
         int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
-        if (ni < 0)
+        if (ni < 0) {
+            cout << "ni < 0?" << endl;
             ni = 0;
+        }
 
         // Make sure we immediately discard any frames that are way out of range
-        if (abs(ni) > MAX_VOICE_FRAME_DIFF_MS)
+        if (abs(ni) > MAX_VOICE_FRAME_DIFF_MS) {
+            cout << "Huge difference ignored" << endl;
             return false;
+        }
 
         _buffer.insert({ .voice=isVoice, .remoteTime=remoteTime, .localTime=localTime, 
             .payload=payload });     
@@ -341,7 +346,10 @@ private:
             _vi = _initialDelayMargin / 4.0f;
             _vi_1 = _vi;
             if (!_delayLocked) {
+                // Note here that we're giving ourselves an extra frame margin
                 _delay = std::max(_di + (4.0f * _vi), _delayMin);
+                _delay += _voiceTickSize;
+                cout << "First frame, set delay " << _delay << endl;
             }
         }
         // For subsequent frames look to see whether the delay needs to be
@@ -355,7 +363,9 @@ private:
                 // then extend the delay to capture it
                 if ((int32_t)remoteTime < playOutWindowStart && ni > (int32_t)_delay) {
                     uint32_t oldDelay = _delay;
+                    // Note here that we're giving ourselves an extra frame margin
                     _delay = ni;
+                    _delay += _voiceTickSize;
                     cout << "Extended delay from " << oldDelay << " to " << _delay << endl;
                 }
             }
