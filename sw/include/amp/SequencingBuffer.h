@@ -19,6 +19,9 @@
 #include <cstdint>
 
 namespace kc1fsz {
+
+class Log;
+
     namespace amp {
 
 /**
@@ -80,13 +83,13 @@ public:
      * @return true if the message was consumed, false if it was ignored and can be 
      * discarded (i.e. all full)
      */
-    virtual bool consumeVoice(const T& payload, uint32_t remoteTime, uint32_t localTime) = 0;
+    virtual bool consumeVoice(Log& log, const T& payload, uint32_t remoteTime, uint32_t localTime) = 0;
 
     /**
      * Called when a full signal frame is received.
      * See consumeVoice()
      */
-    virtual bool consumeSignal(const T& payload, uint32_t remoteTime, uint32_t localTime) = 0;
+    virtual bool consumeSignal(Log& log, const T& payload, uint32_t remoteTime, uint32_t localTime) = 0;
 
     /**
      * Should be called periodically (precisely on the audio tick interval) to ask the 
@@ -97,7 +100,7 @@ public:
      * @param localTime Milliseconds elpased from the start of the call.
      * @param sink Where the frames should be sent.
      */
-    virtual void playOut(uint32_t localTime, SequencingBufferSink<T>* sink) = 0;
+    virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) = 0;
 };
     }
 }

@@ -19,10 +19,11 @@
 #include <cmath>
 
 #include "kc1fsz-tools/fixedsortedlist.h"
+#include "kc1fsz-tools/Log.h"
 
 #include "amp/SequencingBuffer.h"
 
-namespace kc1fsz {
+namespace kc1fsz {   
     namespace amp {
 
 /**
@@ -162,15 +163,15 @@ public:
 
     // ----- SequencingBuffer -------------------------------------------------
 
-    virtual bool consumeSignal(const T& payload, uint32_t remoteTime, uint32_t localTime) {
-        return _consume(false, payload, remoteTime, localTime);
+    virtual bool consumeSignal(Log& log, const T& payload, uint32_t remoteTime, uint32_t localTime) {
+        return _consume(log, false, payload, remoteTime, localTime);
     }
 
-    virtual bool consumeVoice(const T& payload, uint32_t remoteTime, uint32_t localTime) {       
-        return _consume(true, payload, remoteTime, localTime);
+    virtual bool consumeVoice(Log& log, const T& payload, uint32_t remoteTime, uint32_t localTime) {       
+        return _consume(log, true, payload, remoteTime, localTime);
     }
 
-    virtual void playOut(uint32_t localTime, SequencingBufferSink<T>* sink) {     
+    virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) {     
 
         // For diagnostic purposes
         _maxBufferDepth = std::max(_maxBufferDepth, _buffer.size());
@@ -192,12 +193,13 @@ public:
 
         _buffer.visitIfAndRemove(
             // Visitor
-            [playOutWindowStart, playOutWindowEnd, &lateVoiceFrames]
+            [playOutWindowStart, playOutWindowEnd, &lateVoiceFrames, &log, delay=_delay]
             (const Slot& slot) {
                 lateVoiceFrames++;
-                cout << "Discarded voice: [" << 
-                    playOutWindowStart << "->" << playOutWindowEnd << ") " 
-                    << (int32_t)slot.remoteTime << endl;
+                log.info("Discarded voice %d [%d->%d) %d",
+                    (int32_t)slot.remoteTime, 
+                    playOutWindowStart, playOutWindowEnd,
+                    (int32_t)delay);
                 return true;
             },
             // Predicate
@@ -310,24 +312,23 @@ private:
         bool isVoice() const { return voice; }
     };
 
-    bool _consume(bool isVoice, const T& payload, uint32_t remoteTime, uint32_t localTime) {
+    bool _consume(Log& log, bool isVoice, const T& payload, uint32_t remoteTime, uint32_t localTime) {
     
         if (!_buffer.hasCapacity()) {
             _overflowCount++;
-            cout << "Buffer overflow" << endl;
+            log.info("Sequencing Buffer overflow");
             return false;
         }
 
         // The pure mapping offset between local and remote time
         int32_t ni = (int32_t)localTime - (int32_t)remoteTime;
         if (ni < 0) {
-            cout << "ni < 0?" << endl;
             ni = 0;
         }
 
         // Make sure we immediately discard any frames that are way out of range
         if (abs(ni) > MAX_VOICE_FRAME_DIFF_MS) {
-            cout << "Huge difference ignored" << endl;
+            log.info("Voice frame out of range, dropped");
             return false;
         }
 
@@ -349,7 +350,7 @@ private:
                 // Note here that we're giving ourselves an extra frame margin
                 _delay = std::max(_di + (4.0f * _vi), _delayMin);
                 _delay += _voiceTickSize;
-                cout << "First frame, set delay " << _delay << endl;
+                log.info("First frame, delay %d", _delay);
             }
         }
         // For subsequent frames look to see whether the delay needs to be
@@ -366,7 +367,7 @@ private:
                     // Note here that we're giving ourselves an extra frame margin
                     _delay = ni;
                     _delay += _voiceTickSize;
-                    cout << "Extended delay from " << oldDelay << " to " << _delay << endl;
+                    log.info("Delay %d->%d", oldDelay, _delay);
                 }
             }
         }
