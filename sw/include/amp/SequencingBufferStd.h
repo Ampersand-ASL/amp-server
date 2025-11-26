@@ -171,6 +171,51 @@ public:
         return _consume(log, true, payload, remoteTime, localTime);
     }
 
+    /*
+    Variables
+
+    bool _inTalkspurt = false;
+    // Keeps track of how many 20ms ticks have happened
+    // in this talkspurt.
+    unsigned _talkspurtTickCount = 0;
+    uint32_t _talkspurtFirstRemoteTime;
+    uint32_t _delay;
+
+
+    Logic:
+    1. Keep a flag that indicates when we are in a talkspurt. This
+    flag will be set when we see the first packet and will be 
+    cleared after inactivity timeout or on an explicit UNKEY.
+    2. Lock in the first remote timestamp of a talkspurt 
+    called _talkspurtFirstRemoteTime.
+    3. All subsequent voice frames are expected at 
+    _talkspurtRemoteFirstTime + _talkspurtTickCount * 20ms.
+    4. On the first frame we should set _delay so that it is at
+    least large enough to capture the first frame. It might be
+    good to set the delay out 20 or 40ms longer to provide a bit of 
+    margin.
+    5. At each tick the targetRemoteTime = localTime - _delay. 
+    6. Look at the oldest frame in the jitter buffer.
+    7. Is the oldest frame remoteTime = targetRemoteTime? If so, play it,
+    this is the happy path.
+    8. If the oldest frame remoteTime is > targetRemoteTime then either 
+    (a) if we have not played the first frame in the talkspurt yet,
+    then do nothing. This is determined by targetRemoteTime < 
+    _talkspurtFirstRemoteTime.
+    or
+    (b) if we have played the first frame in the talkspurt then this
+    must be a gap created by a missing frame, interpolate the tick.
+    And then consider _delay extension by one tick. This will cause
+    us to look for exactly the same frame on the next tick.
+    9. If the oldest frame is < targetRemoteTime then we discard
+    it (this must be a late arriving frame from a tick that we skipped
+    previouslt).
+    */
+
+
+
+
+
     virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) {     
 
         // For diagnostic purposes
