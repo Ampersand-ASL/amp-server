@@ -170,82 +170,59 @@ public:
         // look for the start of a talk spurt, play voice frames at the 
         // right time, and discard expired voice frames.
         while (!_buffer.empty()) {
+
             // Signal frame
             if (!_buffer.first().voice)
                 sink->playSignal(_buffer.pop().payload, localTime);
+
             // Voice frame
             else {
+                // First frame of the talkpsurt? If so, lock in the remote time
+                // expectation.
                 if (!_inTalkspurt) {
-                    // First frame of a call? If so, use it to set the 
-                    // initial delay for the call.
-                    if (_voicePlayoutCount == 0) {
-
-                        // Check the initial delay to make sure this is in range.
-                        // NOTE: It is theoretically possible to have a negative 
-                        // delay in the case that the remote clock is ahead.
-                        int32_t firstDelay = 
-                            (int32_t)localTime - (int32_t)_buffer.first().remoteTime;
-                        if (firstDelay > (int32_t)_maxDelay) {
-                            log.info("Discarded old frame (%d/%d/%d)", 
-                                _buffer.first().remoteTime, _buffer.first().localTime, firstDelay);
-                            _lateVoiceFrameCount++;
-                            _buffer.pop();
-                            continue;
-                        }
-
-                        // If the delay is reasonable, take it as the starting point.
-                        if (!_delayLocked) {
-                            _delay = (firstDelay + (int32_t)_delaySafetyMargin);
-                            log.info("New call, delay set to %d", _delay);
-                        }
-                    }
-
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
                     _talkspurtFirstRemoteTime = _buffer.first().remoteTime;
+                    // The delay adjustment provides the margin needed
+                    _talkspurtNextRemoteTime = (int32_t)_buffer.first().remoteTime - _delay;
                 }
 
-                // Look for expired frames and discard them
-                // TODO: CONSIDER EXTENDING DELAY?
-                int32_t actualDelay = (int32_t)localTime - (int32_t)_buffer.first().remoteTime;
-                if (actualDelay > _delay) {
-                    log.info("Discarded old frame delay=%d, limit=%d", actualDelay, _delay);
+                // First frame of a call? If so, use it to set the 
+                // initial delay for the call.
+                if (_voicePlayoutCount == 0) {
+                }
+
+                // If we get an expired frame ignore it
+                if (_buffer.first().remoteTime < _talkspurtNextRemoteTime) {
+                    log.info("Discarded old frame (%d/%d)", 
+                        _buffer.first().remoteTime, _talkspurtNextRemoteTime);
                     _lateVoiceFrameCount++;
                     _buffer.pop();
                     continue;
                 }
+                else if (_buffer.first().remoteTime == _talkspurtNextRemoteTime) {
+                    sink->playVoice(slot.payload, localTime);
+                    bool startOfCall = _voicePlayoutCount == 0;
+                    bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
+                    _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
+                    _lastVoiceFramePlayedLocalTime = localTime;
+                    _lastVoiceFramePlayedLocalTime = slot.remoteTime;
+                    voicePlayed = true;
+                    log.info("In talkspurt");
+                    _talkspurtFrameCount++;
+                    _voicePlayoutCount++;
+                    _buffer.pop();
+                }
+                // Otherwise the next voice is in the future so we'll need to 
+                // interpolate to get there.
                 else {
+                    if (_talkSpurtFrameCount > 0) {
+                        _interpolatedVoiceFrameCount++;
+                        sink->interpolateVoice(localTime, _voiceTickSize);
+                    }
                     break;
                 }
             }            
-        }
-
-        bool voicePlayed = false;
-
-        // At this point we are in a talkspurt and the oldest frame has not expired, 
-        // check to see if we should play it now or wait.
-        if (!_buffer.empty()) {
-            const Slot& slot = _buffer.first();
-            if ((int32_t)slot.remoteTime == (int32_t)localTime - (int32_t)_delay) {
-                sink->playVoice(slot.payload, localTime);
-                bool startOfCall = _voicePlayoutCount == 0;
-                bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
-                _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
-                _lastVoiceFramePlayedLocalTime = localTime;
-                _lastVoiceFramePlayedLocalTime = slot.remoteTime;
-                voicePlayed = true;
-                log.info("In talkspurt");
-                _talkspurtFrameCount++;
-                _voicePlayoutCount++;
-                _buffer.pop();
-            }
-        }
-
-        // If there was nothing ready to be played in the queue and we're in a talkspurt
-        // then request an interpolation to fill the gap.
-        if (_inTalkspurt && !voicePlayed && _talkspurtFrameCount > 0) {
-            _interpolatedVoiceFrameCount++;
-            sink->interpolateVoice(localTime, _voiceTickSize);
         }
 
         // Check to see if a talkspurt has ended
@@ -321,15 +298,6 @@ private:
     }
 
     void _endOfTalkspurt(Log& log) { 
-        if (!_delayLocked) {
-            int32_t oldDelay = _delay;
-            // Update delay for next talkspurt based on the statistics,
-            // making sure the delay is a multiple of 20.
-            float unroundedDelay = (_di + (4.0f * _vi));
-            // Round up to the nearest 20ms
-            _delay = (20 * (int32_t)ceilf(unroundedDelay / 20)) + _delaySafetyMargin;
-            log.info("Delay adjusted %f %d -> %d", unroundedDelay, oldDelay, _delay);
-        }
     }
     
     void _voiceFramePlayed(bool startOfCall, bool startOfSpurt, 
@@ -375,7 +343,7 @@ private:
     unsigned _talkspurtFrameCount = 0;
     uint32_t _talkspurtTimeoutInteval = 60;
     bool _delayLocked = false;
-    int32_t _delay = 0;
+    int32_t _delay = 250;
     // This is locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime;
     uint32_t _lastVoiceFramePlayedRemoteTime = 0;
