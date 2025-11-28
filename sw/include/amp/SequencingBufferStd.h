@@ -103,10 +103,6 @@ public:
 
     void setNetworkDelayEstimate(int32_t m) {
         _networkDelayEstimateMs = m;
-        // This is a heuristic that assumes (conservatively) that a good guess 
-        // for the initial delay margin that should be applied at the start of 
-        // a new call is 25% of the estimated network delay.
-        _initialDelayMargin = m / 4;
     }
 
     void setRemoteClockLagEstimate(int32_t m) {
@@ -164,39 +160,6 @@ public:
         return _consume(log, true, payload, remoteTime, localTime);
     }
 
-    /*
-    Logic:
-    1. Keep a flag that indicates when we are in a talkspurt. This
-    flag will be set when we see the first packet and will be 
-    cleared after inactivity timeout or on an explicit UNKEY.
-    2. Use the first voice frame of a call to get the delay
-    2. Lock in the first remote timestamp of a talkspurt 
-    called _talkspurtFirstRemoteTime.
-    3. All subsequent voice frames are expected at 
-    _talkspurtRemoteFirstTime + _talkspurtTickCount * 20ms.
-    4. On the first frame we should set _delay so that it is at
-    least large enough to capture the first frame. It might be
-    good to set the delay out 20 or 40ms longer to provide a bit of 
-    margin.
-    5. At each tick the targetRemoteTime = localTime - _delay. 
-    6. Look at the oldest frame in the jitter buffer.
-    7. Is the oldest frame remoteTime = targetRemoteTime? If so, play it,
-    this is the happy path.
-    8. If the oldest frame remoteTime is > targetRemoteTime then either 
-    (a) if we have not played the first frame in the talkspurt yet,
-    then do nothing. This is determined by targetRemoteTime < 
-    _talkspurtFirstRemoteTime.
-    or
-    (b) if we have played the first frame in the talkspurt then this
-    must be a gap created by a missing frame, interpolate the tick.
-    And then consider _delay extension by one tick. This will cause
-    us to look for exactly the same frame on the next tick.
-    9. If the oldest frame is < targetRemoteTime then we discard
-    it (this must be a late arriving frame from a tick that we skipped
-    previouslt).
-    */
-
-
     virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) {     
 
         // For diagnostic purposes
@@ -230,7 +193,7 @@ public:
 
                         // If the delay is reasonable, take it as the starting point.
                         if (!_delayLocked) {
-                            _delay = (firstDelay + (int32_t)_initialDelayMargin);
+                            _delay = (firstDelay + (int32_t)_delaySafetyMargin);
                             log.info("New call, delay set to %d", _delay);
                         }
                     }
@@ -359,7 +322,7 @@ private:
             // making sure the delay is a multiple of 20.
             float unroundedDelay = (_di + (4.0f * _vi));
             // Round up to the nearest 20ms
-            _delay = 20 * ceilf(unroundedDelay / 20);
+            _delay = (20 * (int32_t)ceilf(unroundedDelay / 20)) + _delaySafetyMargin;
             log.info("Delay adjusted %f %d -> %d", unroundedDelay, oldDelay, _delay);
         }
     }
@@ -375,10 +338,8 @@ private:
         if (startOfCall) {
             _di = ni;
             _di_1 = ni;
-            // Since we have no history from which to construct a network 
-            // variance term, we use a fixed guess of "initial margin" and allow
-            // the adaptive algorithm to fix this over time.
-            _vi = _initialDelayMargin / 4.0f;
+            // Assume no variance at the beginning
+            _vi = 0;
             _vi_1 = _vi;
         }
         else {
@@ -424,15 +385,12 @@ private:
     const int32_t _maxDelay = 1000;
 
     const uint32_t _voiceTickSize = 20;
-    // The minimum delay possible.  It's good to have a bit or margin to take into account 
-    // some inprecision in the local timing mechanisms.
-    const uint32_t _delayMin = 20;
 
-    // This is a guess of the margin that should be assumed for the very 
-    // first delay update for a new call. Once the call gets going the 
-    // real variance calculation will take over. This number may possibly
-    // be updated by the ping latency testing before the guess is used.
-    const unsigned _initialDelayMargin = 20;
+    // This amount is always added any time we update the delay. This provides
+    // a small amount of buffer over what the calculated delay says we should 
+    // use in case of additional timing problems.
+    // MUST BE A MULTIPLE OF _voiceTickSize
+    const unsigned _delaySafetyMargin = _voiceTickSize * 2;
 
     // For Algorithm 1
     const float _alpha = 0.998002;
