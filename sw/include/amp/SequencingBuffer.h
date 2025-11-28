@@ -101,6 +101,11 @@ public:
      * @param sink Where the frames should be sent.
      */
     virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) = 0;
+
+    /**
+     * @returns true if a talkspurt is actively being played.
+     */
+    virtual bool inTalkspurt() const = 0;
 };
     }
 }
