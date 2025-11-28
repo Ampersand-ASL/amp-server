@@ -358,6 +358,7 @@ private:
             // Update delay for next talkspurt based on the statistics,
             // making sure the delay is a multiple of 20.
             float unroundedDelay = (_di + (4.0f * _vi));
+            // Round up to the nearest 20ms
             _delay = 20 * ceilf(unroundedDelay / 20);
             log.info("Delay adjusted %f %d -> %d", unroundedDelay, oldDelay, _delay);
         }
