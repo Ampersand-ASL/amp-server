@@ -73,7 +73,8 @@ public:
         _overflowCount = 0;
         _lateVoiceFrameCount = 0;
         _interpolatedVoiceFrameCount = 0;
-        _lastVoiceFramePlayedTime = 0;
+        _lastVoiceFramePlayedLocalTime = 0;
+        _lastVoiceFramePlayedRemoteTime = 0;
         _inTalkspurt = false;
         _talkSpurtCount = 0;
         _talkspurtFrameCount = 0;
@@ -182,10 +183,11 @@ public:
                         // Check the initial delay to make sure this is in range.
                         // NOTE: It is theoretically possible to have a negative 
                         // delay in the case that the remote clock is ahead.
-                        int32_t firstDelay = (int32_t)localTime - (int32_t)_buffer.first().remoteTime;
+                        int32_t firstDelay = 
+                            (int32_t)localTime - (int32_t)_buffer.first().remoteTime;
                         if (firstDelay > (int32_t)_maxDelay) {
                             log.info("Discarded old frame (%d/%d/%d)", 
-                                _buffer.first().remoteTime, localTime, firstDelay);
+                                _buffer.first().remoteTime, _buffer.first().localTime, firstDelay);
                             _lateVoiceFrameCount++;
                             _buffer.pop();
                             continue;
@@ -205,10 +207,9 @@ public:
 
                 // Look for expired frames and discard them
                 // TODO: CONSIDER EXTENDING DELAY?
-                if ((int32_t)_buffer.first().remoteTime < 
-                    (int32_t)localTime - (int32_t)_delay) {
-                    log.info("Discarded old frame (%d/%d/%d)", 
-                        _buffer.first().remoteTime, localTime, _delay);
+                int32_t actualDelay = (int32_t)localTime - (int32_t)_buffer.first().remoteTime;
+                if (actualDelay > _delay) {
+                    log.info("Discarded old frame delay=%d, limit=%d", actualDelay, _delay);
                     _lateVoiceFrameCount++;
                     _buffer.pop();
                     continue;
@@ -229,9 +230,11 @@ public:
                 sink->playVoice(slot.payload, localTime);
                 bool startOfCall = _voicePlayoutCount == 0;
                 bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
-                _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, slot.localTime);
-                _lastVoiceFramePlayedTime = localTime;
+                _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
+                _lastVoiceFramePlayedLocalTime = localTime;
+                _lastVoiceFramePlayedLocalTime = slot.remoteTime;
                 voicePlayed = true;
+                log.info("In talkspurt");
                 _talkspurtFrameCount++;
                 _voicePlayoutCount++;
                 _buffer.pop();
@@ -247,8 +250,10 @@ public:
 
         // Check to see if a talkspurt has ended
         if (_inTalkspurt && 
-            localTime > _lastVoiceFramePlayedTime + _talkspurtTimeoutInteval) {
+            _voicePlayoutCount > 0 && 
+            localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
             _inTalkspurt = false;
+            log.info("Out of talkspurt");
             _talkSpurtCount++;
             _endOfTalkspurt(log);
         }
@@ -364,7 +369,7 @@ private:
     fixedsortedlist<Slot> _buffer;
 
     // Used for detecting the end of a talkspurt
-    uint32_t _lastVoiceFramePlayedTime = 0;
+    uint32_t _lastVoiceFramePlayedLocalTime = 0;
 
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
@@ -373,6 +378,7 @@ private:
     int32_t _delay = 0;
     // This is locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime;
+    uint32_t _lastVoiceFramePlayedRemoteTime = 0;
 
     // Used to estimate delay and delay variance
     float _di_1 = 0;
@@ -390,7 +396,7 @@ private:
     // a small amount of buffer over what the calculated delay says we should 
     // use in case of additional timing problems.
     // MUST BE A MULTIPLE OF _voiceTickSize
-    const unsigned _delaySafetyMargin = _voiceTickSize * 2;
+    const unsigned _delaySafetyMargin = _voiceTickSize * 3;
 
     // For Algorithm 1
     const float _alpha = 0.998002;
