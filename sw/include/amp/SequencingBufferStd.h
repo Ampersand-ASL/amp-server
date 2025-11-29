@@ -80,6 +80,7 @@ public:
         _talkSpurtCount = 0;
         _talkspurtFrameCount = 0;
         _talkspurtFirstRemoteTime = 0;
+        _talkspurtFirstOffset = 0;
         _networkDelayEstimateMs = 0;
         _remoteClockLagEstimateMs = 0;
         _voicePlayoutCount = 0;
@@ -188,6 +189,7 @@ public:
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
                     _talkspurtFirstRemoteTime = slot.remoteTime;
+                    _talkspurtFirstOffset = slot.offset();
                     // The delay adjustment provides the margin needed. Subtracting
                     // the delay means that the expectation is set earlier to leave
                     // some time for frames to come in.
@@ -196,8 +198,8 @@ public:
                     // if the voice starts very early in the call.
                     //
                     _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _delay;
-                    log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
-                        _talkspurtNextRemoteTime, _delay);
+                    //log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
+                    //    _talkspurtNextRemoteTime, _delay);
                 }
 
                 // First frame of a call? If so, use it to set the initial network 
@@ -221,7 +223,7 @@ public:
                     // These steps are used to calculate the variance, etc.
                     bool startOfCall = _voicePlayoutCount == 0;
                     bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
-                    _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
+                    _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, slot.localTime);
                     
                     _lastVoiceFramePlayedLocalTime = localTime;
                     _lastVoiceFramePlayedRemoteTime = slot.remoteTime;
@@ -280,6 +282,15 @@ private:
         uint32_t localTime;
         T payload;
         
+        /**
+         * @returns Call time offset between local arrival time and
+         * remote generation time. Theoretically could be negative
+         * if start times are significantly different. 
+         */
+        int32_t offset() const { 
+            return (int32_t)localTime - (int32_t)remoteTime; 
+        }
+
         /**
          * Determines where this slot falls relative to the
          * timestamp/seq in chronological order.
@@ -366,17 +377,21 @@ private:
 
     // Used for detecting the end of a talkspurt
     uint32_t _lastVoiceFramePlayedLocalTime = 0;
+    uint32_t _lastVoiceFramePlayedRemoteTime = 0;
 
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
+    // The number of ms of silence before we delcare a talkspurt ended.
     uint32_t _talkspurtTimeoutInteval = 60;
     bool _delayLocked = false;
+    // The gap between arrival time and play time for voice packets.
+    // MUST BE A MULTIPLE OF 20!
     int32_t _delay = 240;
 
     // These are locked in at the start of the talkspurt. 
-    uint32_t _talkspurtFirstRemoteTime;
-    uint32_t _lastVoiceFramePlayedRemoteTime = 0;
+    uint32_t _talkspurtFirstRemoteTime = 0;
     int32_t _talkspurtNextRemoteTime = 0;
+    int32_t _talkspurtFirstOffset = 0;
 
     // Used to estimate delay and delay variance
     float _di_1 = 0;
