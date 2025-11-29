@@ -75,6 +75,7 @@ public:
         _interpolatedVoiceFrameCount = 0;
         _lastVoiceFramePlayedLocalTime = 0;
         _lastVoiceFramePlayedRemoteTime = 0;
+        _talkspurtNextRemoteTime = 0;
         _inTalkspurt = false;
         _talkSpurtCount = 0;
         _talkspurtFrameCount = 0;
@@ -163,6 +164,8 @@ public:
 
     virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) {     
 
+        bool voiceFramePlayed = false;
+
         // For diagnostic purposes
         _maxBufferDepth = std::max(_maxBufferDepth, _buffer.size());
 
@@ -177,55 +180,72 @@ public:
 
             // Voice frame
             else {
-                // First frame of the talkpsurt? If so, lock in the remote time
-                // expectation.
+                const Slot& slot = _buffer.first();
+
+                // First frame of the talkpsurt? If so, lock in the new remote 
+                // time expectation.
                 if (!_inTalkspurt) {
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
-                    _talkspurtFirstRemoteTime = _buffer.first().remoteTime;
-                    // The delay adjustment provides the margin needed
-                    _talkspurtNextRemoteTime = (int32_t)_buffer.first().remoteTime - _delay;
+                    _talkspurtFirstRemoteTime = slot.remoteTime;
+                    // The delay adjustment provides the margin needed. Subtracting
+                    // the delay means that the expectation is set earlier to leave
+                    // some time for frames to come in.
+                    //
+                    // It is theoretically possible for this value to be negative
+                    // if the voice starts very early in the call.
+                    //
+                    _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _delay;
+                    log.info("Next time established %d", _talkspurtNextRemoteTime);
                 }
 
-                // First frame of a call? If so, use it to set the 
-                // initial delay for the call.
+                // First frame of a call? If so, use it to set the initial network 
+                // delay for the call.
                 if (_voicePlayoutCount == 0) {
                 }
 
                 // If we get an expired frame ignore it
-                if (_buffer.first().remoteTime < _talkspurtNextRemoteTime) {
+                if (slot.remoteTime < _talkspurtNextRemoteTime) {
                     log.info("Discarded old frame (%d/%d)", 
-                        _buffer.first().remoteTime, _talkspurtNextRemoteTime);
+                        slot.remoteTime, _talkspurtNextRemoteTime);
                     _lateVoiceFrameCount++;
                     _buffer.pop();
                     continue;
                 }
-                else if (_buffer.first().remoteTime == _talkspurtNextRemoteTime) {
+                // If we got the frame we are waiting for then play it
+                else if (slot.remoteTime == _talkspurtNextRemoteTime) {
+                    
                     sink->playVoice(slot.payload, localTime);
+
+                    // These steps are used to calculate the variance, etc.
                     bool startOfCall = _voicePlayoutCount == 0;
                     bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
                     _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
+                    
                     _lastVoiceFramePlayedLocalTime = localTime;
                     _lastVoiceFramePlayedLocalTime = slot.remoteTime;
-                    voicePlayed = true;
-                    log.info("In talkspurt");
                     _talkspurtFrameCount++;
                     _voicePlayoutCount++;
                     _buffer.pop();
+                    voiceFramePlayed = true;
+                    break;
                 }
-                // Otherwise the next voice is in the future so we'll need to 
-                // interpolate to get there.
+                // Otherwise the next voice is in the future.
                 else {
-                    if (_talkSpurtFrameCount > 0) {
-                        _interpolatedVoiceFrameCount++;
-                        sink->interpolateVoice(localTime, _voiceTickSize);
-                    }
                     break;
                 }
             }            
         }
 
-        // Check to see if a talkspurt has ended
+        // If no voice was generated on this tick and if the voice
+        // is already playing (i.e. no the very beginning of the talkspurt)
+        // then request an interpolation.
+        if (!voiceFramePlayed && _talkspurtFrameCount > 0) {
+            _interpolatedVoiceFrameCount++;
+            sink->interpolateVoice(localTime, _voiceTickSize);
+        }
+
+        // Check to see if a talkspurt has timed out 
         if (_inTalkspurt && 
             _voicePlayoutCount > 0 && 
             localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
@@ -233,6 +253,11 @@ public:
             log.info("Out of talkspurt");
             _talkSpurtCount++;
             _endOfTalkspurt(log);
+        }
+
+        // Move the expectation forward one click
+        if (_inTalkspurt) {
+            _talkspurtNextRemoteTime += _voiceTickSize;
         }
     }
     
@@ -344,9 +369,11 @@ private:
     uint32_t _talkspurtTimeoutInteval = 60;
     bool _delayLocked = false;
     int32_t _delay = 250;
-    // This is locked in at the start of the talkspurt. 
+
+    // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime;
     uint32_t _lastVoiceFramePlayedRemoteTime = 0;
+    int32_t _talkspurtNextRemoteTime = 0;
 
     // Used to estimate delay and delay variance
     float _di_1 = 0;
