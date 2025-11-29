@@ -80,7 +80,6 @@ public:
         _talkSpurtCount = 0;
         _talkspurtFrameCount = 0;
         _talkspurtFirstRemoteTime = 0;
-        _talkspurtFirstOffset = 0;
         _networkDelayEstimateMs = 0;
         _remoteClockLagEstimateMs = 0;
         _voicePlayoutCount = 0;
@@ -89,7 +88,10 @@ public:
         _di_1 = 0;
         _vi = 0;
         _vi_1 = 0;
+        _idealMargin = 0;
         _maxBufferDepth = 0;
+        _delay = 0;
+        _flightTime = 0;
     }
 
     bool empty() const { return _buffer.empty(); }
@@ -163,6 +165,16 @@ public:
         return _consume(log, true, payload, remoteTime, localTime);
     }
 
+    int32_t _roundUpToTick(int32_t v, int32_t tick) {
+        float a = ceilf((float)v / (float)tick);
+        return a * (float)tick;
+    }
+
+    /**
+     * @param localTime The call-relative local time, but must be on _voiceTickSize
+     * boundaries. For example, if tick=20ms we'd expect to see localTime : 100, 120, 140,
+     * 160, 180, 200, 220, 240, ...
+     */
     virtual void playOut(Log& log, uint32_t localTime, SequencingBufferSink<T>* sink) {     
 
         bool voiceFramePlayed = false;
@@ -183,13 +195,21 @@ public:
             else {
                 const Slot& slot = _buffer.first();
 
+                // First frame of a call? If so, use it to set the initial network 
+                // delay for the call.
+                if (!_inTalkspurt && _voicePlayoutCount == 0) {                    
+                    // Estimated flight time (including clock differences)
+                    _flightTime = slot.localTime - slot.remoteTime;
+                    // Set the starting delay
+                    _delay = _roundUpToTick(_flightTime + _initialMargin, _voiceTickSize);
+                }
+
                 // First frame of the talkpsurt? If so, lock in the new remote 
                 // time expectation.
                 if (!_inTalkspurt) {
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
                     _talkspurtFirstRemoteTime = slot.remoteTime;
-                    _talkspurtFirstOffset = slot.offset();
                     // The delay adjustment provides the margin needed. Subtracting
                     // the delay means that the expectation is set earlier to leave
                     // some time for frames to come in.
@@ -197,14 +217,9 @@ public:
                     // It is theoretically possible for this value to be negative
                     // if the voice starts very early in the call.
                     //
-                    _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _delay;
-                    //log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
-                    //    _talkspurtNextRemoteTime, _delay);
-                }
-
-                // First frame of a call? If so, use it to set the initial network 
-                // delay for the call.
-                if (_voicePlayoutCount == 0) {
+                    _talkspurtNextRemoteTime = (int32_t)localTime - _delay;
+                    log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
+                        _talkspurtNextRemoteTime, _delay);
                 }
 
                 // If we get an expired frame ignore it
@@ -223,7 +238,7 @@ public:
                     // These steps are used to calculate the variance, etc.
                     bool startOfCall = _voicePlayoutCount == 0;
                     bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
-                    _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, slot.localTime);
+                    _voiceFramePlayed(startOfCall, startOfSpurt, localTime, slot.localTime);
                     
                     _lastVoiceFramePlayedLocalTime = localTime;
                     _lastVoiceFramePlayedRemoteTime = slot.remoteTime;
@@ -336,13 +351,19 @@ private:
         return true;
     }
 
-    void _endOfTalkspurt(Log& log) { 
+    void _endOfTalkspurt(Log& log) {         
+        // Re-adjust delay
+        int32_t oldDelay = _delay;
+        _delay = _roundUpToTick(_flightTime + _idealMargin, _voiceTickSize);
+        log.info("Adjusting delay from %d to %d", oldDelay, _delay);
     }
     
     void _voiceFramePlayed(bool startOfCall, bool startOfSpurt, 
-        uint32_t frameRemoteTime, uint32_t frameLocalTime) {
+        uint32_t localTime, uint32_t frameLocalTime) {
 
-        float ni = (float)frameLocalTime - (float)frameRemoteTime;
+        // Calculate the margin of this frame (i.e. how long it's been 
+        // waiting to play)
+        float ni = (float)localTime - (float)frameLocalTime;
 
         // If this is the very first voice received for the first talkspurt
         // then use it to make an initial estimate of the delay. This can float
@@ -366,6 +387,9 @@ private:
             _vi = _alpha * _vi_1 + (1 - _alpha) * fabs(_di - ni);
             _vi_1 = _vi;
         }
+
+        // This is the current estimate of the desired margin
+        _idealMargin = _di + _beta * _vi;
     }
 
     // A 64-entry buffer provides room to track 1 second of audio
@@ -382,22 +406,22 @@ private:
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
     // The number of ms of silence before we delcare a talkspurt ended.
-    uint32_t _talkspurtTimeoutInteval = 60;
+    uint32_t _talkspurtTimeoutInteval = 60;   
+
     bool _delayLocked = false;
-    // The gap between arrival time and play time for voice packets.
-    // MUST BE A MULTIPLE OF 20!
-    int32_t _delay = 240;
+    int32_t _delay = 0;
+    int32_t _flightTime = 0;
 
     // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime = 0;
     int32_t _talkspurtNextRemoteTime = 0;
-    int32_t _talkspurtFirstOffset = 0;
 
     // Used to estimate delay and delay variance
     float _di_1 = 0;
     float _di = 0;
     float _vi = 0;
     float _vi_1 = 0; 
+    float _idealMargin = 0;
 
     // ------ Configuration Constants ----------------------------------------
 
@@ -405,14 +429,13 @@ private:
 
     const uint32_t _voiceTickSize = 20;
 
-    // This amount is always added any time we update the delay. This provides
-    // a small amount of buffer over what the calculated delay says we should 
-    // use in case of additional timing problems.
+    // Starting estimate of margin
     // MUST BE A MULTIPLE OF _voiceTickSize
-    const unsigned _delaySafetyMargin = _voiceTickSize * 3;
+    const unsigned _initialMargin = _voiceTickSize * 3;
 
     // For Algorithm 1
-    const float _alpha = 0.998002;
+    const float _alpha = 0.998002f;
+    const float _beta = 4.0f;
 
     // ----- Diagnostic/Metrics Stuff ----------------------------------------
 
