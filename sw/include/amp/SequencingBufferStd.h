@@ -53,10 +53,12 @@ public:
         _delayLocked = false;
     }   
 
-    void setDelay(unsigned ms) {
-        _delay = ms;
+    void setInitialMargin(int32_t ms) {
+        _initialMargin = ms;
         // Seed the adaptive buffer
         _di = _di_1 = ms;
+        _vi = _vi_1 = 0;
+        _idealMargin = ms;
     }
 
     unsigned getDelay() const {
@@ -218,8 +220,12 @@ public:
                     // if the voice starts very early in the call.
                     //
                     _talkspurtNextRemoteTime = (int32_t)localTime - _delay;
-                    log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
-                        _talkspurtNextRemoteTime, _delay);
+                    log.info("Start of talkspurt");
+                    log.info(" remoteTime (packet) : %d", slot.remoteTime);
+                    log.info(" localTime (packet)  : %d", slot.localTime);
+                    log.info(" Flight              : %d", _flightTime);
+                    log.info(" Delay               : %d", _delay);
+                    log.info(" Next play           : %d", _talkspurtNextRemoteTime);
                 }
 
                 // If we get an expired frame ignore it
@@ -351,11 +357,13 @@ private:
         return true;
     }
 
-    void _endOfTalkspurt(Log& log) {         
-        // Re-adjust delay
-        int32_t oldDelay = _delay;
-        _delay = _roundUpToTick(_flightTime + _idealMargin, _voiceTickSize);
-        log.info("Adjusting delay from %d to %d", oldDelay, _delay);
+    void _endOfTalkspurt(Log& log) {     
+        if (!_delayLocked) {
+            // Re-adjust delay
+            int32_t oldDelay = _delay;
+            _delay = _roundUpToTick(_flightTime + _idealMargin, _voiceTickSize);
+            log.info("Adjusting delay from %d to %d", oldDelay, _delay);
+        }
     }
     
     void _voiceFramePlayed(bool startOfCall, bool startOfSpurt, 
@@ -422,17 +430,14 @@ private:
     float _vi = 0;
     float _vi_1 = 0; 
     float _idealMargin = 0;
+    // Starting estimate of margin
+    // MUST BE A MULTIPLE OF _voiceTickSize
+    unsigned _initialMargin = _voiceTickSize * 3;
 
     // ------ Configuration Constants ----------------------------------------
 
     const int32_t _maxDelay = 1000;
-
     const uint32_t _voiceTickSize = 20;
-
-    // Starting estimate of margin
-    // MUST BE A MULTIPLE OF _voiceTickSize
-    const unsigned _initialMargin = _voiceTickSize * 3;
-
     // For Algorithm 1
     const float _alpha = 0.998002f;
     const float _beta = 4.0f;
