@@ -174,7 +174,7 @@ public:
         // right time, and discard expired voice frames.
         while (!_buffer.empty()) {
 
-            // Signal frame
+            // Signal frames are passed along immediately
             if (!_buffer.first().voice)
                 sink->playSignal(_buffer.pop().payload, localTime);
 
@@ -196,7 +196,8 @@ public:
                     // if the voice starts very early in the call.
                     //
                     _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _delay;
-                    log.info("Next time established %d", _talkspurtNextRemoteTime);
+                    log.info("Start of talkspurt, next time: %d, %d, %d", slot.remoteTime,
+                        _talkspurtNextRemoteTime, _delay);
                 }
 
                 // First frame of a call? If so, use it to set the initial network 
@@ -205,7 +206,7 @@ public:
                 }
 
                 // If we get an expired frame ignore it
-                if (slot.remoteTime < _talkspurtNextRemoteTime) {
+                if ((int32_t)slot.remoteTime < _talkspurtNextRemoteTime) {
                     log.info("Discarded old frame (%d/%d)", 
                         slot.remoteTime, _talkspurtNextRemoteTime);
                     _lateVoiceFrameCount++;
@@ -213,7 +214,7 @@ public:
                     continue;
                 }
                 // If we got the frame we are waiting for then play it
-                else if (slot.remoteTime == _talkspurtNextRemoteTime) {
+                else if ((int32_t)slot.remoteTime == _talkspurtNextRemoteTime) {
                     
                     sink->playVoice(slot.payload, localTime);
 
@@ -223,36 +224,38 @@ public:
                     _voiceFramePlayed(startOfCall, startOfSpurt, slot.remoteTime, localTime);
                     
                     _lastVoiceFramePlayedLocalTime = localTime;
-                    _lastVoiceFramePlayedLocalTime = slot.remoteTime;
+                    _lastVoiceFramePlayedRemoteTime = slot.remoteTime;
                     _talkspurtFrameCount++;
                     _voicePlayoutCount++;
                     _buffer.pop();
                     voiceFramePlayed = true;
                     break;
                 }
-                // Otherwise the next voice is in the future.
+                // Otherwise the next voice is in the future so there's nothing more to do
+                // in this tick.
                 else {
                     break;
                 }
             }            
         }
 
-        // If no voice was generated on this tick and if the voice
-        // is already playing (i.e. no the very beginning of the talkspurt)
-        // then request an interpolation.
-        if (!voiceFramePlayed && _talkspurtFrameCount > 0) {
-            _interpolatedVoiceFrameCount++;
-            sink->interpolateVoice(localTime, _voiceTickSize);
-        }
+        // Things to check when the talkspurt is running
+        if (_inTalkspurt && _talkspurtFrameCount > 0) {
 
-        // Check to see if a talkspurt has timed out 
-        if (_inTalkspurt && 
-            _voicePlayoutCount > 0 && 
-            localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
-            _inTalkspurt = false;
-            log.info("Out of talkspurt");
-            _talkSpurtCount++;
-            _endOfTalkspurt(log);
+            // If no voice was generated on this tick and if the voice
+            // is already playing (i.e. not the very beginning of the talkspurt)
+            // then request an interpolation.
+            if (!voiceFramePlayed) {
+                sink->interpolateVoice(localTime, _voiceTickSize);
+                _interpolatedVoiceFrameCount++;
+            }
+
+            // Check to see if a talkspurt has timed out 
+            if (localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
+                _inTalkspurt = false;
+                _talkSpurtCount++;
+                _endOfTalkspurt(log);
+            }
         }
 
         // Move the expectation forward one click
@@ -368,7 +371,7 @@ private:
     unsigned _talkspurtFrameCount = 0;
     uint32_t _talkspurtTimeoutInteval = 60;
     bool _delayLocked = false;
-    int32_t _delay = 250;
+    int32_t _delay = 240;
 
     // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime;
