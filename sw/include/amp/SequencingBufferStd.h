@@ -208,8 +208,6 @@ public:
                     // This will be refined as we gather statistic on the actual 
                     // connection.
                     _delay = roundUpToTick(_initialMargin, _voiceTickSize);
-                    _fixedMargin = 0;
-                    log.info("Start of call: Delay=%d", _delay);
                 }
 
                 // First frame of the talkpsurt? If so, lock in the new remote 
@@ -227,6 +225,7 @@ public:
                     // if the voice starts very early in the call.
                     //
                     _talkspurtNextRemoteTime = roundToTick(slot.remoteTime - _delay, _voiceTickSize);
+                    log.info("Start of talksprurt: delay=%d", _delay);
                 }
 
                 // If we get an expired frame ignore it. 
@@ -253,7 +252,7 @@ public:
                     bool startOfCall = _voicePlayoutCount == 0;
                     bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
 
-                    _voiceFramePlayed(startOfCall, startOfSpurt, localTime, slot.localTime,
+                    _voiceFramePlayed(log, startOfCall, startOfSpurt, localTime, slot.localTime,
                         slot.remoteTime);
 
                     _lastVoiceFramePlayedLocalTime = localTime;
@@ -372,7 +371,7 @@ private:
             _talkspurtWorstMargin, (int)_idealMargin);
     }
     
-    void _voiceFramePlayed(bool startOfCall, bool startOfSpurt, 
+    void _voiceFramePlayed(Log& log, bool startOfCall, bool startOfSpurt, 
         uint32_t localTime, uint32_t frameLocalTime, uint32_t frameRemoteTime) {
 
         // Calculate the margin of this frame (i.e. how long it's been 
@@ -407,8 +406,16 @@ private:
 
         // Keep track of worst margin
         int32_t margin = localTime - frameLocalTime;
-        if (startOfSpurt || margin < _talkspurtWorstMargin)
+        if (startOfSpurt || margin < _talkspurtWorstMargin) {
             _talkspurtWorstMargin = margin;
+            // If the worst margin is inside of a tick then increase the delay.
+            if (margin < (int32_t)_voiceTickSize * 2) {
+                _delay += _voiceTickSize;
+                _talkspurtNextRemoteTime -= _voiceTickSize;
+                _talkspurtWorstMargin += _voiceTickSize;
+                log.info("Extended delay to %d", _delay);
+            }
+        }
     }
 
     // ------ Configuration Constants ----------------------------------------
@@ -436,7 +443,6 @@ private:
 
     bool _delayLocked = false;
     int32_t _delay = 0;
-    int32_t _fixedMargin = 0;
 
     // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime = 0;
