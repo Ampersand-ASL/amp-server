@@ -211,6 +211,8 @@ public:
                     // This will be refined as we gather statistic on the actual 
                     // connection.
                     _delay = roundUpToTick(_estFixedFlightTime + _initialMargin, _voiceTickSize);
+                    log.info("Start of call");
+                    log.info(" flight %d margin %d delay %d", _estFixedFlightTime, _initialMargin, _delay);
                 }
 
                 // First frame of the talkpsurt? If so, lock in the new remote 
@@ -226,7 +228,7 @@ public:
                     // It is theoretically possible for this value to be negative
                     // if the voice starts very early in the call.
                     //
-                    _talkspurtNextRemoteTime = (int32_t)localTime - _delay;
+                    _talkspurtNextRemoteTime = roundToTick((int32_t)localTime - _delay, _voiceTickSize);
 
                     log.info("Start of talkspurt");
                     log.info(" remoteTime (packet) : %d", slot.remoteTime);
@@ -251,6 +253,7 @@ public:
                 else if ((int32_t)slot.remoteTime == _talkspurtNextRemoteTime) {
                     
                     sink->playVoice(slot.payload, localTime);
+                    //log.info("Played margin %d", (int32_t)localTime - (int32_t)slot.localTime);
 
                     // These steps are used to calculate the variance, etc.
                     bool startOfCall = _voicePlayoutCount == 0;
@@ -372,8 +375,13 @@ private:
         if (!_delayLocked) {
             // Re-adjust delay
             int32_t oldDelay = _delay;
-            _delay = roundUpToTick(_estFixedFlightTime + _idealMargin, _voiceTickSize);
+            // Enforce a maximum margin
+            int32_t newMargin = std::min((int)_idealMargin, 1000);
+            _delay = roundToTick(_estFixedFlightTime + newMargin, _voiceTickSize);
             log.info("Adjusting delay from %d to %d", oldDelay, _delay);
+            // If delay is changed then adjust the statistical trackers so that it doesn't
+            // look like we just made a huge jump
+            _di = _di_1 = (_delay - _estFixedFlightTime);
         }
     }
     
@@ -411,6 +419,14 @@ private:
         _idealMargin = _di + _beta * _vi;
     }
 
+    // ------ Configuration Constants ----------------------------------------
+
+    const int32_t _maxDelay = 1000;
+    const uint32_t _voiceTickSize = 20;
+    // For Algorithm 1
+    const float _alpha = 0.998002f;
+    const float _beta = 4.0f;
+
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
     const static unsigned MAX_BUFFER_SIZE = 64;
@@ -447,14 +463,6 @@ private:
     // Starting estimate of margin
     // MUST BE A MULTIPLE OF _voiceTickSize
     unsigned _initialMargin = _voiceTickSize * 3;
-
-    // ------ Configuration Constants ----------------------------------------
-
-    const int32_t _maxDelay = 1000;
-    const uint32_t _voiceTickSize = 20;
-    // For Algorithm 1
-    const float _alpha = 0.998002f;
-    const float _beta = 4.0f;
 
     // ----- Diagnostic/Metrics Stuff ----------------------------------------
 
