@@ -154,7 +154,7 @@ public:
     }
 
     static int32_t roundToTick(int32_t v, int32_t tick) {
-        float a = floor((float)v / (float)tick);
+        float a = round((float)v / (float)tick);
         return a * (float)tick;
     }
 
