@@ -425,7 +425,7 @@ private:
     const uint32_t _voiceTickSize = 20;
     // For Algorithm 1
     const float _alpha = 0.998002f;
-    const float _beta = 4.0f;
+    const float _beta = 4.5f;
 
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
