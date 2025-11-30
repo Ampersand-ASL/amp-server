@@ -211,8 +211,7 @@ public:
                     // This will be refined as we gather statistic on the actual 
                     // connection.
                     _delay = roundUpToTick(_estFixedFlightTime + _initialMargin, _voiceTickSize);
-                    log.info("Start of call");
-                    log.info(" flight %d margin %d delay %d", _estFixedFlightTime, _initialMargin, _delay);
+                    log.info("Start of call: Flight=%d, Delay=%d", _estFixedFlightTime, _delay);
                 }
 
                 // First frame of the talkpsurt? If so, lock in the new remote 
@@ -230,12 +229,12 @@ public:
                     //
                     _talkspurtNextRemoteTime = roundToTick((int32_t)localTime - _delay, _voiceTickSize);
 
-                    log.info("Start of talkspurt");
-                    log.info(" remoteTime (packet) : %d", slot.remoteTime);
-                    log.info(" localTime (packet)  : %d", slot.localTime);
-                    log.info(" Fixed flight        : %d", _estFixedFlightTime);
-                    log.info(" Delay               : %d", _delay);
-                    log.info(" Next play           : %d", _talkspurtNextRemoteTime);
+                    //log.info("Start of talkspurt");
+                    //log.info(" remoteTime (packet) : %d", slot.remoteTime);
+                    //log.info(" localTime (packet)  : %d", slot.localTime);
+                    //log.info(" Fixed flight        : %d", _estFixedFlightTime);
+                    //log.info(" Delay               : %d", _delay);
+                    //log.info(" Next play           : %d", _talkspurtNextRemoteTime);
                 }
 
                 // If we get an expired frame ignore it. 
@@ -378,10 +377,12 @@ private:
             // Enforce a maximum margin
             int32_t newMargin = std::min((int)_idealMargin, 1000);
             _delay = roundToTick(_estFixedFlightTime + newMargin, _voiceTickSize);
-            log.info("Adjusting delay from %d to %d", oldDelay, _delay);
-            // If delay is changed then adjust the statistical trackers so that it doesn't
-            // look like we just made a huge jump
-            _di = _di_1 = (_delay - _estFixedFlightTime);
+            if (oldDelay != _delay) {
+                log.info("Adjusting delay from %d to %d", oldDelay, _delay);
+                // If delay is changed then adjust the statistical trackers so that it doesn't
+                // look like we just made a huge jump
+                _di = _di_1 = (_delay - _estFixedFlightTime);
+            }
         }
     }
     
@@ -425,7 +426,7 @@ private:
     const uint32_t _voiceTickSize = 20;
     // For Algorithm 1
     const float _alpha = 0.998002f;
-    const float _beta = 4.5f;
+    const float _beta = 4.0f;
 
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
