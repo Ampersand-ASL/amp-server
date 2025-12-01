@@ -43,6 +43,7 @@ void Resampler::setRates(unsigned inRate, unsigned outRate) {
 }
 
 void Resampler::reset() {
+    assert(_inRate != 0 && _outRate != 0);
     if (_inRate == _outRate) {
         // No filter needed
     } else if (_inRate == 8000 && _outRate == 48000) {
@@ -72,6 +73,7 @@ unsigned Resampler::_getBlockSize(unsigned rate) const {
 }
 
 void Resampler::resample(const int16_t* inBlock, int16_t* outBlock) {
+    assert(_inRate != 0 && _outRate != 0);
     if (_inRate == _outRate)
         memcpy(outBlock, inBlock, sizeof(int16_t) * getInBlockSize());
     else if (_inRate == 8000 && _outRate == 48000) {
@@ -85,7 +87,7 @@ void Resampler::resample(const int16_t* inBlock, int16_t* outBlock) {
         // Apply the LPF anti-aliasing filter
         arm_fir_q15(&_lpfFilter, pcm48k_1, outBlock, BLOCK_SIZE_48K);
     }
-    else if (_inRate == 8000 && _outRate == 48000) {
+    else if (_inRate == 48000 && _outRate == 8000) {
         // Decimate from 48k to 8k
         // Apply a LPF to the block because we are decimating.
         // TODO: Use the more efficient decimation filter.
