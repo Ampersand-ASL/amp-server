@@ -37,13 +37,12 @@ const int16_t Resampler::F2_COEFFS[] = { 103, 136, 148, 74, -113, -395, -694,
     74, 148, 136, 103 };
 
 void Resampler::setRates(unsigned inRate, unsigned outRate) {
+
+    reset();
+
     _inRate = inRate;
     _outRate = outRate;
-    reset();
-}
 
-void Resampler::reset() {
-    assert(_inRate != 0 && _outRate != 0);
     if (_inRate == _outRate) {
         // No filter needed
     } else if (_inRate == 8000 && _outRate == 48000) {
@@ -53,6 +52,10 @@ void Resampler::reset() {
     } else {
         assert(false);
     }
+}
+
+void Resampler::reset() {
+    memset(_lpfState, 0, sizeof(_lpfState));
 }
 
 unsigned Resampler::getInBlockSize() const {
