@@ -27,13 +27,15 @@ namespace kc1fsz {
     namespace amp {
 
 /**
- * The standard implementation of the SequencingBuffer. Uses
+ * Adaptive Jitter Bufer.
+ * 
+ * The method I've settled on at the moment is called "Ramjee Algorithm 1" after a 
+ * paper by Ramjee, Kurose, Towsley, and Schulzrinne called "Adaptive Playout 
+ * Mechanisms for Packetized Audio Applications in Wide-Area Networks." This
+ * is an IEEE paper behind the paywell.
  */
 template <class T> class SequencingBufferStd : public SequencingBuffer<T> {
 public:
-
-    // Any voice frames that fall outside of this range +/- are ignored
-    static const int MAX_VOICE_FRAME_DIFF_MS = 5000;
 
     SequencingBufferStd()
     :   _buffer(_slotSpace, _ptrSpace, MAX_BUFFER_SIZE, 
@@ -91,8 +93,8 @@ public:
         _vi = 0;
         _vi_1 = 0;
         _idealDelay = 0;
-        //_delay = 0;
         _talkspurtWorstMargin = 0;    
+        _talkspurtTotalMargin = 0;    
     }
 
     bool empty() const { return _buffer.empty(); }
@@ -225,19 +227,35 @@ public:
                     _talkspurtFrameCount = 0;
                     _talkspurtFirstRemoteTime = slot.remoteTime;
                     _talkspurtWorstMargin = 0;
+                    _talkspurtTotalMargin = 0;
+                    _lastVoiceFramePlayedOriginTime = 0;
                 }
 
-                // If we get an expired frame ignore it. 
+                // If we get an expired frame then expand the delay window to 
+                // accomodate it and try again on the next cycle.
+                //
                 // NOTICE: The localTime doesn't come into the picture here. We are 
                 // advancing _talkspurtNextRemoteTime one tick each call.
                 //
                 // I saw a case where the remote time got to be >3 seconds earlier than 
                 // the _talkspurtNextRemoteTime.
                 if ((int32_t)slot.remoteTime < _talkspurtNextRemoteTime) {
-                    log.info("Discarded old frame (%d/%d)", 
-                        slot.remoteTime, _talkspurtNextRemoteTime);
-                    _lateVoiceFrameCount++;
-                    _buffer.pop();
+
+                    // If we've already played past the frame then discard in
+                    if (slot.remoteTime <= _lastVoiceFramePlayedOriginTime) {
+                        log.info("Discarded old frame (%d/%d)", 
+                            slot.remoteTime, _talkspurtNextRemoteTime);
+                        _lateVoiceFrameCount++;
+                        _buffer.pop();
+                    }
+                    else {
+                        // Here we backup to one tick before the frame since the counter
+                        // will be advanced by one tick below. This should allow us to pick 
+                        // up the late frame.
+                        int32_t shortFall = (int32_t)_talkspurtNextRemoteTime - (int32_t)slot.remoteTime;
+                        _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _voiceTickSize;
+                        log.info("Backing up for late frame: %d", shortFall);
+                    }
                 }
                 // If we got the frame we are waiting for then play it
                 // NOTICE: The localTime doesn't come into the picture here. We are 
@@ -254,6 +272,7 @@ public:
                         slot.remoteTime);
 
                     _lastVoiceFramePlayedLocalTime = localTime;
+                    _lastVoiceFramePlayedOriginTime = slot.remoteTime;
                     _talkspurtFrameCount++;
                     _voicePlayoutCount++;
                     voiceFramePlayed = true;
@@ -364,7 +383,9 @@ private:
     }
 
     void _endOfTalkspurt(Log& log, uint32_t localTime) {     
-        log.info("Talkspurt end, worstMargin: %d, nextRemoteTime: %d, ideal: %d",
+        int32_t avg = (_talkspurtFrameCount != 0) ? _talkspurtTotalMargin / _talkspurtFrameCount : 0;
+        log.info("Talkspurt end, avgD: %d, shortestD: %d, nextRemoteTime: %d, ideal: %d",
+            avg,
             _talkspurtWorstMargin, 
             _talkspurtNextRemoteTime,
             (int)localTime - (int)_idealDelay); 
@@ -406,13 +427,9 @@ private:
         int32_t margin = localTime - frameRxTime;
         if (startOfSpurt || margin < _talkspurtWorstMargin) {
             _talkspurtWorstMargin = margin;
-            // If the worst margin is inside of a tick then increase the delay.
-            if (margin <= (int32_t)_voiceTickSize) {
-                _talkspurtNextRemoteTime -= _voiceTickSize;
-                _talkspurtWorstMargin += _voiceTickSize;
-                log.info("Margin %d, extended delay", margin);
-            }
         }
+
+        _talkspurtTotalMargin += margin;
     }
 
     // ------ Configuration Constants ----------------------------------------
@@ -436,12 +453,12 @@ private:
 
     // Used for detecting the end of a talkspurt
     uint32_t _lastVoiceFramePlayedLocalTime = 0;
+    uint32_t _lastVoiceFramePlayedOriginTime = 0;
 
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
 
     bool _delayLocked = false;
-    //int32_t _delay = 0;
 
     // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime = 0;
@@ -465,6 +482,7 @@ private:
     unsigned _voicePlayoutCount = 0;
     unsigned _voiceConsumedCount = 0;
     int32_t _talkspurtWorstMargin = 0;
+    int32_t _talkspurtTotalMargin = 0;
 
     // The number of talkspurts since reset. This is incremented at the end of 
     // each talkspurt. Importantly, it will be zero for the duration of the 
