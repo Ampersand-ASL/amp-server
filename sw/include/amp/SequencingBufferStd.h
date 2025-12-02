@@ -58,7 +58,6 @@ public:
         // Seed the adaptive buffer
         _di = _di_1 = ms;
         _vi = _vi_1 = 0;
-        _idealMargin = ms;
     }
 
     unsigned getDelay() const {
@@ -90,7 +89,7 @@ public:
         _di_1 = 0;
         _vi = 0;
         _vi_1 = 0;
-        _idealMargin = 0;
+        _idealDelay = 0;
         _delay = 0;
         _talkspurtWorstMargin = 0;    
     }
@@ -367,16 +366,15 @@ private:
     }
 
     void _endOfTalkspurt(Log& log) {     
-        log.info("End of talkspurt, delay: %d, worst: %d, ideal: %d", _delay,
-            _talkspurtWorstMargin, (int)_idealMargin);
+        log.info("End of talkspurt, worst margin: %d, delay: %d, ideal: %d", 
+            _talkspurtWorstMargin, _delay, (int)_idealDelay);
     }
     
     void _voiceFramePlayed(Log& log, bool startOfCall, bool startOfSpurt, 
-        uint32_t localTime, uint32_t frameLocalTime, uint32_t frameRemoteTime) {
+        uint32_t localTime, uint32_t frameRxTime, uint32_t frameOrigTime) {
 
-        // Calculate the margin of this frame (i.e. how long it's been 
-        // waiting to play)
-        float ni = ((float)localTime - (float)frameLocalTime);
+        // Calculate the flight time of this frame
+        float ni = ((float)frameRxTime - (float)frameOrigTime);
 
         // If this is the very first voice received for the first talkspurt
         // then use it to make an initial estimate of the delay. This can float
@@ -401,11 +399,11 @@ private:
             _vi_1 = _vi;
         }
 
-        // This is the current estimate of the desired margin
-        _idealMargin = _di + _beta * _vi;
+        // This is the current estimate of the ideal delay
+        _idealDelay = _di + _beta * _vi;
 
         // Keep track of worst margin
-        int32_t margin = localTime - frameLocalTime;
+        int32_t margin = localTime - frameRxTime;
         if (startOfSpurt || margin < _talkspurtWorstMargin) {
             _talkspurtWorstMargin = margin;
             // If the worst margin is inside of a tick then increase the delay.
@@ -453,7 +451,7 @@ private:
     float _di = 0;
     float _vi = 0;
     float _vi_1 = 0; 
-    float _idealMargin = 0;
+    float _idealDelay = 0;
     // Starting estimate of margin
     // MUST BE A MULTIPLE OF _voiceTickSize
     unsigned _initialMargin = _voiceTickSize * 3;
