@@ -37,7 +37,6 @@ namespace kc1fsz {
 class Resampler {
 public:
 
-    //static const unsigned AUDIO_RATE = 48000;
     static const unsigned BLOCK_SIZE_8K = 160;
     static const unsigned BLOCK_SIZE_48K = 160 * 6;
     static const unsigned BLOCK_PERIOD_MS = 20;
@@ -55,7 +54,7 @@ public:
      * use caution to make sure that the blocks are the 
      * correct length.
      */
-    void resample(const int16_t* inBlock, int16_t* outBlock);
+    void resample(const int16_t* inBlock, unsigned inSize, int16_t* outBlock, unsigned outSize);
 
     unsigned getInBlockSize() const;
     unsigned getOutBlockSize() const;
