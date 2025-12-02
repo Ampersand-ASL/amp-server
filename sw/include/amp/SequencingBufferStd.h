@@ -61,7 +61,8 @@ public:
     }
 
     unsigned getDelay() const {
-        return _delay;
+        //return _delay;
+        return 0;
     }
 
     void setTalkspurtTimeoutInterval(uint32_t i) {
@@ -90,7 +91,7 @@ public:
         _vi = 0;
         _vi_1 = 0;
         _idealDelay = 0;
-        _delay = 0;
+        //_delay = 0;
         _talkspurtWorstMargin = 0;    
     }
 
@@ -200,31 +201,30 @@ public:
             else {
                 const Slot& slot = _buffer.first();
 
-                // First frame of a call? If so, use it to set the initial network 
-                // delay for the call.
-                if (!_inTalkspurt && _voicePlayoutCount == 0) {                    
-                    // Set the starting delay using a configured initial margin.
+                // First frame of the talkpsurt? 
+                // The _talkspurtNextRemoteTime variable determines how far
+                // behind the playout is from the arrival of the voice packets.
+                // We adjust this value at the start of each talkspurt.
+                if (!_inTalkspurt) {
+                    
+                    // Set the starting delay for a new call uses a configured initial margin.
                     // This will be refined as we gather statistic on the actual 
                     // connection.
-                    _delay = roundUpToTick(_initialMargin, _voiceTickSize);
-                }
+                    if (_voicePlayoutCount == 0) {
+                        _talkspurtNextRemoteTime = roundToTick(slot.remoteTime - _initialMargin,
+                            _voiceTickSize);
+                    } 
+                    // After the call is up and running we use the adaptive algorithm to track
+                    // the delay between arrival and playback.
+                    else {
+                        _talkspurtNextRemoteTime = roundToTick(localTime - (int32_t)_idealDelay - 
+                            (int32_t)_margin, _voiceTickSize);
+                    }
 
-                // First frame of the talkpsurt? If so, lock in the new remote 
-                // time expectation.
-                if (!_inTalkspurt) {
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
                     _talkspurtFirstRemoteTime = slot.remoteTime;
                     _talkspurtWorstMargin = 0;
-                    // The delay adjustment provides the margin needed. Subtracting
-                    // the delay means that the expectation is set earlier to leave
-                    // some time for frames to come in.
-                    //
-                    // It is theoretically possible for this value to be negative
-                    // if the voice starts very early in the call.
-                    //
-                    _talkspurtNextRemoteTime = roundToTick(slot.remoteTime - _delay, _voiceTickSize);
-                    log.info("Start of talksprurt: delay=%d", _delay);
                 }
 
                 // If we get an expired frame ignore it. 
@@ -245,7 +245,6 @@ public:
                 else if ((int32_t)slot.remoteTime == _talkspurtNextRemoteTime) {
                     
                     sink->playVoice(slot.payload, localTime);
-                    //log.info("Played margin %d", (int32_t)localTime - (int32_t)slot.localTime);
 
                     // These steps are used to calculate the variance, etc.
                     bool startOfCall = _voicePlayoutCount == 0;
@@ -365,9 +364,9 @@ private:
     }
 
     void _endOfTalkspurt(Log& log, uint32_t localTime) {     
-        log.info("End of talkspurt, worst margin: %d, delay: %d, ideal: %d", 
-            _talkspurtWorstMargin, _delay, (int)_idealDelay);
-        log.info("nextRemoteTime %d ideal %d", _talkspurtNextRemoteTime,
+        log.info("Talkspurt end, worstMargin: %d, nextRemoteTime: %d, ideal: %d",
+            _talkspurtWorstMargin, 
+            _talkspurtNextRemoteTime,
             (int)localTime - (int)_idealDelay); 
     }
     
@@ -408,11 +407,10 @@ private:
         if (startOfSpurt || margin < _talkspurtWorstMargin) {
             _talkspurtWorstMargin = margin;
             // If the worst margin is inside of a tick then increase the delay.
-            if (margin < (int32_t)_voiceTickSize * 2) {
-                _delay += _voiceTickSize;
+            if (margin <= (int32_t)_voiceTickSize) {
                 _talkspurtNextRemoteTime -= _voiceTickSize;
                 _talkspurtWorstMargin += _voiceTickSize;
-                log.info("Extended delay to %d", _delay);
+                log.info("Margin %d, extended delay", margin);
             }
         }
     }
@@ -424,6 +422,10 @@ private:
     // For Algorithm 1
     const float _alpha = 0.998002f;
     const float _beta = 4.0f;
+    // The number of ms of silence before we delcare a talkspurt ended.
+    const uint32_t _talkspurtTimeoutInteval = 60;   
+    // MUST BE A MULTIPLE OF _voiceTickSize
+    const unsigned _margin = _voiceTickSize * 2;
 
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
@@ -437,11 +439,9 @@ private:
 
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
-    // The number of ms of silence before we delcare a talkspurt ended.
-    uint32_t _talkspurtTimeoutInteval = 60;   
 
     bool _delayLocked = false;
-    int32_t _delay = 0;
+    //int32_t _delay = 0;
 
     // These are locked in at the start of the talkspurt. 
     uint32_t _talkspurtFirstRemoteTime = 0;
