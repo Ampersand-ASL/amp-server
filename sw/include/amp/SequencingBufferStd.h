@@ -285,14 +285,13 @@ public:
             if (localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
                 _inTalkspurt = false;
                 _talkSpurtCount++;
-                _endOfTalkspurt(log);
+                _endOfTalkspurt(log, localTime);
             }
         }
 
-        // Move the expectation forward one click
-        if (_inTalkspurt) {
-            _talkspurtNextRemoteTime += _voiceTickSize;
-        }
+        // Always move the expectation forward one click to keep in sync with 
+        // the clock moving forward on the remote side.
+        _talkspurtNextRemoteTime += _voiceTickSize;
     }
     
     virtual bool inTalkspurt() const {
@@ -365,9 +364,11 @@ private:
         return true;
     }
 
-    void _endOfTalkspurt(Log& log) {     
+    void _endOfTalkspurt(Log& log, uint32_t localTime) {     
         log.info("End of talkspurt, worst margin: %d, delay: %d, ideal: %d", 
             _talkspurtWorstMargin, _delay, (int)_idealDelay);
+        log.info("nextRemoteTime %d ideal %d", _talkspurtNextRemoteTime,
+            (int)localTime - (int)_idealDelay); 
     }
     
     void _voiceFramePlayed(Log& log, bool startOfCall, bool startOfSpurt, 
