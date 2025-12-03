@@ -446,7 +446,7 @@ private:
     const float _alpha = 0.998002f;
     const float _beta = 5.0f;
     // The number of ms of silence before we delcare a talkspurt ended.
-    const uint32_t _talkspurtTimeoutInteval = 60;   
+    uint32_t _talkspurtTimeoutInteval = 60;   
 
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
