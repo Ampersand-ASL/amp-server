@@ -194,10 +194,11 @@ public:
             // Voice frame
             else {
                 const Slot& slot = _buffer.first();
+                const int32_t oldOriginCursor = _originCursor;
 
-                // Old voice frames (out of order) are discarded immediately
-                if (slot.remoteTime < _lastPlayedOrigin) {
-                    log.info("Discarded OOO frame (%d < %d)", slot.remoteTime, _lastPlayedOrigin);
+                // Old voice frames (out of order or repeats) are discarded immediately
+                if (slot.remoteTime <= _lastPlayedOrigin) {
+                    log.info("Discarded OOO frame (%d <= %d)", slot.remoteTime, _lastPlayedOrigin);
                     _lateVoiceFrameCount++;
                     _buffer.pop();
                     // NOTICE: We're in a loop so we get another shot at it,
@@ -226,7 +227,6 @@ public:
                         //    the cursor forward, being careful not to pass the next availble
                         //    frame in the buffer.
                         // 
-                        int32_t oldOriginCursor = _originCursor;
                         int32_t idealOriginCursor = roundToTick(
                             (int32_t)localTime - (int32_t)_idealDelay, _voiceTickSize);
 
@@ -236,11 +236,11 @@ public:
                             _originCursor = std::min(idealOriginCursor, (int32_t)slot.remoteTime);
 
                         if (_originCursor > oldOriginCursor)
-                            log.info("Start TS, moving cursor forward %u->%u", 
+                            log.info("Start TS, moving cursor forward %u -> %u", 
                                 oldOriginCursor, _originCursor);
                         else if (_originCursor < oldOriginCursor)
-                            log.info("Start TS, moving cursor backward %u->%u", 
-                                oldOriginCursor, _originCursor);
+                            log.info("Start TS, moving cursor backward %u <- %u", 
+                                _originCursor, oldOriginCursor);
                         else 
                             log.info("Start TS, No cursor movement");
                     }
@@ -256,9 +256,11 @@ public:
                 // or discard it and move on.
                 if ((int32_t)slot.remoteTime < _originCursor) {
                     // Is it OK to slow down for this one?
-                    if (_originCursor - slot.remoteTime <= _voiceTickSize &&
-                        slot.remoteTime > _lastPlayedOrigin) {
-                        log.info("Mid TS, adjusting for frame (%d < %d)", slot.remoteTime, _originCursor);
+                    if (_originCursor - (int32_t)slot.remoteTime <= _midTsAdjustMax) {
+                        log.info("Mid TS, adjusting (%d < %d)", slot.remoteTime, _originCursor);
+                        // NOTE: It has already been establishe that slot.remoteTime is larger
+                        // that _lastPlayedOrigin so there is no risk in moving back to this
+                        // point in the stream.
                         _originCursor = slot.remoteTime;
                     } 
                     // Too late, move on
@@ -313,9 +315,9 @@ public:
             // If no voice was generated on this tick (for whatever reason)
             // then request an interpolation.
             if (!voiceFramePlayed) {
-                //log.info("Interlopated %d",_talkspurtNextRemoteTime);
                 sink->interpolateVoice(localTime, _voiceTickSize);
                 _interpolatedVoiceFrameCount++;
+                log.info("Interpolated %u", _originCursor);
             }
 
             // Has the talkspurt has timed out yet?
@@ -435,15 +437,16 @@ private:
 
     // ------ Configuration Constants ----------------------------------------
 
-    const int32_t _maxDelay = 1500;
+    // The size of an audio tick in milliseconds
     const uint32_t _voiceTickSize = 20;
-    // For Algorithm 1
+    // This is the most the playback cursor can be adjusted to pick up a 
+    // late frame inside of a talkspurt
+    const int32_t _midTsAdjustMax = 40;
+    // Constants for Ramjee Algorithm 1
     const float _alpha = 0.998002f;
     const float _beta = 5.0f;
     // The number of ms of silence before we delcare a talkspurt ended.
     const uint32_t _talkspurtTimeoutInteval = 60;   
-    // MUST BE A MULTIPLE OF _voiceTickSize
-    const unsigned _margin = _voiceTickSize * 2;
 
     // A 64-entry buffer provides room to track 1 second of audio
     // plus some extra for control frames that may be interspersed.
