@@ -74,18 +74,19 @@ public:
     // #### TODO: MAKE SURE WE HAVE EVERYTHING
     virtual void reset() {
         _buffer.clear();
+        // Diagnostics
         _maxBufferDepth = 0;
         _overflowCount = 0;
         _lateVoiceFrameCount = 0;
         _interpolatedVoiceFrameCount = 0;
-        _lastVoiceFramePlayedLocalTime = 0;
-        _talkspurtNextRemoteTime = 0;
+        // Tracking
+        _lastPlayedLocal = 0;
+        _lastPlayedOrigin = 0;
+        _originCursor = 0;
         _inTalkspurt = false;
         _talkSpurtCount = 0;
         _talkspurtFrameCount = 0;
-        _talkspurtFirstRemoteTime = 0;
-        _networkDelayEstimateMs = 0;
-        _remoteClockLagEstimateMs = 0;
+        _talkspurtFirstOrigin = 0;
         _voicePlayoutCount = 0;
         _voiceConsumedCount = 0;
         _di = 0;
@@ -93,8 +94,8 @@ public:
         _vi = 0;
         _vi_1 = 0;
         _idealDelay = 0;
-        _talkspurtWorstMargin = 0;    
-        _talkspurtTotalMargin = 0;    
+        _worstMargin = 0;    
+        _totalMargin = 0;    
     }
 
     bool empty() const { return _buffer.empty(); }
@@ -107,14 +108,6 @@ public:
             cout << " rt=" << slot.remoteTime << ", seq=" << slot.seq << endl;
             return true;
         });
-    }
-
-    void setNetworkDelayEstimate(int32_t m) {
-        _networkDelayEstimateMs = m;
-    }
-
-    void setRemoteClockLagEstimate(int32_t m) {
-        _remoteClockLagEstimateMs = m;
     }
 
     /**
@@ -166,7 +159,6 @@ public:
     unsigned getInterpolatedVoiceFrameCount() const { return _interpolatedVoiceFrameCount; }
     unsigned getOverflowCount() const { return _overflowCount; }
     unsigned getMaxBufferDepth() const { return _maxBufferDepth; }
-    unsigned getRemoteVoiceDelayEstimate() const { return _remoteVoiceDelayEstimateMs; }
 
     // ----- SequencingBuffer -------------------------------------------------
 
@@ -203,85 +195,112 @@ public:
             else {
                 const Slot& slot = _buffer.first();
 
+                // Old voice frames (out of order) are discarded immediately
+                if (slot.remoteTime < _lastPlayedOrigin) {
+                    log.info("Discarded OOO frame (%d < %d)", slot.remoteTime, _lastPlayedOrigin);
+                    _lateVoiceFrameCount++;
+                    _buffer.pop();
+                    // NOTICE: We're in a loop so we get another shot at it,
+                    continue;
+                }
+
                 // First frame of the talkpsurt? 
-                // The _talkspurtNextRemoteTime variable determines how far
-                // behind the playout is from the arrival of the voice packets.
-                // We adjust this value at the start of each talkspurt.
                 if (!_inTalkspurt) {
                     
                     // Set the starting delay for a new call uses a configured initial margin.
-                    // This will be refined as we gather statistic on the actual 
-                    // connection.
+                    // This will be refined as we gather statistic on the actual connection.
                     if (_voicePlayoutCount == 0) {
-                        _talkspurtNextRemoteTime = roundToTick(slot.remoteTime - _initialMargin,
+                        _originCursor = roundToTick(slot.remoteTime - _initialMargin,
                             _voiceTickSize);
                     } 
                     // After the call is up and running we use the adaptive algorithm to track
                     // the delay between arrival and playback.
                     else {
-                        _talkspurtNextRemoteTime = roundToTick(localTime - (int32_t)_idealDelay - 
-                            (int32_t)_margin, _voiceTickSize);
+                        // We only get to change the delay at the start of a talkspurt.
+                        // There are a few cases:
+                        // 1. The ideal delay wants us to slow down. In that case we shift
+                        //    the cursor backwards, being careful not to go back any further
+                        //    than the last frame played.
+                        //
+                        // 2. The ideal dealy wants us to speed up. In that case we shift
+                        //    the cursor forward, being careful not to pass the next availble
+                        //    frame in the buffer.
+                        // 
+                        int32_t oldOriginCursor = _originCursor;
+                        int32_t idealOriginCursor = roundToTick(
+                            (int32_t)localTime - (int32_t)_idealDelay, _voiceTickSize);
+
+                        if (idealOriginCursor < _originCursor)
+                            _originCursor = std::max(idealOriginCursor, (int32_t)_lastPlayedOrigin);
+                        else if (idealOriginCursor > _originCursor)
+                            _originCursor = std::min(idealOriginCursor, (int32_t)slot.remoteTime);
+
+                        if (_originCursor > oldOriginCursor)
+                            log.info("Start TS, moving cursor forward %u->%u", 
+                                oldOriginCursor, _originCursor);
+                        else if (_originCursor < oldOriginCursor)
+                            log.info("Start TS, moving cursor backward %u->%u", 
+                                oldOriginCursor, _originCursor);
+                        else 
+                            log.info("Start TS, No cursor movement");
                     }
 
                     _inTalkspurt = true;
                     _talkspurtFrameCount = 0;
-                    _talkspurtFirstRemoteTime = slot.remoteTime;
-                    _talkspurtWorstMargin = 0;
-                    _talkspurtTotalMargin = 0;
-                    _lastVoiceFramePlayedOriginTime = 0;
+                    _talkspurtFirstOrigin = slot.remoteTime;
+                    _lastPlayedOrigin = 0;
+                    _lastPlayedLocal = 0;
                 }
 
-                // If we get an expired frame then expand the delay window to 
-                // accomodate it and try again on the next cycle.
-                //
-                // NOTICE: The localTime doesn't come into the picture here. We are 
-                // advancing _talkspurtNextRemoteTime one tick each call.
-                //
-                // I saw a case where the remote time got to be >3 seconds earlier than 
-                // the _talkspurtNextRemoteTime.
-                if ((int32_t)slot.remoteTime < _talkspurtNextRemoteTime) {
-
-                    // If we've already played past the frame then discard in
-                    if (slot.remoteTime <= _lastVoiceFramePlayedOriginTime) {
-                        log.info("Discarded old frame (%d/%d)", 
-                            slot.remoteTime, _talkspurtNextRemoteTime);
+                // If we get an expired frame then either slow down a bit to pick it up
+                // or discard it and move on.
+                if ((int32_t)slot.remoteTime < _originCursor) {
+                    // Is it OK to slow down for this one?
+                    if (_originCursor - slot.remoteTime <= _voiceTickSize &&
+                        slot.remoteTime > _lastPlayedOrigin) {
+                        log.info("Mid TS, adjusting for frame (%d < %d)", slot.remoteTime, _originCursor);
+                        _originCursor = slot.remoteTime;
+                    } 
+                    // Too late, move on
+                    else {
+                        log.info("Mid TS, discarded frame (%d < %d)", slot.remoteTime, _originCursor);
                         _lateVoiceFrameCount++;
                         _buffer.pop();
                     }
-                    else {
-                        // Here we backup to one tick before the frame since the counter
-                        // will be advanced by one tick below. This should allow us to pick 
-                        // up the late frame.
-                        int32_t shortFall = (int32_t)_talkspurtNextRemoteTime - (int32_t)slot.remoteTime;
-                        _talkspurtNextRemoteTime = (int32_t)slot.remoteTime - _voiceTickSize;
-                        log.info("Backing up for late frame: %d", shortFall);
-                    }
+                    // NOTICE: We're in a loop so we get another shot at it,
                 }
                 // If we got the frame we are waiting for then play it
-                // NOTICE: The localTime doesn't come into the picture here. We are 
-                // advancing _talkspurtNextRemoteTime one tick each call.
-                else if ((int32_t)slot.remoteTime == _talkspurtNextRemoteTime) {
+                else if ((int32_t)slot.remoteTime == _originCursor) {
                     
                     sink->playVoice(slot.payload, localTime);
 
-                    // These steps are used to calculate the variance, etc.
-                    bool startOfCall = _voicePlayoutCount == 0;
-                    bool startOfSpurt = _talkspurtFirstRemoteTime == slot.remoteTime;
-
-                    _voiceFramePlayed(log, startOfCall, startOfSpurt, localTime, slot.localTime,
-                        slot.remoteTime);
-
-                    _lastVoiceFramePlayedLocalTime = localTime;
-                    _lastVoiceFramePlayedOriginTime = slot.remoteTime;
-                    _talkspurtFrameCount++;
-                    _voicePlayoutCount++;
                     voiceFramePlayed = true;
+                    _lastPlayedLocal = localTime;
+                    _lastPlayedOrigin = slot.remoteTime;
+                    _voicePlayoutCount++;
+
+                    bool startOfSpurt = _talkspurtFirstOrigin == slot.remoteTime;
+
+                    // Keep margin tracking up to date
+                    int32_t margin = (int32_t)localTime - (int32_t)slot.localTime;
+                    if (startOfSpurt) {
+                        _worstMargin = margin;
+                        _totalMargin = margin;
+                        _talkspurtFrameCount = 1;
+                    } else {
+                        if (margin < _worstMargin) 
+                            _worstMargin = margin;
+                        _totalMargin += margin;
+                        _talkspurtFrameCount++;
+                    }
+
                     _buffer.pop();
+
                     // We can only play one frame per tick, so break out of the loop
                     break;
                 }
                 // Otherwise the next voice is in the future so there's nothing more to do
-                // in this tick.
+                // in this tick but wait.
                 else {
                     break;
                 }
@@ -300,16 +319,18 @@ public:
             }
 
             // Has the talkspurt has timed out yet?
-            if (localTime > _lastVoiceFramePlayedLocalTime + _talkspurtTimeoutInteval) {
+            if (localTime > _lastPlayedLocal + _talkspurtTimeoutInteval) {
                 _inTalkspurt = false;
                 _talkSpurtCount++;
-                _endOfTalkspurt(log, localTime);
+                int32_t avgMargin = (_talkspurtFrameCount != 0) ? 
+                    _totalMargin / _talkspurtFrameCount : 0;
+                log.info("End TS, avgM: %d, shortM: %d", avgMargin, _worstMargin); 
             }
         }
 
         // Always move the expectation forward one click to keep in sync with 
         // the clock moving forward on the remote side.
-        _talkspurtNextRemoteTime += _voiceTickSize;
+        _originCursor += _voiceTickSize;
     }
     
     virtual bool inTalkspurt() const {
@@ -356,7 +377,7 @@ private:
         bool isVoice() const { return voice; }
     };
 
-    bool _consume(Log& log, bool isVoice, const T& payload, uint32_t remoteTime, uint32_t localTime) {
+    bool _consume(Log& log, bool isVoice, const T& payload, uint32_t origTime, uint32_t rxTime) {
     
         if (!_buffer.hasCapacity()) {
             _overflowCount++;
@@ -364,35 +385,23 @@ private:
             return false;
         }
 
-        _buffer.insert({ .voice=isVoice, .remoteTime=remoteTime, .localTime=localTime, 
+        _buffer.insert({ .voice=isVoice, .remoteTime=origTime, .localTime=rxTime, 
             .payload=payload });     
-            
-        // Update an estimate of the remote side's audio delay. This removes the effects 
-        // of the remote side's clock skey and the current network delay.
-        int32_t delay = (int32_t)localTime - 
-            ((int32_t)remoteTime + (int32_t)_remoteClockLagEstimateMs) -
-            _networkDelayEstimateMs;
-        if (delay > 0)
-            _remoteVoiceDelayEstimateMs = delay;
-        else 
-            _remoteVoiceDelayEstimateMs = 0;
 
-        _voiceConsumedCount++;
+        if (isVoice) {
+            bool startOfCall = _voiceConsumedCount == 0;
+            _voiceConsumedCount++;
+            // Use the frame information to keep the delay estimate up to date
+            _updateDelayTarget(log, startOfCall, rxTime, origTime);
+        }
 
         return true;
     }
 
-    void _endOfTalkspurt(Log& log, uint32_t localTime) {     
-        int32_t avg = (_talkspurtFrameCount != 0) ? _talkspurtTotalMargin / _talkspurtFrameCount : 0;
-        log.info("Talkspurt end, avgD: %d, shortestD: %d, nextRemoteTime: %d, ideal: %d",
-            avg,
-            _talkspurtWorstMargin, 
-            _talkspurtNextRemoteTime,
-            (int)localTime - (int)_idealDelay); 
-    }
-    
-    void _voiceFramePlayed(Log& log, bool startOfCall, bool startOfSpurt, 
-        uint32_t localTime, uint32_t frameRxTime, uint32_t frameOrigTime) {
+    // This should be called on each voice frame arrival so that we have the 
+    // most timely information about the network conditions.
+    void _updateDelayTarget(Log& log, bool startOfCall, 
+        uint32_t frameRxTime, uint32_t frameOrigTime) {
 
         // Calculate the flight time of this frame
         float ni = ((float)frameRxTime - (float)frameOrigTime);
@@ -407,8 +416,8 @@ private:
             _vi = 0;
             _vi_1 = _vi;
         }
+        // Re-estimate the variance statistics on each frame
         else {
-            // Re-estimate the variance statistics on each frame
             //
             // Please see "Adaptive Playout Mechanisms for Packetized Audio Applications
             // in Wide-Area Networks" by Ramachandran Ramjee, et. al.
@@ -422,23 +431,15 @@ private:
 
         // This is the current estimate of the ideal delay
         _idealDelay = _di + _beta * _vi;
-
-        // Keep track of worst margin
-        int32_t margin = localTime - frameRxTime;
-        if (startOfSpurt || margin < _talkspurtWorstMargin) {
-            _talkspurtWorstMargin = margin;
-        }
-
-        _talkspurtTotalMargin += margin;
     }
 
     // ------ Configuration Constants ----------------------------------------
 
-    const int32_t _maxDelay = 1000;
+    const int32_t _maxDelay = 1500;
     const uint32_t _voiceTickSize = 20;
     // For Algorithm 1
     const float _alpha = 0.998002f;
-    const float _beta = 4.0f;
+    const float _beta = 5.0f;
     // The number of ms of silence before we delcare a talkspurt ended.
     const uint32_t _talkspurtTimeoutInteval = 60;   
     // MUST BE A MULTIPLE OF _voiceTickSize
@@ -451,18 +452,18 @@ private:
     unsigned _ptrSpace[MAX_BUFFER_SIZE];
     fixedsortedlist<Slot> _buffer;
 
+    // This is the important variable. This always points to the next
+    // origin time to be played.
+    int32_t _originCursor = 0;
+    uint32_t _talkspurtFirstOrigin = 0;
+    uint32_t _lastPlayedOrigin = 0;
     // Used for detecting the end of a talkspurt
-    uint32_t _lastVoiceFramePlayedLocalTime = 0;
-    uint32_t _lastVoiceFramePlayedOriginTime = 0;
+    uint32_t _lastPlayedLocal = 0;
 
     bool _inTalkspurt = false;
     unsigned _talkspurtFrameCount = 0;
 
     bool _delayLocked = false;
-
-    // These are locked in at the start of the talkspurt. 
-    uint32_t _talkspurtFirstRemoteTime = 0;
-    int32_t _talkspurtNextRemoteTime = 0;
 
     // Used to estimate delay and delay variance
     float _di_1 = 0;
@@ -481,16 +482,13 @@ private:
     unsigned _interpolatedVoiceFrameCount = 0;
     unsigned _voicePlayoutCount = 0;
     unsigned _voiceConsumedCount = 0;
-    int32_t _talkspurtWorstMargin = 0;
-    int32_t _talkspurtTotalMargin = 0;
+    int32_t _worstMargin = 0;
+    int32_t _totalMargin = 0;
 
     // The number of talkspurts since reset. This is incremented at the end of 
     // each talkspurt. Importantly, it will be zero for the duration of the 
     // first talkspurt.
     unsigned _talkSpurtCount = 0;
-    int32_t _networkDelayEstimateMs = 0;
-    int32_t _remoteClockLagEstimateMs = 0;
-    int32_t _remoteVoiceDelayEstimateMs = 0;
     unsigned _maxBufferDepth = 0;
 };    
 
