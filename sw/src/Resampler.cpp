@@ -36,6 +36,10 @@ const int16_t Resampler::F2_COEFFS[] = { 103, 136, 148, 74, -113, -395, -694,
     4589, 3265, 1836, 573, -331, -801, -881, -694, -395, -113,
     74, 148, 136, 103 };
 
+const int16_t Resampler::F16_COEFFS[] = {
+    -3915, -295, 1127, -1312, 481, 531, -508, -720, 1840, -1315, -770, 2263, -691, -4236, 9813, 20508, 9813, -4236, -691, 2263, -770, -1315, 1840, -720, -508, 531, 481, -1312, 1127, -295, -3915    
+};
+
 void Resampler::setRates(unsigned inRate, unsigned outRate) {
 
     reset();
@@ -49,6 +53,10 @@ void Resampler::setRates(unsigned inRate, unsigned outRate) {
         arm_fir_init_q15(&_lpfFilter, F1_TAPS, F1_COEFFS, _lpfState, BLOCK_SIZE_48K);
     } else if (_inRate == 48000 && _outRate == 8000) {
         arm_fir_init_q15(&_lpfFilter, F2_TAPS, F2_COEFFS, _lpfState, BLOCK_SIZE_48K);
+    } else if (_inRate == 16000 && _outRate == 48000) {
+        arm_fir_init_q15(&_lpfFilter, F16_TAPS, F16_COEFFS, _lpfState, BLOCK_SIZE_48K);
+    } else if (_inRate == 48000 && _outRate == 16000) {
+        arm_fir_init_q15(&_lpfFilter, F16_TAPS, F16_COEFFS, _lpfState, BLOCK_SIZE_48K);
     } else {
         assert(false);
     }
@@ -69,6 +77,8 @@ unsigned Resampler::getOutBlockSize() const {
 unsigned Resampler::_getBlockSize(unsigned rate) const {
     if (rate == 8000)
         return BLOCK_SIZE_8K;
+    if (rate == 16000)
+        return BLOCK_SIZE_16K;
     else if (rate == 48000)
         return BLOCK_SIZE_48K;
     else 
@@ -105,6 +115,31 @@ void Resampler::resample(const int16_t* inBlock, unsigned inSize,
         arm_fir_q15(&_lpfFilter, inBlock, pcm48k_1, BLOCK_SIZE_48K);
         const int16_t* srcPtr = pcm48k_1;
         for (unsigned i = 0; i < BLOCK_SIZE_8K; i++, srcPtr += 6)
+            outBlock[i] = *srcPtr;
+    }
+    else if (_inRate == 16000 && _outRate == 48000) {
+        assert(inSize == BLOCK_SIZE_16K);
+        assert(outSize == BLOCK_SIZE_48K);
+        // Perform the upsampling to 48k.
+        int16_t pcm48k_1[BLOCK_SIZE_48K];
+        int16_t* p1 = pcm48k_1;
+        const int16_t* p0 = inBlock;
+        for (unsigned i = 0; i < BLOCK_SIZE_16K; i++, p0++)
+            for (unsigned j = 0; j < 3; j++)
+                *(p1++) = *p0;
+        // Apply the LPF anti-aliasing filter
+        arm_fir_q15(&_lpfFilter, pcm48k_1, outBlock, BLOCK_SIZE_48K);
+    }
+    else if (_inRate == 48000 && _outRate == 16000) {
+        assert(inSize == BLOCK_SIZE_48K);
+        assert(outSize == BLOCK_SIZE_16K);
+        // Decimate from 48k 
+        // Apply a LPF to the block because we are decimating.
+        // TODO: Use the more efficient decimation filter.
+        int16_t pcm48k_1[BLOCK_SIZE_48K];
+        arm_fir_q15(&_lpfFilter, inBlock, pcm48k_1, BLOCK_SIZE_48K);
+        const int16_t* srcPtr = pcm48k_1;
+        for (unsigned i = 0; i < BLOCK_SIZE_16K; i++, srcPtr += 3)
             outBlock[i] = *srcPtr;
     }
     else {
