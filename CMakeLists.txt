@@ -29,6 +29,7 @@ add_executable(main
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
   amp-core/src/Line.cpp
+  amp-core/src/LineRadio.cpp
   amp-core/src/LineUsb.cpp
   amp-core/src/LineIAX2.cpp
   amp-core/src/IAX2FrameFull.cpp
