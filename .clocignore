@@ -1,0 +1,9 @@
+# Mocks for unit testing
+alsa-mock/
+hid-mock/
+# 3rd party
+nlohmann/
+# Unit tests
+src/tests
+src/demos
+

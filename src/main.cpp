@@ -55,7 +55,7 @@ using namespace kc1fsz;
 Development:
 
 export AMP_NODE0_NUMBER=672730
-export AMP_NODE0_PASSWORD=microlink2
+export AMP_NODE0_PASSWORD=xxxx
 export AMP_NODE0_MGR_PORT=5038
 export AMP_IAX_PORT=4568
 export AMP_IAX_PROTO=IPV4
