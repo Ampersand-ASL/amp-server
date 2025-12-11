@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2025, Bruce MacKinnon KC1FSZ, All Rights Reserved
+ * Copyright (C) 2025, Bruce MacKinnon KC1FSZ
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,5 @@
  */
 #pragma once
 
-namespace kc1fsz {
-    namespace amp {
-    }
-}
+void* service_thread(void* l);
+

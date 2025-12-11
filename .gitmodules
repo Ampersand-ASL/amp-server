@@ -1,0 +1,15 @@
+[submodule "amp-core"]
+	path = amp-core
+	url = https://github.com/Ampersand-ASL/amp-core.git
+[submodule "kc1fsz-tools-cpp"]
+	path = kc1fsz-tools-cpp
+	url = https://github.com/brucemack/kc1fsz-tools-cpp.git
+[submodule "itu-g711-codec"]
+	path = itu-g711-codec
+	url = https://github.com/brucemack/itu-g711-codec.git
+[submodule "cmsis-dsp-mock"]
+	path = cmsis-dsp-mock
+	url = https://github.com/brucemack/cmsis-dsp-mock.git
+[submodule "sound-map"]
+	path = sound-map
+	url = https://github.com/Ampersand-ASL/sound-map.git
