@@ -15,8 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <sched.h>
-#include <linux/sched.h>
-#include <linux/sched/types.h>
+//#include <linux/sched.h>
+//#include <linux/sched/types.h>
+#include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
