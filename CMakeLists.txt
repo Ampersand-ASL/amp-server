@@ -40,10 +40,11 @@ add_executable(main
   amp-core/src/RetransmissionBufferStd.cpp
   amp-core/src/Transcoder_G711_ULAW.cpp
   amp-core/src/Transcoder_SLIN_48K.cpp
-  amp-core/src/Transcoder_SLIN.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
-  amp-core/src/AdaptorIn.cpp
-  amp-core/src/AdaptorOut.cpp
+  amp-core/src/Bridge.cpp
+  amp-core/src/BridgeCall.cpp
+  amp-core/src/BridgeIn.cpp
+  amp-core/src/BridgeOut.cpp
   amp-core/src/Resampler.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp

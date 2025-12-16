@@ -45,8 +45,9 @@
 #include "MessageBus.h"
 #include "ManagerTask.h"
 #include "EventLoop.h"
-#include "AdaptorOut.h"
-#include "AdaptorIn.h"
+#include "Bridge.h"
+#include "TwoLineRouter.h"
+
 #include "service-thread.h"
 
 using namespace std;
@@ -62,6 +63,7 @@ export AMP_IAX_PORT=4568
 export AMP_IAX_PROTO=IPV4
 export AMP_ASL_REG_URL=https://register.allstarlink.org
 export AMP_NODE0_USBSOUND="vendorname:\"C-Media Electronics, Inc.\""
+export AMP_MEDIA_DIR=../amp-core/media
 */
 extern uint32_t cmsisdsp_overflow;
 
@@ -105,29 +107,6 @@ public:
     }
 };
 
-class MessageBus2 : public MessageConsumer {
-public:
-
-    MessageBus2(Log& log) : _log(log) { }
-
-    virtual void consume(const Message& msg) {
-        if (msg.getType() == Message::Type::SIGNAL && 
-            msg.getFormat() == Message::SignalType::CALL_START) {
-            PayloadCallStart payload;
-            assert(msg.size() == sizeof(payload));
-            memcpy(&payload, msg.raw(), sizeof(payload));
-            _log.info("Call started %d codec %X", msg.getSourceCallId(), payload.codec);
-            adIn->setCodec(payload.codec);
-            adOut->setCodec(payload.codec);
-        }
-        adIn->consume(msg);
-    }
-
-    Log& _log;
-    AdaptorIn* adIn = 0;
-    AdaptorOut* adOut = 0;
-};
-
 // A crash signal handler that displays stack information
 static void sigHandler(int sig) {
     void *array[32];
@@ -141,12 +120,6 @@ static void sigHandler(int sig) {
     raise(sig);
 }
 
-/*
-Topology:
-
-iax0->mb0->adaptor0->radio0
-radio0->adaptor1->iax0
-*/
 int main(int argc, const char** argv) {
 
     // Name the thread
@@ -171,12 +144,6 @@ int main(int argc, const char** argv) {
         return -1;
     }
     
-    // This goes from IAX2->USB
-    MessageBus2 mb0(log);
-    AdaptorIn adaptor0;
-    // This goes from USB->IAX2
-    AdaptorOut adaptor1;
-
     // Resolve the sound card/HID name
     char alsaCardNumber[16];
     char hidDeviceName[32];
@@ -192,41 +159,37 @@ int main(int argc, const char** argv) {
     log.info("USB %s mapped to %s, %s", getenv("AMP_NODE0_USBSOUND"),
         hidDeviceName, alsaDeviceName);
 
-    LineUsb radio0(log, clock, adaptor1, 2, 1, 3, Message::BROADCAST);
-    int rc = radio0.open(alsaDeviceName, hidDeviceName);
-    if (rc < 0) {
-        log.error("%d", rc);
-        return -1;
-    }
+    amp::Bridge bridge10(log, clock);
+
+    LineUsb radio2(log, clock, bridge10, 2, 1, 10, Message::BROADCAST);
 
     CallValidatorStd val;
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel0(log, clock, 1, mb0, &val, &locReg);
-    //iax2Channel0.setTrace(true);
+    LineIAX2 iax2Channel1(log, clock, 1, bridge10, &val, &locReg);
+    //iax2Channel1.setTrace(true);
 
-    // Routes
-    mb0.adIn = &adaptor0;
-    mb0.adOut = &adaptor1;
-    adaptor0.setSink([&radio0](const Message& msg) { radio0.consume(msg); });
-    adaptor1.setSink([&iax2Channel0](const Message& msg) { iax2Channel0.consume(msg); });
+    TwoLineRouter router(iax2Channel1, 1, radio2, 2);
+    bridge10.setSink(&router);
 
-    // The listening node
-    iax2Channel0.open(AF_INET, atoi(getenv("AMP_IAX_PORT")), "radio");
+    int rc = iax2Channel1.open(AF_INET, atoi(getenv("AMP_IAX_PORT")), "radio");
+    if (rc < 0) {
+        log.error("Unable to open IAX2 line %d", rc);
+        return -1;
+    }
+
+    rc = radio2.open(alsaDeviceName, hidDeviceName);
+    if (rc < 0) {
+        log.error("Unable to open radio line %d", rc);
+        return -1;
+    }
     
-    ManagerSink mgrSink(iax2Channel0);
+    ManagerSink mgrSink(iax2Channel1);
     ManagerTask mgrTask(log, clock, atoi(getenv("AMP_NODE0_MGR_PORT")));
     mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
-    const unsigned task2Count = 3;
-    Runnable2* tasks2[task2Count] = { &radio0, &iax2Channel0, &mgrTask };
-
+    const unsigned task2Count = 4;
+    Runnable2* tasks2[task2Count] = { &radio2, &iax2Channel1, &bridge10, &mgrTask };
     EventLoop::run(log, clock, 0, 0, tasks2, task2Count, nullptr, true);
-
-    iax2Channel0.close();
-    radio0.close();
-
-    log.info("Done");
-
     return 0;
 }
