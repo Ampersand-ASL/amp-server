@@ -63,6 +63,7 @@ export AMP_IAX_PORT=4568
 export AMP_IAX_PROTO=IPV4
 export AMP_ASL_REG_URL=https://register.allstarlink.org
 export AMP_NODE0_USBSOUND="vendorname:\"C-Media Electronics, Inc.\""
+export AMP_MEDIA_DIR=../amp-core/media
 */
 extern uint32_t cmsisdsp_overflow;
 
@@ -187,8 +188,8 @@ int main(int argc, const char** argv) {
     mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
-    const unsigned task2Count = 3;
-    Runnable2* tasks2[task2Count] = { &radio2, &iax2Channel1, &mgrTask };
+    const unsigned task2Count = 4;
+    Runnable2* tasks2[task2Count] = { &radio2, &iax2Channel1, &bridge10, &mgrTask };
     EventLoop::run(log, clock, 0, 0, tasks2, task2Count, nullptr, true);
     return 0;
 }
