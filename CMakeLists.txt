@@ -34,7 +34,6 @@ add_executable(main
   amp-core/src/LineIAX2.cpp
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
-  amp-core/src/MessageBus.cpp
   amp-core/src/RegisterTask.cpp
   amp-core/src/ManagerTask.cpp
   amp-core/src/RetransmissionBufferStd.cpp
@@ -58,6 +57,16 @@ add_executable(main
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
   sound-map/src/sound-map.c
+  ed25519/src/add_scalar.c
+  ed25519/src/ge.c
+  ed25519/src/keypair.c
+  ed25519/src/seed.c
+  ed25519/src/sign.c
+  ed25519/src/fe.c
+  ed25519/src/key_exchange.c
+  ed25519/src/sc.c
+  ed25519/src/sha512.c
+  ed25519/src/verify.c
 )
 
 target_include_directories(main PRIVATE src)
@@ -68,6 +77,10 @@ target_include_directories(main PRIVATE amp-core/include)
 # TODO: REMOVE
 target_include_directories(main PRIVATE amp-core/src)
 target_include_directories(main PRIVATE sound-map/include)
+target_include_directories(main PRIVATE ed25519/src)
+target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
+target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
+
 
 target_link_libraries(main -lasound -lcurl -lusb-1.0)
 

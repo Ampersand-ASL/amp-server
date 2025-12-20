@@ -42,10 +42,10 @@
 
 #include "LineIAX2.h"
 #include "LineUsb.h"
-#include "MessageBus.h"
 #include "ManagerTask.h"
 #include "EventLoop.h"
 #include "Bridge.h"
+#include "BridgeCall.h"
 #include "TwoLineRouter.h"
 
 #include "service-thread.h"
@@ -62,6 +62,7 @@ export AMP_NODE0_MGR_PORT=5038
 export AMP_IAX_PORT=4568
 export AMP_IAX_PROTO=IPV4
 export AMP_ASL_REG_URL=https://register.allstarlink.org
+export AMP_ASL_DNS_ROOT=allstarlink.org
 export AMP_NODE0_USBSOUND="vendorname:\"C-Media Electronics, Inc.\""
 export AMP_MEDIA_DIR=../amp-core/media
 */
@@ -159,13 +160,14 @@ int main(int argc, const char** argv) {
     log.info("USB %s mapped to %s, %s", getenv("AMP_NODE0_USBSOUND"),
         hidDeviceName, alsaDeviceName);
 
-    amp::Bridge bridge10(log, clock);
+    amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
 
-    LineUsb radio2(log, clock, bridge10, 2, 1, 10, Message::BROADCAST);
+    LineUsb radio2(log, clock, bridge10, 2, 1, 10, 1);
 
     CallValidatorStd val;
     LocalRegistryStd locReg;
     LineIAX2 iax2Channel1(log, clock, 1, bridge10, &val, &locReg);
+    iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
     //iax2Channel1.setTrace(true);
 
     TwoLineRouter router(iax2Channel1, 1, radio2, 2);
@@ -188,8 +190,7 @@ int main(int argc, const char** argv) {
     mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
-    const unsigned task2Count = 4;
-    Runnable2* tasks2[task2Count] = { &radio2, &iax2Channel1, &bridge10, &mgrTask };
-    EventLoop::run(log, clock, 0, 0, tasks2, task2Count, nullptr, true);
+    Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &mgrTask };
+    EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, true);
     return 0;
 }
