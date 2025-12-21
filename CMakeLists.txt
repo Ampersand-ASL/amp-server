@@ -81,6 +81,15 @@ target_include_directories(main PRIVATE ed25519/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
 
-
 target_link_libraries(main -lasound -lcurl -lusb-1.0)
 
+# ----- hello-http-server -------------------------------------------------
+
+add_executable(hello-http-server
+  src/demos/hello-http-server.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+)
+target_include_directories(hello-http-server PRIVATE src)
+target_include_directories(hello-http-server PRIVATE include)
+target_include_directories(hello-http-server PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(hello-http-server PRIVATE cpp-httplib)
