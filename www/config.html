@@ -1,0 +1,109 @@
+<html>
+    <head>
+        <title>Ampersand Configuration</title>
+        <style>
+body {
+    font-family: sans-serif;
+}
+
+#config-form {
+    width: 500px;
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* Creates two columns, the second twice as wide */
+    gap: 10px; /* Adds space between rows and columns */
+    max-width: 500px; /* Optional: sets a max width for the form itself */
+}
+
+#config-form label {
+  text-align: right;
+}
+
+.save-button {
+    background-color: #228B22;
+}
+        </style>
+    </head>
+    <body>
+        <form id="config-form">
+            <label for="node">Node Number:</label>
+            <input type="text" id="node" name="node"/>
+            <label for="password">Password:</label>
+            <input type="text" id="password" name="password"/>
+            <label for="audiodevice">Audio Device:</label>
+            <select id="audiodevice" name="audiodevice">
+            </select>
+            <label for="iaxport4">IAX Port (IPv4):</label>
+            <input type="text" id="iaxport4" name="iaxport4"/>
+            <span></span>
+            <input type="submit" value="Save" class="save-button"/>
+        </form>
+        <hr/>
+        <a href="/">Home</a>
+    </body>
+    <script>
+
+async function load_audiodevice_menu() {
+    try {
+        const response = await fetch('audiodevice-list');
+        // Check if the request was successful (status in the 200s)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const sel = document.getElementById('audiodevice');
+        sel.replaceChildren();
+        for (const i of data) {
+            var opt = document.createElement('option');
+            opt.value = i["query"]
+            opt.innerHTML = i["bus"] + "/" + i["port"] + " " + i["desc"]
+            sel.appendChild(opt);
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error.message);
+    }
+}
+
+async function config_load() {
+    try {
+        const response = await fetch('config-load');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        document.getElementById("node").setAttribute("value", data["node"]);
+        document.getElementById("password").setAttribute("value", data["password"]);
+        document.getElementById("audiodevice").value = data["audiodevice"];
+        document.getElementById("iaxport4").setAttribute("value", data["iaxport4"]);
+    } catch (error) {
+        console.error('Error fetching data:', error.message);
+    }
+}
+
+function config_save() {
+    const form = document.getElementById('config-form');
+    const formData = new FormData(form);
+    const formObject = Object.fromEntries(formData.entries());
+    const jsonString = JSON.stringify(formObject, null, 2);
+    fetch('/config-save', {
+        method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonString,
+        }
+    );
+}
+
+document.addEventListener('DOMContentLoaded', async() => {
+
+    load_audiodevice_menu();
+    config_load();
+
+    // Add a submit event listener to the form
+    document.getElementById('config-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        config_save();
+    });   
+});
+    </script>
+</html>

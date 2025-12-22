@@ -1,32 +1,39 @@
+#include <unistd.h>
+#include <iostream>
+#include <thread>
+
 //#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "httplib.h"
 
-#include <unistd.h>
-#include <iostream>
-
 using namespace std;
 
-void srv_thread(void*) {
+void srv_thread() {
+
+    cout << "Starting ..." << endl;
 
     // HTTP
     httplib::Server svr;
 
-    svr.Get("/", [](const httplib::Request &, httplib::Response &res) {
-    res.set_content("Hello Izzy!", "text/plain");
-    });
+    //svr.Get("/", [](const httplib::Request &, httplib::Response &res) {
+    //    res.set_content("Hello Izzy 2!", "text/plain");
+    //});
+
+    auto ret = svr.set_mount_point("/", "../src/demos/www");
+    if (!ret) {
+        cout << "Error" << endl;
+        return;
+    }
 
     svr.listen("0.0.0.0", 8080);
 }
 
 int main(int, const char**) {
 
-    // Get the AMP thread running
-    _beginthread(srv_thread, 0, (void*)0);
+    // 1. Create and start the thread
+    std::thread t(srv_thread);
 
     while (true) {
-        cout << "test" << endl;
         sleep(5);
     }
-
 }
 

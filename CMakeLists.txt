@@ -26,6 +26,7 @@ add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -rdynamic -O0)
 add_executable(main
   src/main.cpp
   src/service-thread.cpp
+  src/ui-thread.cpp
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
   amp-core/src/Line.cpp
@@ -80,8 +81,22 @@ target_include_directories(main PRIVATE sound-map/include)
 target_include_directories(main PRIVATE ed25519/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
+target_include_directories(main PRIVATE cpp-httplib)
 
 target_link_libraries(main -lasound -lcurl -lusb-1.0)
+
+# ----- main-ui ---------------------------------------------------------
+
+add_executable(main-ui
+  src/demos/main-ui.cpp
+  src/ui-thread.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+)
+target_include_directories(main-ui PRIVATE src)
+target_include_directories(main-ui PRIVATE include)
+target_include_directories(main-ui PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(main-ui PRIVATE cpp-httplib)
+target_include_directories(main-ui PRIVATE json/include)
 
 # ----- hello-http-server -------------------------------------------------
 
@@ -93,3 +108,4 @@ target_include_directories(hello-http-server PRIVATE src)
 target_include_directories(hello-http-server PRIVATE include)
 target_include_directories(hello-http-server PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(hello-http-server PRIVATE cpp-httplib)
+target_include_directories(hello-http-server PRIVATE json/include)

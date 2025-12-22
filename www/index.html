@@ -1,0 +1,125 @@
+<html>
+    <head>
+        <title>Ampersand Configuration</title>
+        <style>
+/* https://www.color-hex.com/color-palette/98179)             */
+body {
+    font-family: sans-serif;
+ }
+
+#connect-button {
+    background-color: #228B22;
+}
+#disconnect-button {
+    background-color: #ff5c5c;
+}
+
+#cos-active {
+    text-align: center;
+    width: 120px;
+    padding: 3px;
+    color: green;
+    background-color: black;
+}
+
+#cos-inactive {
+    text-align: center;
+    width: 120px;
+    padding: 3px;
+}
+
+#ptt-button {
+    width: 100px;
+}
+
+#ptt-button.selected {
+    background-color: green;
+}
+        </style>
+    </head>
+    <body>
+        <form id="status-form">
+            <input id="node" name="node" type="text" placeholder="Node Number"/>
+            <input id="connect-button" name="connect-button" type="submit" value="Connect"/>
+            <input id="disconnect-button" type="submit" value="Disconnect All"/>
+            <p><div id="cos-inactive"> COS Inactive </div><div id="cos-active"> COS Active </div></p>
+            <p>Connected to Nodes:</p>
+            <table>
+                <thead>
+                    <th></th>
+                    <th></th>
+                </thead>
+                <tbody id="connection-table-body">
+                </tbody>
+            </table>
+            <br/>
+            <input id="ptt-button" type="submit" value="PTT"/>
+        </form>
+        <hr/>
+        <a href="config">Configuration Page</a>
+    </body>
+    <script>
+
+async function status_update() {
+    const response = await fetch('status');
+    if (response.ok) {
+        const data = await response.json();
+        if (data["cos"]) {
+            document.getElementById("cos-active").hidden = false
+            document.getElementById("cos-inactive").hidden = true
+        } else {
+            document.getElementById("cos-active").hidden = true
+            document.getElementById("cos-inactive").hidden = false
+        }
+        if (data["ptt"]) {
+            document.getElementById("ptt-button").classList.add("selected")
+        } else {
+            document.getElementById("ptt-button").classList.remove("selected")
+        }
+
+        tbody = document.getElementById("connection-table-body")
+        tbody.replaceChildren();
+        for (c of data["connections"]) {
+            var tr = document.createElement('tr');
+            var td0 = document.createElement('td');
+            var td1 = document.createElement('td');
+            tr.appendChild(td0);
+            tr.appendChild(td1);
+            td0.innerHTML = c["node"];
+            tbody.appendChild(tr);
+        }
+    }
+}
+
+function status_save(v) {
+    const form = document.getElementById('status-form');
+    const formData = new FormData(form);
+    const formObject = Object.fromEntries(formData.entries());
+    const jsonString = JSON.stringify(formObject, null, 2);
+    fetch('/status-save', {
+        method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonString,
+        }
+    );
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById("cos-active").hidden = true
+    // Install a fast timer to get updates
+    setInterval(async () => {
+        status_update();
+    }, 500);
+    document.getElementById('status-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const clickedButtonValue = event.submitter.value;
+        status_save(clickedButtonValue);
+        // Clear the entry 
+        document.getElementById('node').value = ""
+        status_update();
+    });   
+});
+    </script>
+</html>
