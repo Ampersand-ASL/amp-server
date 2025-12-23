@@ -19,11 +19,13 @@ body {
 }
 
 .save-button {
-    background-color: #228B22;
+    background-color: #38dc38;
+    width: 100px;
 }
         </style>
     </head>
     <body>
+        <h1>Ampersand ASL Server</h1>
         <form id="config-form">
             <label for="node">Node Number:</label>
             <input type="text" id="node" name="node"/>
@@ -39,6 +41,9 @@ body {
         </form>
         <hr/>
         <a href="/">Home</a>
+        <br/>
+        <br/>
+        <span><i>Bruce MacKinnon KC1FSZ bruce@mackinnon.com</i></span>
     </body>
     <script>
 
@@ -70,6 +75,7 @@ async function config_load() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log(data)
         document.getElementById("node").setAttribute("value", data["node"]);
         document.getElementById("password").setAttribute("value", data["password"]);
         document.getElementById("audiodevice").value = data["audiodevice"];

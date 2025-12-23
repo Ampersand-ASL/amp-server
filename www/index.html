@@ -5,10 +5,14 @@
 /* https://www.color-hex.com/color-palette/98179)             */
 body {
     font-family: sans-serif;
- }
+}
+
+.fav-button {
+    background-color: #38dc38;
+}
 
 #connect-button {
-    background-color: #228B22;
+    background-color: #38dc38;
 }
 #disconnect-button {
     background-color: #ff5c5c;
@@ -18,7 +22,7 @@ body {
     text-align: center;
     width: 120px;
     padding: 3px;
-    color: green;
+    color: #00FF00;
     background-color: black;
 }
 
@@ -29,25 +33,46 @@ body {
 }
 
 #ptt-button {
-    width: 100px;
+    width: 200px;
+    height: 40px;
 }
 
 #ptt-button.selected {
     background-color: green;
 }
+
+table, th, td {
+  border: 1px solid black; /* Sets a visible border */
+}
+
+table {
+  border-collapse: collapse; /* Merges adjacent borders */
+}
+
+td {
+    padding: 5px;
+}
         </style>
     </head>
     <body>
+        <h1>Ampersand ASL Server</h1>
         <form id="status-form">
+            <input class="fav-button" name="fav0" type="submit" value="TX Parrot"/>
+            <input class="fav-button" name="fav1" type="submit" value="ASL Parrot"/>
+            <input class="fav-button" name="fav2" type="submit" value="East Cost Reflector"/>
+            <br/>
+            <br/>
             <input id="node" name="node" type="text" placeholder="Node Number"/>
-            <input id="connect-button" name="connect-button" type="submit" value="Connect"/>
+            <input id="connect-button" name="connect" type="submit" value="Connect"/>
+            <br/>
+            <br/>
             <input id="disconnect-button" type="submit" value="Disconnect All"/>
             <p><div id="cos-inactive"> COS Inactive </div><div id="cos-active"> COS Active </div></p>
-            <p>Connected to Nodes:</p>
+            <p>Connections:</p>
             <table>
                 <thead>
-                    <th></th>
-                    <th></th>
+                    <th>Node</th>
+                    <th>Connections</th>
                 </thead>
                 <tbody id="connection-table-body">
                 </tbody>
@@ -56,7 +81,10 @@ body {
             <input id="ptt-button" type="submit" value="PTT"/>
         </form>
         <hr/>
-        <a href="config">Configuration Page</a>
+        <a href="config">Configuration</a>
+        <br/>
+        <br/>
+        <span><i>Bruce MacKinnon KC1FSZ bruce@mackinnon.com</i></span>
     </body>
     <script>
 
@@ -85,7 +113,23 @@ async function status_update() {
             var td1 = document.createElement('td');
             tr.appendChild(td0);
             tr.appendChild(td1);
-            td0.innerHTML = c["node"];
+            var a = document.createElement('a');
+            a.innerHTML = c["node"];
+            a.setAttribute("href", "https://stats.allstarlink.org/stats/" + c["node"]);
+            td0.appendChild(a);
+            var first = true;
+            for (c1 of c["connections"]) {
+                if (!first) {
+                    var s = document.createElement("span");
+                    s.innerHTML = "&nbsp;"
+                    td1.appendChild(s);
+                }
+                var s = document.createElement("a");
+                s.innerHTML = c1;
+                s.setAttribute("href", "https://stats.allstarlink.org/stats/" + c1);
+                td1.appendChild(s);
+                first = false;
+            }
             tbody.appendChild(tr);
         }
     }

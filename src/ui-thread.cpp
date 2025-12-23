@@ -30,7 +30,7 @@ using json = nlohmann::json;
 
 void ui_thread() {
 
-    pthread_setname_np(pthread_self(), "amp-server-iu");
+    //pthread_setname_np(pthread_self(), "amp-server-ui");
 
     // HTTP
     httplib::Server svr;
@@ -49,10 +49,13 @@ void ui_thread() {
         auto a = json::array();
         json o2;
         o2["node"] = "2222";
+        auto b = json::array();
+        b.push_back("61057");
+        b.push_back("55553");
+        o2["connections"] = b;
         a.push_back(o2);
         o["connections"] = a;
         res.set_content(o.dump(), "application/json");
-        cout << "Status" << endl;
     });
     svr.Post("/status-save", [&ptt](const httplib::Request &, httplib::Response &res, 
         const httplib::ContentReader &content_reader) {
@@ -66,7 +69,7 @@ void ui_thread() {
     });
     svr.Get("/config-load", [](const httplib::Request &, httplib::Response &res) {
         json o;
-        o["cos"] = true;
+        o["node"] = "61057";
         o["password"] = "xxxxxx";
         o["audiodevice"] = "bus:1,port:3";
         o["iaxport4"] = 4569;
