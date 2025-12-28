@@ -25,8 +25,7 @@ add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -O0)
 
 add_executable(main
   src/main.cpp
-  src/service-thread.cpp
-  src/ui-thread.cpp
+  amp-core/src/service-thread.cpp
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
   amp-core/src/Line.cpp
@@ -36,6 +35,7 @@ add_executable(main
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
   amp-core/src/RegisterTask.cpp
+  amp-core/src/StatsTask.cpp
   amp-core/src/ManagerTask.cpp
   amp-core/src/RetransmissionBufferStd.cpp
   amp-core/src/Transcoder_G711_ULAW.cpp
@@ -46,6 +46,9 @@ add_executable(main
   amp-core/src/BridgeIn.cpp
   amp-core/src/BridgeOut.cpp
   amp-core/src/Resampler.cpp
+  amp-core/src/ConfigPoller.cpp
+  amp-core/src/MultiRouter.cpp
+  amp-core/src/WebUi.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
@@ -58,6 +61,8 @@ add_executable(main
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
   sound-map/src/sound-map.c
+  sound-map/src/usb-dir.c
+  sound-map/src/sound-map-2.cpp
   ed25519/src/add_scalar.c
   ed25519/src/ge.c
   ed25519/src/keypair.c
@@ -82,21 +87,9 @@ target_include_directories(main PRIVATE ed25519/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(main PRIVATE cpp-httplib)
+target_include_directories(main PRIVATE json/include)
 
 target_link_libraries(main -lasound -lcurl -lusb-1.0)
-
-# ----- main-ui ---------------------------------------------------------
-
-add_executable(main-ui
-  src/demos/main-ui.cpp
-  src/ui-thread.cpp
-  kc1fsz-tools-cpp/src/linux/StdClock.cpp
-)
-target_include_directories(main-ui PRIVATE src)
-target_include_directories(main-ui PRIVATE include)
-target_include_directories(main-ui PRIVATE kc1fsz-tools-cpp/include)
-target_include_directories(main-ui PRIVATE cpp-httplib)
-target_include_directories(main-ui PRIVATE json/include)
 
 # ----- hello-http-server -------------------------------------------------
 

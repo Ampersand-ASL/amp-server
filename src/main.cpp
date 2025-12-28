@@ -46,9 +46,13 @@
 #include "EventLoop.h"
 #include "Bridge.h"
 #include "BridgeCall.h"
-#include "TwoLineRouter.h"
+#include "MultiRouter.h"
+#include "WebUi.h"
+#include "ConfigPoller.h"
 
 #include "service-thread.h"
+
+#define WEB_UI_PORT (8080)
 
 using namespace std;
 using namespace kc1fsz;
@@ -121,6 +125,8 @@ static void sigHandler(int sig) {
     raise(sig);
 }
 
+void* service_thread_2(void* o) { service_thread(o); return 0; }
+
 int main(int argc, const char** argv) {
 
     // Name the thread
@@ -140,7 +146,7 @@ int main(int argc, const char** argv) {
 
     // Get the service thread running
     pthread_t new_thread_id;
-    if (pthread_create(&new_thread_id, NULL, service_thread, (Log*)(&log)) != 0) {
+    if (pthread_create(&new_thread_id, NULL, service_thread_2, (Log*)(&log)) != 0) {
         perror("Error creating thread");
         return -1;
     }
@@ -160,37 +166,64 @@ int main(int argc, const char** argv) {
     log.info("USB %s mapped to %s, %s", getenv("AMP_NODE0_USBSOUND"),
         hidDeviceName, alsaDeviceName);
 
+    MultiRouter router;
     amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
+    bridge10.setSink(&router);
+    router.addRoute(&bridge10, 10);
 
     LineUsb radio2(log, clock, bridge10, 2, 1, 10, 1);
+    router.addRoute(&radio2, 2);
+
+    string cfgFileName = "./config.json";
 
     CallValidatorStd val;
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, clock, 1, bridge10, &val, &locReg);
-    iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
+    LineIAX2 iax2Channel1(log, clock, 1, bridge10, &val, &locReg, 10);
     //iax2Channel1.setTrace(true);
+    router.addRoute(&iax2Channel1, 1);
 
-    TwoLineRouter router(iax2Channel1, 1, radio2, 2);
-    bridge10.setSink(&router);
+    // Instantiate the server for the web-based UI
+    amp::WebUi webUi(log, clock, router, WEB_UI_PORT, 1, 2, cfgFileName.c_str());
+    // This allow the WebUi to watch all traffic and pull out the things 
+    // that are relevant for status display.
+    router.addRoute(&webUi, MultiRouter::BROADCAST);
 
-    int rc = iax2Channel1.open(AF_INET, atoi(getenv("AMP_IAX_PORT")), "radio");
-    if (rc < 0) {
-        log.error("Unable to open IAX2 line %d", rc);
-        return -1;
-    }
+    // Setup the configuration poller for this thread
+    amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
+        // This function will be called on any update to the configuration document.
+        [&log, &webUi, &iax2Channel1, &radio2, &bridge10, alsaDeviceName, hidDeviceName]
+        (const json& cfg) {
 
-    rc = radio2.open(alsaDeviceName, hidDeviceName);
-    if (rc < 0) {
-        log.error("Unable to open radio line %d", rc);
-        return -1;
-    }
-    
-    ManagerSink mgrSink(iax2Channel1);
-    ManagerTask mgrTask(log, clock, atoi(getenv("AMP_NODE0_MGR_PORT")));
-    mgrTask.setCommandSink(&mgrSink);
+            log.info("Configuration change detected");
+            cout << cfg.dump() << endl;
+
+            // Transfer the new configuration into the various places it is needed
+            webUi.setConfig(cfg);
+
+            //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
+            //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
+
+            int rc;
+            rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort4"].get<std::string>()), "radio");
+            if (rc < 0) {
+                log.error("Failed to open IAX2 connection %d", rc);
+            }
+
+            // #### TODO: Audio Device Selection
+            rc = radio2.open(alsaDeviceName, hidDeviceName);
+            if (rc < 0) {
+                log.error("Failed to open radio connection %d", rc);
+                return;
+            }
+        }
+    );
+      
+    //ManagerSink mgrSink(iax2Channel1);
+    //ManagerTask mgrTask(log, clock, atoi(getenv("AMP_NODE0_MGR_PORT")));
+    //mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
-    Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &mgrTask };
+    Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, true);
     return 0;
 }
