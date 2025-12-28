@@ -144,9 +144,28 @@ int main(int argc, const char** argv) {
         return 0;
     }
 
+    string cfgFileName = "./config.json";
+    log.info("Using configuration file %s", cfgFileName.c_str());
+
+    if (!filesystem::exists(cfgFileName)) {
+        log.info("Creating default configuration");
+        ofstream cfg(cfgFileName);
+        if (cfg.is_open()) {
+            cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
+            cfg.close();
+        } else {
+            log.error("Unable to create default configuration");
+        }
+    }
+
     // Get the service thread running
+
+    service_thread_args args1;
+    args1.log = &log;
+    args1.cfgFileName = cfgFileName;
+
     pthread_t new_thread_id;
-    if (pthread_create(&new_thread_id, NULL, service_thread_2, (Log*)(&log)) != 0) {
+    if (pthread_create(&new_thread_id, NULL, service_thread_2, &args1) != 0) {
         perror("Error creating thread");
         return -1;
     }
@@ -173,8 +192,6 @@ int main(int argc, const char** argv) {
 
     LineUsb radio2(log, clock, bridge10, 2, 1, 10, 1);
     router.addRoute(&radio2, 2);
-
-    string cfgFileName = "./config.json";
 
     CallValidatorStd val;
     LocalRegistryStd locReg;
@@ -223,6 +240,7 @@ int main(int argc, const char** argv) {
     //mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
+    log.info("main event loop ...");
     Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, true);
     return 0;
