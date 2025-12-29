@@ -187,15 +187,16 @@ int main(int argc, const char** argv) {
 
     MultiRouter router;
     amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
+    // ### TODOD: MOVE THIS TO CONSTRUCTOR
     bridge10.setSink(&router);
     router.addRoute(&bridge10, 10);
 
-    LineUsb radio2(log, clock, bridge10, 2, 1, 10, 1);
+    LineUsb radio2(log, clock, router, 2, 1, 10, 1);
     router.addRoute(&radio2, 2);
 
     CallValidatorStd val;
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, clock, 1, bridge10, &val, &locReg, 10);
+    LineIAX2 iax2Channel1(log, clock, 1, router, &val, &locReg, 10);
     //iax2Channel1.setTrace(true);
     router.addRoute(&iax2Channel1, 1);
 
@@ -242,6 +243,6 @@ int main(int argc, const char** argv) {
     // Main loop        
     log.info("main event loop ...");
     Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
-    EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, true);
+    EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, false);
     return 0;
 }
