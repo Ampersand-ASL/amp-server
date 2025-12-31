@@ -88,6 +88,7 @@ target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(main PRIVATE cpp-httplib)
 target_include_directories(main PRIVATE json/include)
+target_include_directories(main PRIVATE argparse/include)
 
 target_link_libraries(main -lasound -lcurl -lusb-1.0)
 

@@ -9,6 +9,10 @@ Get the public SSH key loaded onto the machine to enable login, remote editing, 
         cd .ssh
         echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_keys
 
+Tell git to retain credentials:
+
+        git config --global credential.helper store
+
 An adjustment needs to be made to allow a normal user to access the HID interfaces:
 
 Create /etc/udev/rules.d/99-mydevice.rules with this contents:

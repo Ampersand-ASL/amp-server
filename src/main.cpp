@@ -15,8 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <sched.h>
-//#include <linux/sched.h>
-//#include <linux/sched/types.h>
 #include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
@@ -31,6 +29,7 @@
 #include <queue>
 
 #include <curl/curl.h>
+#include <argparse/argparse.hpp>
 
 #include "kc1fsz-tools/Log.h"
 #include "kc1fsz-tools/linux/StdClock.h"
@@ -51,8 +50,6 @@
 #include "ConfigPoller.h"
 
 #include "service-thread.h"
-
-#define WEB_UI_PORT (8080)
 
 using namespace std;
 using namespace kc1fsz;
@@ -125,6 +122,7 @@ static void sigHandler(int sig) {
     raise(sig);
 }
 
+// #### TODO: MOVE 
 void* service_thread_2(void* o) { service_thread(o); return 0; }
 
 int main(int argc, const char** argv) {
@@ -144,7 +142,34 @@ int main(int argc, const char** argv) {
         return 0;
     }
 
-    string cfgFileName = "./config.json";
+    argparse::ArgumentParser program("amp-server");
+
+    string cfgFileName;
+    string defaultCfgFileName = getenv("HOME");
+    defaultCfgFileName += "/amp-server.json";
+    program.add_argument("--config")
+        .help("name of configuration file")
+        .default_value(defaultCfgFileName)
+        .store_into(cfgFileName);
+
+    
+    int uiPort = 0;
+    program.add_argument("--httpport")
+        .store_into(uiPort)
+        .help("Port number for HTTP UI server")
+        .default_value(8080);
+
+    try {
+        program.parse_args(argc, argv);
+    }
+    catch (const std::exception& err) {
+        log.error("Argument error: %s", err.what());
+        std::exit(1);
+    }
+
+    //auto cfgFileName = program.get<std::string>("--config");
+    //string cfgFileName = "./config.json";
+
     log.info("Using configuration file %s", cfgFileName.c_str());
 
     if (!filesystem::exists(cfgFileName)) {
@@ -170,21 +195,6 @@ int main(int argc, const char** argv) {
         return -1;
     }
     
-    // Resolve the sound card/HID name
-    char alsaCardNumber[16];
-    char hidDeviceName[32];
-    int rc2 = querySoundMap(getenv("AMP_NODE0_USBSOUND"), 
-        hidDeviceName, 32, alsaCardNumber, 16, 0, 0);
-    if (rc2 < 0) {
-        log.error("Unable to resolve USB device %d", rc2);
-        return -1;
-    }
-    char alsaDeviceName[32];
-    snprintf(alsaDeviceName, 32, "plughw:%s", alsaCardNumber);
-
-    log.info("USB %s mapped to %s, %s", getenv("AMP_NODE0_USBSOUND"),
-        hidDeviceName, alsaDeviceName);
-
     MultiRouter router;
     amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
     // ### TODOD: MOVE THIS TO CONSTRUCTOR
@@ -201,7 +211,7 @@ int main(int argc, const char** argv) {
     router.addRoute(&iax2Channel1, 1);
 
     // Instantiate the server for the web-based UI
-    amp::WebUi webUi(log, clock, router, WEB_UI_PORT, 1, 2, cfgFileName.c_str());
+    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str());
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);
@@ -227,11 +237,27 @@ int main(int argc, const char** argv) {
                 log.error("Failed to open IAX2 connection %d", rc);
             }
 
-            // #### TODO: Audio Device Selection
-            rc = radio2.open(alsaDeviceName, hidDeviceName);
-            if (rc < 0) {
-                log.error("Failed to open radio connection %d", rc);
-                return;
+            // Resolve the sound card/HID name
+            char alsaCardNumber[16];
+            char hidDeviceName[32];
+            int rc2 = querySoundMap(cfg["audioDevice"]), 
+                hidDeviceName, 32, alsaCardNumber, 16, 0, 0);
+            if (rc2 < 0) {
+                log.error("Unable to resolve USB device %d", rc2);
+            } 
+            else {
+                char alsaDeviceName[32];
+                snprintf(alsaDeviceName, 32, "plughw:%s", alsaCardNumber);
+
+                log.info("USB %s mapped to %s, %s", cfg["audioDevice"].c_str(),
+                    hidDeviceName, alsaDeviceName);
+
+                // #### TODO: Audio Device Selection
+                rc = radio2.open(alsaDeviceName, hidDeviceName);
+                if (rc < 0) {
+                    log.error("Failed to open radio connection %d", rc);
+                    return;
+                }
             }
         }
     );
