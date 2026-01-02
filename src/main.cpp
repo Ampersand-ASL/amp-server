@@ -243,29 +243,37 @@ int main(int argc, const char** argv) {
                 log.error("Failed to open IAX2 connection %d", rc);
             }
 
-            // #### TODO: Audio Device Selection
-            // Resolve the sound card/HID name
-            char hidDeviceName[32];
-            char alsaCardNumber[16];
+            // Resolve the audio device
+            string alsaCardNumber;
+            string ossDevice;
             int rc2 = querySoundMap(cfg["audioDevice"].get<std::string>().c_str(), 
-                hidDeviceName, 32, alsaCardNumber, 16, 0, 0);
+                alsaCardNumber, ossDevice);
             if (rc2 < 0) {
-                log.error("Unable to resolve USB device %d", rc2);
+                log.error("Unable to resolve sound device %d", rc2);
             } 
             else {
                 char alsaDeviceName[32];
-                snprintf(alsaDeviceName, 32, "plughw:%s", alsaCardNumber);
+                snprintf(alsaDeviceName, 32, "plughw:%s", alsaCardNumber.c_str());
 
-                log.info("USB %s mapped to %s, %s", cfg["audioDevice"].get<std::string>().c_str(),
-                    hidDeviceName, alsaDeviceName);
-
+                log.info("Audio %s mapped to %s", cfg["audioDevice"].get<std::string>().c_str(),
+                    alsaDeviceName);
                 rc = radio2.open(alsaDeviceName);
                 if (rc < 0) {
                     log.error("Failed to open radio connection %d", rc);
                     return;
                 }
+            }
 
-                rc = signalIn3.openHid(hidDeviceName);
+            // Resolve the COS signal
+            string cosSignalDevice;
+            int rc3 = queryHidMap(cfg["cosSignal"].get<std::string>().c_str(), cosSignalDevice);
+            if (rc3 < 0) {
+                log.error("Unable to resolve HID device %d", rc3);
+            } 
+            else {
+                log.info("HID %s mapped to %s", cfg["cosSignal"].get<std::string>().c_str(),
+                    cosSignalDevice);
+                rc = signalIn3.openHid(cosSignalDevice.c_str());
                 if (rc < 0) {
                     log.error("Failed to open HID signal connection %d", rc);
                     return;

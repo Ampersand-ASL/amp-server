@@ -62,9 +62,9 @@ add_executable(main
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
-  sound-map/src/sound-map.c
-  sound-map/src/usb-dir.c
+  sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
   ed25519/src/add_scalar.c
   ed25519/src/ge.c
   ed25519/src/keypair.c
