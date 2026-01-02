@@ -49,6 +49,8 @@ add_executable(main
   amp-core/src/ConfigPoller.cpp
   amp-core/src/MultiRouter.cpp
   amp-core/src/WebUi.cpp
+  amp-core/src/SignalIn.cpp
+  amp-core/src/ThreadUtil.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp

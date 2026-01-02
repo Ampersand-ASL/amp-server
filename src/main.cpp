@@ -48,6 +48,7 @@
 #include "MultiRouter.h"
 #include "WebUi.h"
 #include "ConfigPoller.h"
+#include "SignalIn.h"
 
 #include "service-thread.h"
 
@@ -65,7 +66,8 @@ export AMP_IAX_PROTO=IPV4
 export AMP_ASL_REG_URL=https://register.allstarlink.org
 export AMP_ASL_DNS_ROOT=allstarlink.org
 export AMP_NODE0_USBSOUND="vendorname:\"C-Media Electronics, Inc.\""
-export AMP_MEDIA_DIR=../amp-core/media
+export AMP_NODE0_USBCOS="vendorname:\"C-Media Electronics, Inc.\""
+
 */
 extern uint32_t cmsisdsp_overflow;
 
@@ -153,11 +155,10 @@ int main(int argc, const char** argv) {
         .store_into(cfgFileName);
 
     
-    int uiPort = 0;
+    int uiPort = 8080;
     program.add_argument("--httpport")
         .store_into(uiPort)
-        .help("Port number for HTTP UI server")
-        .default_value(8080);
+        .help("Port number for HTTP UI server");
 
     try {
         program.parse_args(argc, argv);
@@ -166,9 +167,6 @@ int main(int argc, const char** argv) {
         log.error("Argument error: %s", err.what());
         std::exit(1);
     }
-
-    //auto cfgFileName = program.get<std::string>("--config");
-    //string cfgFileName = "./config.json";
 
     log.info("Using configuration file %s", cfgFileName.c_str());
 
@@ -189,6 +187,7 @@ int main(int argc, const char** argv) {
     args1.log = &log;
     args1.cfgFileName = cfgFileName;
 
+    // #### TODO: Switch to C++ standard
     pthread_t new_thread_id;
     if (pthread_create(&new_thread_id, NULL, service_thread_2, &args1) != 0) {
         perror("Error creating thread");
@@ -201,9 +200,16 @@ int main(int argc, const char** argv) {
     bridge10.setSink(&router);
     router.addRoute(&bridge10, 10);
 
+    // This is the connection to the USB sound interface
     LineUsb radio2(log, clock, router, 2, 1, 10, 1);
     router.addRoute(&radio2, 2);
 
+    // This manages the COS signal detect
+    amp::SignalIn signalIn3(log, clock, router, 2, 
+        Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
+    router.addRoute(&signalIn3, 3);
+
+    // This is the IAX2 network connection
     CallValidatorStd val;
     LocalRegistryStd locReg;
     LineIAX2 iax2Channel1(log, clock, 1, router, &val, &locReg, 10);
@@ -219,7 +225,7 @@ int main(int argc, const char** argv) {
     // Setup the configuration poller for this thread
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &radio2, &bridge10, alsaDeviceName, hidDeviceName]
+        [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10]
         (const json& cfg) {
 
             log.info("Configuration change detected");
@@ -237,10 +243,11 @@ int main(int argc, const char** argv) {
                 log.error("Failed to open IAX2 connection %d", rc);
             }
 
+            // #### TODO: Audio Device Selection
             // Resolve the sound card/HID name
-            char alsaCardNumber[16];
             char hidDeviceName[32];
-            int rc2 = querySoundMap(cfg["audioDevice"]), 
+            char alsaCardNumber[16];
+            int rc2 = querySoundMap(cfg["audioDevice"].get<std::string>().c_str(), 
                 hidDeviceName, 32, alsaCardNumber, 16, 0, 0);
             if (rc2 < 0) {
                 log.error("Unable to resolve USB device %d", rc2);
@@ -249,13 +256,18 @@ int main(int argc, const char** argv) {
                 char alsaDeviceName[32];
                 snprintf(alsaDeviceName, 32, "plughw:%s", alsaCardNumber);
 
-                log.info("USB %s mapped to %s, %s", cfg["audioDevice"].c_str(),
+                log.info("USB %s mapped to %s, %s", cfg["audioDevice"].get<std::string>().c_str(),
                     hidDeviceName, alsaDeviceName);
 
-                // #### TODO: Audio Device Selection
-                rc = radio2.open(alsaDeviceName, hidDeviceName);
+                rc = radio2.open(alsaDeviceName);
                 if (rc < 0) {
                     log.error("Failed to open radio connection %d", rc);
+                    return;
+                }
+
+                rc = signalIn3.openHid(hidDeviceName);
+                if (rc < 0) {
+                    log.error("Failed to open HID signal connection %d", rc);
                     return;
                 }
             }
@@ -268,7 +280,7 @@ int main(int argc, const char** argv) {
 
     // Main loop        
     log.info("main event loop ...");
-    Runnable2* tasks2[] = { &radio2, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
+    Runnable2* tasks2[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, false);
     return 0;
 }
