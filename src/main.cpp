@@ -234,53 +234,76 @@ int main(int argc, const char** argv) {
             // Transfer the new configuration into the various places it is needed
             webUi.setConfig(cfg);
 
-            // #### TODO: Syntax check on configuration 
+            try {
 
-            //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
-            //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
-            
-            int rc;
-            rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort"].get<std::string>()), "radio");
-            if (rc < 0) {
-                log.error("Failed to open IAX2 connection %d", rc);
-            }
+                // #### TODO: Syntax check on configuration 
 
-            // Resolve the audio device
-            int alsaCard;
-            string ossDevice;
-            int rc2 = querySoundMap(cfg["aslAudioDevice"].get<std::string>().c_str(), 
-                alsaCard, ossDevice);
-            if (rc2 < 0) {
-                log.error("Unable to resolve sound device %d", rc2);
-            } 
-            else {
-                log.info("Audio %s mapped to ALSA card %d", 
-                    cfg["aslAudioDevice"].get<std::string>().c_str(), alsaCard);
-                int txMixASet = std::stoi(cfg["aslTxMixASet"].get<std::string>());
-                int txMixBSet = std::stoi(cfg["aslTxMixBSet"].get<std::string>());
-                int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
-                // NOTE: ASL uses 0-1000 scale
-                rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
+                //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
+                //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
+                
+                int rc;
+                rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort"].get<std::string>()), "radio");
                 if (rc < 0) {
-                    log.error("Failed to open radio connection %d", rc);
-                    return;
+                    log.error("Failed to open IAX2 connection %d", rc);
+                }
+
+                string setupMode = cfg["setupMode"].get<std::string>();
+
+                // ----- ASL Compatibility Mode -----------------------------------
+
+                if (setupMode.empty() || setupMode == "0") {
+
+                    // Resolve the audio device
+                    string aslAudioDevice = cfg["aslAudioDevice"].get<std::string>();
+                    if (aslAudioDevice.starts_with("usb ")) {
+                        int alsaCard;
+                        string ossDevice;
+                        int rc2 = querySoundMap(aslAudioDevice.substr(4).c_str(), alsaCard, ossDevice);
+                        if (rc2 < 0) {
+                            log.error("Unable to resolve sound device %d", rc2);
+                        } 
+                        else {
+                            log.info("Audio %s mapped to ALSA card %d", 
+                                aslAudioDevice.c_str(), alsaCard);                         
+
+                            // NOTE: ASL uses 0-1000 scale
+                            int txMixASet = std::stoi(cfg["aslTxMixASet"].get<std::string>());
+                            int txMixBSet = std::stoi(cfg["aslTxMixBSet"].get<std::string>());
+                            int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
+                            rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
+                            if (rc < 0) {
+                                log.error("Failed to open radio connection %d", rc);
+                                return;
+                            }
+                        }
+                    }
+
+                    // Resolve the COS signal
+                    string aslCosFrom = cfg["aslCosFrom"].get<std::string>();
+                    if (aslAudioDevice.starts_with("usb ") && aslCosFrom.starts_with("usb")) {
+
+                        string cosSignalDevice;
+                        int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), cosSignalDevice);
+                        if (rc3 < 0) {
+                            log.error("Unable to resolve HID device %d", rc3);
+                        } 
+                        else {
+                            log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
+                                cosSignalDevice.c_str());
+                            rc = signalIn3.openHid(cosSignalDevice.c_str());
+                            if (rc < 0) {
+                                log.error("Failed to open HID signal connection %d", rc);
+                                return;
+                            }
+                        }
+
+                        // ##### TODO: DEAL WITH INVERT
+                    }
                 }
             }
-
-            // Resolve the COS signal
-            string cosSignalDevice;
-            int rc3 = queryHidMap(cfg["aslAudioDevice"].get<std::string>().c_str(), cosSignalDevice);
-            if (rc3 < 0) {
-                log.error("Unable to resolve HID device %d", rc3);
-            } 
-            else {
-                log.info("HID %s mapped to %s", cfg["aslAudioDevice"].get<std::string>().c_str(),
-                    cosSignalDevice);
-                rc = signalIn3.openHid(cosSignalDevice.c_str());
-                if (rc < 0) {
-                    log.error("Failed to open HID signal connection %d", rc);
-                    return;
-                }
+            // ### TODO MORE SPECIFIC
+            catch (json::exception& ex) {
+                log.error("Failed to process configuration change %s", ex.what());
             }
         }
     );
