@@ -31,6 +31,7 @@ add_executable(main
   amp-core/src/Line.cpp
   amp-core/src/LineRadio.cpp
   amp-core/src/LineUsb.cpp
+  amp-core/src/LineUsb2.cpp
   amp-core/src/LineIAX2.cpp
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
@@ -96,7 +97,7 @@ target_link_libraries(main -lasound -lcurl -lusb-1.0)
 
 # ----- hello-http-server -------------------------------------------------
 
-add_executable(hello-http-server
+add_executable(hello-http-server EXCLUDE_FROM_ALL
   src/demos/hello-http-server.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
 )
@@ -105,3 +106,22 @@ target_include_directories(hello-http-server PRIVATE include)
 target_include_directories(hello-http-server PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(hello-http-server PRIVATE cpp-httplib)
 target_include_directories(hello-http-server PRIVATE json/include)
+
+# ----- hello-mixer -------------------------------------------------------
+
+add_executable(hello-mixer EXCLUDE_FROM_ALL
+  src/demos/hello-mixer.cpp
+  amp-core/src/LineUsb2.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+)
+target_include_directories(hello-mixer PRIVATE src)
+target_include_directories(hello-mixer PRIVATE include)
+target_include_directories(hello-mixer PRIVATE cmsis-dsp-mock/include)
+target_include_directories(hello-mixer PRIVATE amp-core/include)
+target_include_directories(hello-mixer PRIVATE amp-core/src)
+target_include_directories(hello-mixer PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(hello-mixer PRIVATE kc1fsz-sdrc/sw/src)
+target_include_directories(hello-mixer PRIVATE kc1fsz-sdrc/sw/include)
+target_include_directories(hello-mixer PRIVATE cpp-httplib)
+target_link_libraries(hello-mixer -lasound -lusb-1.0)
+
