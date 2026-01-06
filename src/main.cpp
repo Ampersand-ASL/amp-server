@@ -49,7 +49,7 @@
 #include "WebUi.h"
 #include "ConfigPoller.h"
 #include "SignalIn.h"
-
+#include "NRLog.h"
 #include "service-thread.h"
 
 using namespace std;
@@ -134,6 +134,8 @@ int main(int argc, const char** argv) {
     signal(SIGSEGV, sigHandler);
 
     MTLog log;
+    //NRLog log("AMP Server", "bruce", "");
+
     log.info("Start main");
     StdClock clock;
 
@@ -196,6 +198,8 @@ int main(int argc, const char** argv) {
     
     MultiRouter router;
     amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
+    //amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::PARROT);
+
     // ### TODOD: MOVE THIS TO CONSTRUCTOR
     bridge10.setSink(&router);
     router.addRoute(&bridge10, 10);

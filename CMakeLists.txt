@@ -20,8 +20,41 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -O0)
 
-# Set the default install prefix (e.g., /usr/local on Linux)
-#set(CMAKE_INSTALL_PREFIX "/tmp")
+# ----- Make resource objects ------------------------------------------------
+
+# xxd -n _www_index_html -i ../amp-core/www/index.html resource-amp-core-www-index.c
+
+# Converting an html file into a .c file. The temporary .c file is 
+# created in the build directory.
+set(RESOURCE0 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/index.html")
+set(OBJECT0 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-index.c")
+set(NAME0 "_amp_core_www_index_html")
+add_custom_command(
+    OUTPUT ${OBJECT0}
+    COMMAND xxd
+    ARGS 
+        -n ${NAME0}
+        -i 
+        ${RESOURCE0}
+        ${OBJECT0}
+    DEPENDS ${RESOURCE0}
+)
+
+set(RESOURCE1 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/config.html")
+set(OBJECT1 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-config.c")
+set(NAME1 "_amp_core_www_config_html")
+add_custom_command(
+    OUTPUT ${OBJECT1}
+    COMMAND xxd
+    ARGS 
+        -n ${NAME1}
+        -i 
+        ${RESOURCE1}
+        ${OBJECT1}
+    DEPENDS ${RESOURCE1}
+)
+
+# ----- main ----------------------------------------------------------------
 
 add_executable(main
   src/main.cpp
@@ -52,6 +85,7 @@ add_executable(main
   amp-core/src/WebUi.cpp
   amp-core/src/SignalIn.cpp
   amp-core/src/ThreadUtil.cpp
+  amp-core/src/NRLog.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
@@ -76,6 +110,9 @@ add_executable(main
   ed25519/src/sc.c
   ed25519/src/sha512.c
   ed25519/src/verify.c
+# Here is where the resources are added to the binary
+  ${OBJECT0}
+  ${OBJECT1}
 )
 
 target_include_directories(main PRIVATE src)
