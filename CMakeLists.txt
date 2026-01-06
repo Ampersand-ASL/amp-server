@@ -54,9 +54,9 @@ add_custom_command(
     DEPENDS ${RESOURCE1}
 )
 
-# ----- main ----------------------------------------------------------------
+# ----- amp-server ----------------------------------------------------------------
 
-add_executable(main
+add_executable(amp-server
   src/main.cpp
   amp-core/src/service-thread.cpp
   amp-core/src/EventLoop.cpp
@@ -115,22 +115,22 @@ add_executable(main
   ${OBJECT1}
 )
 
-target_include_directories(main PRIVATE src)
-target_include_directories(main PRIVATE kc1fsz-tools-cpp/include)
-target_include_directories(main PRIVATE itu-g711-codec/src)
-target_include_directories(main PRIVATE cmsis-dsp-mock/include)
-target_include_directories(main PRIVATE amp-core/include)
+target_include_directories(amp-server PRIVATE src)
+target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(amp-server PRIVATE itu-g711-codec/src)
+target_include_directories(amp-server PRIVATE cmsis-dsp-mock/include)
+target_include_directories(amp-server PRIVATE amp-core/include)
 # TODO: REMOVE
-target_include_directories(main PRIVATE amp-core/src)
-target_include_directories(main PRIVATE sound-map/include)
-target_include_directories(main PRIVATE ed25519/src)
-target_include_directories(main PRIVATE kc1fsz-sdrc/sw/src)
-target_include_directories(main PRIVATE kc1fsz-sdrc/sw/include)
-target_include_directories(main PRIVATE cpp-httplib)
-target_include_directories(main PRIVATE json/include)
-target_include_directories(main PRIVATE argparse/include)
+target_include_directories(amp-server PRIVATE amp-core/src)
+target_include_directories(amp-server PRIVATE sound-map/include)
+target_include_directories(amp-server PRIVATE ed25519/src)
+target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/src)
+target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/include)
+target_include_directories(amp-server PRIVATE cpp-httplib)
+target_include_directories(amp-server PRIVATE json/include)
+target_include_directories(amp-server PRIVATE argparse/include)
 
-target_link_libraries(main -lasound -lcurl -lusb-1.0)
+target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
 
 # ----- hello-http-server -------------------------------------------------
 

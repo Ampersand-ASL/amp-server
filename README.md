@@ -37,5 +37,7 @@ Force reload of rules:
     cmake ..
     make main
     
+# Getting Line Number From Stack Trace
 
-    
+        addr2line -e ./amp-server -fC 0x138a0
+        

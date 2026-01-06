@@ -14,19 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <sched.h>
-#include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/syscall.h> 
-#include <alsa/asoundlib.h>
 #include <execinfo.h>
 #include <signal.h>
 
 #include <iostream>
-#include <cmath> 
 #include <queue>
+#include <stdexcept>
 
 #include <curl/curl.h>
 #include <argparse/argparse.hpp>
@@ -49,27 +45,15 @@
 #include "WebUi.h"
 #include "ConfigPoller.h"
 #include "SignalIn.h"
-#include "NRLog.h"
+#include "ThreadUtil.h"
 #include "service-thread.h"
 
 using namespace std;
 using namespace kc1fsz;
 
-/*
-Development:
-
-export AMP_NODE0_NUMBER=672730
-export AMP_NODE0_PASSWORD=xxxx
-export AMP_NODE0_MGR_PORT=5038
-export AMP_IAX_PORT=4568
-export AMP_IAX_PROTO=IPV4
-export AMP_ASL_REG_URL=https://register.allstarlink.org
-export AMP_ASL_DNS_ROOT=allstarlink.org
-export AMP_NODE0_USBSOUND="vendorname:\"C-Media Electronics, Inc.\""
-export AMP_NODE0_USBCOS="vendorname:\"C-Media Electronics, Inc.\""
-
-*/
-extern uint32_t cmsisdsp_overflow;
+static const char* VERSION = "20260106.0";
+// ### TODO: FIGURE THIS OUT
+const char* const GIT_HASH = "?";
 
 // Connects the manager to the IAX channel (TEMPORARY)
 class ManagerSink : public ManagerTask::CommandSink {
@@ -113,59 +97,68 @@ public:
 
 // A crash signal handler that displays stack information
 static void sigHandler(int sig) {
-    void *array[32];
-    // get void*'s for all entries on the stack
-    size_t size = backtrace(array, 32);
-    // print out all the frames to stderr
-    fprintf(stderr, "Error: signal %d:\n", sig);
+    void *array[64];
+    size_t size = backtrace(array, 64);
+    fprintf(stderr, "=========================================================\n");
+    fprintf(stderr, "IMPORTANT: Save this stack trace for analysis!\n\n");
+    fprintf(stderr, "Error signal %d:\n", sig);
+    fprintf(stderr, "Version %s Git Hash %s\n\n", VERSION, GIT_HASH);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+    fprintf(stderr, "\naddr2line -r ./amp-server -fC <addr>\n\n");
+    fprintf(stderr, "=========================================================\n");
     // Now do the regular thing
     signal(sig, SIG_DFL); 
     raise(sig);
 }
 
-// #### TODO: MOVE 
-void* service_thread_2(void* o) { service_thread(o); return 0; }
-
 int main(int argc, const char** argv) {
 
     // Name the thread
-    pthread_setname_np(pthread_self(), "M  ");
+    amp::setThreadName("amp-server");
+    // Install the crash stack handler
     signal(SIGSEGV, sigHandler);
 
     MTLog log;
-    //NRLog log("AMP Server", "bruce", "");
+    log.info("AMP Server");
+    log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
+    log.info("Copyright (C) 2026, Bruce MacKinnon KC1FSZ");
+    log.info("Version %s Git Hash %s", VERSION, GIT_HASH);
+    log.info("----------------------------------------------------------------------");
 
-    log.info("Start main");
     StdClock clock;
 
     // Get libcurl going
     CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
     if (res) {
-        log.error("Libcurl failed");
-        return 0;
+        log.error("Libcurl failed to initialize %d", res);
+        std::exit(1);
     }
 
-    argparse::ArgumentParser program("amp-server");
+    // Parse command line arguments
+    argparse::ArgumentParser program("amp-server", VERSION);
 
     string cfgFileName;
     string defaultCfgFileName = getenv("HOME");
     defaultCfgFileName += "/amp-server.json";
     program.add_argument("--config")
-        .help("name of configuration file")
+        .help("Name of configuration file")
         .default_value(defaultCfgFileName)
         .store_into(cfgFileName);
-
     
     int uiPort = 8080;
     program.add_argument("--httpport")
         .store_into(uiPort)
+        .default_value(8080)
         .help("Port number for HTTP UI server");
+
+    program.add_argument("--trace")
+        .help("Turn on network tracing")
+        .default_value(false)
+        .implicit_value(true);
 
     try {
         program.parse_args(argc, argv);
-    }
-    catch (const std::exception& err) {
+    } catch (const std::exception& err) {
         log.error("Argument error: %s", err.what());
         std::exit(1);
     }
@@ -175,33 +168,23 @@ int main(int argc, const char** argv) {
     if (!filesystem::exists(cfgFileName)) {
         log.info("Creating default configuration");
         ofstream cfg(cfgFileName);
-        if (cfg.is_open()) {
+        if (cfg.is_open()) 
             cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
-            cfg.close();
-        } else {
+        else 
             log.error("Unable to create default configuration");
-        }
     }
 
-    // Get the service thread running
-
+    // Get the service thread running (handles registration, stats, etc.)
     service_thread_args args1;
     args1.log = &log;
     args1.cfgFileName = cfgFileName;
+    std::thread serviceThread(service_thread, &args1);
 
-    // #### TODO: Switch to C++ standard
-    pthread_t new_thread_id;
-    if (pthread_create(&new_thread_id, NULL, service_thread_2, &args1) != 0) {
-        perror("Error creating thread");
-        return -1;
-    }
-    
+    // This is the "bus" that passes messages between components
     MultiRouter router;
-    amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::NORMAL);
-    //amp::Bridge bridge10(log, clock, amp::BridgeCall::Mode::PARROT);
 
-    // ### TODOD: MOVE THIS TO CONSTRUCTOR
-    bridge10.setSink(&router);
+    // The bridge is what provides the conference
+    amp::Bridge bridge10(log, clock, router, amp::BridgeCall::Mode::NORMAL);
     router.addRoute(&bridge10, 10);
 
     // This is the connection to the USB sound interface
@@ -217,8 +200,9 @@ int main(int argc, const char** argv) {
     CallValidatorStd val;
     LocalRegistryStd locReg;
     LineIAX2 iax2Channel1(log, clock, 1, router, &val, &locReg, 10);
-    //iax2Channel1.setTrace(true);
     router.addRoute(&iax2Channel1, 1);
+    if (program["--trace"] == true)
+        iax2Channel1.setTrace(true);
 
     // Instantiate the server for the web-based UI
     amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str());
@@ -239,12 +223,12 @@ int main(int argc, const char** argv) {
             webUi.setConfig(cfg);
 
             try {
-
-                // #### TODO: Syntax check on configuration 
-
                 //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
                 //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
                 
+                if (!cfg["iaxPort"].is_string())
+                    throw invalid_argument("iaxPort is missing/invalid");
+
                 int rc;
                 rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort"].get<std::string>()), "radio");
                 if (rc < 0) {
@@ -271,12 +255,24 @@ int main(int argc, const char** argv) {
                                 aslAudioDevice.c_str(), alsaCard);                         
 
                             // NOTE: ASL uses 0-1000 scale
+                            if (!cfg["aslTxMixASet"].is_string())
+                                throw invalid_argument("aslTxMixASet is missing/invalid");
                             int txMixASet = std::stoi(cfg["aslTxMixASet"].get<std::string>());
+
+                            if (!cfg["aslTxMixBSet"].is_string())
+                                throw invalid_argument("aslTxMixBSet is missing/invalid");
                             int txMixBSet = std::stoi(cfg["aslTxMixBSet"].get<std::string>());
+                            
+                            if (!cfg["aslRxMixerSet"].is_string())
+                                throw invalid_argument("aslRxMixerSet is missing/invalid");
                             int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
+
                             rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
                             if (rc < 0) {
-                                log.error("Failed to open radio connection %d", rc);
+                                if (rc == -12)
+                                    log.error("Unable to open sound device, busy");
+                                else 
+                                    log.error("Unable to open sound device");
                                 return;
                             }
                         }
@@ -311,14 +307,15 @@ int main(int argc, const char** argv) {
             }
         }
     );
-      
+
     //ManagerSink mgrSink(iax2Channel1);
     //ManagerTask mgrTask(log, clock, atoi(getenv("AMP_NODE0_MGR_PORT")));
     //mgrTask.setCommandSink(&mgrSink);
 
     // Main loop        
-    log.info("main event loop ...");
     Runnable2* tasks2[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, false);
+
     return 0;
 }
+
