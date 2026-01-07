@@ -2,7 +2,7 @@
 
 The core server supports linking between radios and nodes on the ASL network.
 
-# One-Time Machine Setup
+# One-Time Machine Setup (To Run the Server)
 
 Get the public SSH key loaded onto the machine to enable login, remote editing, etc.
 
@@ -29,15 +29,21 @@ Force reload of rules:
 
 # Building The Server
 
+    sudo apt install xxd libasound2-dev libcurl4-gnutls-dev
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
     git submodule update --init
     mkdir build
     cd build
     cmake ..
-    make main
-    
-# Getting Line Number From Stack Trace
+    make
+
+# Packaging
+
+    export AMP_SERVER_VERSION=20260106
+    ../scripts/make-package.sh        
+
+# (Debug) Getting Line Number From Stack Trace
 
         addr2line -e ./amp-server -fC 0x138a0
         
