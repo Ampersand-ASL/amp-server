@@ -17,7 +17,7 @@ An adjustment needs to be made to allow a normal user to access the HID interfac
 
 Create /etc/udev/rules.d/99-mydevice.rules with this contents:
 
-        SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", ATTRS{idProduct}=="0012", MODE="0666", TAG+="uaccess"
+        SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
         SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0ade", MODE="0666", TAG+="uaccess"
 
 (And include any other devices you plan to use)
