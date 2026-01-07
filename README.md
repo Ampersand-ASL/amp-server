@@ -43,6 +43,8 @@ Force reload of rules:
     export AMP_SERVER_VERSION=20260106
     ../scripts/make-package.sh        
 
+# Binary Install
+
 # (Debug) Getting Line Number From Stack Trace
 
         addr2line -e ./amp-server -fC 0x138a0
