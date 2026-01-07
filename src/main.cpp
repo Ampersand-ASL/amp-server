@@ -51,7 +51,7 @@
 using namespace std;
 using namespace kc1fsz;
 
-static const char* VERSION = "20260106.0";
+static const char* VERSION = "20260106.1";
 // ### TODO: FIGURE THIS OUT
 const char* const GIT_HASH = "?";
 
@@ -205,7 +205,7 @@ int main(int argc, const char** argv) {
         iax2Channel1.setTrace(true);
 
     // Instantiate the server for the web-based UI
-    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str());
+    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);
