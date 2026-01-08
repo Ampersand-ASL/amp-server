@@ -51,7 +51,7 @@
 using namespace std;
 using namespace kc1fsz;
 
-static const char* VERSION = "20260106.1";
+static const char* VERSION = "20260108.1";
 // ### TODO: FIGURE THIS OUT
 const char* const GIT_HASH = "?";
 
