@@ -13,7 +13,7 @@ A separate build for ARM Cortex-M3 microcontroller boards has also been tested.
 This will be documented separately.
 
 All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
-chips. 
+chip. 
 
 Installation Instructions
 =========================
@@ -52,7 +52,7 @@ Running the Server
     cd amp
     ./amp-server 
 
-Command-line options:
+Command-line options should be used if you want to override defaults:
 
 * --httport (defaults to 8080).  Used to change the port that the web UI runs on.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
@@ -62,8 +62,8 @@ file.
 Setup/Configuration
 ===================
 
-Point your browser to the server using port 8080 (the default), or a different port if you
-have configured one.  The main screen will look like this:
+All configuration is done via a web UI. Start the server and point your browser to the server using port 8080 (the default), or a different port if you
+have configured one on the command line.  The main screen will look like this:
 
 ![Amp1](amp-1.jpg)
 
