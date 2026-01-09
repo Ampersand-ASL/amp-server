@@ -1,3 +1,7 @@
+At the moment the Ampersand Server (amp-server) provides the a basic [All Star Link](https://www.allstarlink.org/) node
+for desktop radio-less use. Future releases will enable more functionality. Send
+comments/question to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
+
 Installation Instructions
 =========================
 
@@ -17,11 +21,17 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
-Get the latest install package:
+Installing for x86-64:
 
     wget https://mackinnon.info/ampersand/releases/amp-20260109-x86_64.tar.gz
     tar xvf amp-20260109-x86_64.tar.gz
-    ln -s amp-20260100-x86_64 amp
+    ln -s amp-20260109-x86_64 amp
+
+Installing for aarch64 (ARM):
+
+    wget https://mackinnon.info/ampersand/releases/amp-20260109-aarch64.tar.gz
+    tar xvf amp-20260109-aarch64.tar.gz
+    ln -s amp-20260109-aarch64 amp
 
 Running the Server
 ==================
@@ -65,3 +75,35 @@ Things That Aren't Enabled Yet
 * Repeater functionality
 * List of linked nodes for each node
 * More status messages need to be shown on the main page
+
+Discarding HID Input
+====================
+
+(Please see [this article for more detail](https://www.florian-wolters.de/posts/discard-hid-input-from-cm108-device/))
+
+There's an interesting problem that shows up on my computer when using
+CM108-based radio interfaces. Per convention, most interface vendors
+have connected the carrier detect (COS) signal to the "Volume Down" 
+pin on the CM108 chip. This is nice since it allows application software
+to read the COS signal without any additional hardware, but it can create
+strange behaviors if your desktop environment things that you want to turn 
+the audio volume down every time a carrier is detected. This behavior 
+depends on your desktop configuration, but I've had this problem on Windows
+and Linux.
+
+Linux provides a way to fix this behavior. It turns out the CM108 volume
+down pin is mapped to a keypress event to achieve the volume function.
+This can be undone.
+
+Create a custom udev hwdb rule file called /etc/udev/hwdb.d/50-cm108.hwdb.
+
+Put this into the file, substituting the correct USB vendor ID/product ID:
+
+    # Ignore hid input events from cm108 GPIOs
+    evdev:input:b*v0D8Cp013C*
+        KEYBOARD_KEY_c00ea=reserved
+
+And then reload the hwdb:
+
+    udevadm hwdb –update
+    udevadm trigger

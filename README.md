@@ -36,7 +36,10 @@ Install the server:
 
         export AMP_SERVER_VERSION=20260109
         wget https://mackinnon.info/ampersand/releases/amp-$AMP_SERVER_VERSION-x86_64.tar.gz
+        # For x86-64:
         tar xvf tar xvf amp-$AMP_SERVER_VERSION-x86_64.tar.gz
+        # For arm64:
+        tar xvf tar xvf amp-$AMP_SERVER_VERSION-aarch64.tar.gz
         ln -s amp-$AMP_SERVER_VERSION-x86_64 amp       
 
 # Building The Server
