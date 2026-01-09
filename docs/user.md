@@ -72,13 +72,20 @@ that looks like this:
 
 ![Amp2](amp-2.jpg)
 
-Fill in your node number and password. All other defaults should be enough to get your started.
+This configuration should be very consistent with that used on the ASL system. Fill 
+in your node number and password. All other defaults should be enough to get your started.
 
 The audio levels will be the first thing to configure. Your audio level will be displayed in 
-the system log any time you key your transmitter (regardless of whether you are connected to 
+the system log any time you key your microphone (regardless of whether you are connected to 
 any other nodes). The levels will be displayed like this:
 
 ![Amp3](amp-3.jpg)
+
+The audio level that you are transmitting into the ASL network is controlled using the 
+"Receive Mixer" level on the configuration screen. This is a bit confusing since
+the "Receive" in this context is from the perspective of the radio interface hardware.
+
+![Amp3](amp-4.jpg)
 
 Things That Aren't Enabled Yet
 ==============================
