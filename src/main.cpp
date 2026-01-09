@@ -205,7 +205,7 @@ int main(int argc, const char** argv) {
     // This is the IAX2 network connection
     CallValidatorStd val;
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, clock, 1, router, &val, &locReg, 10);
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, &val, &locReg, 10);
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
