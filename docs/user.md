@@ -2,6 +2,16 @@ At the moment the Ampersand Server (amp-server) provides the a basic [All Star L
 for desktop radio-less use. Future releases will enable more functionality. Send
 comments/question to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
 
+All of the testing of this system has happened on either:
+* A Raspberry Pi 5 running Debian 12 Bookworm
+* A Dell Wyse 3040 runnign Debian 13 Trixie
+
+A separate build for ARM Corext-M3 microcontroller boards has also been tested.
+This will be documented separately.
+
+All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
+chips. 
+
 Installation Instructions
 =========================
 
@@ -86,12 +96,12 @@ CM108-based radio interfaces. Per convention, most interface vendors
 have connected the carrier detect (COS) signal to the "Volume Down" 
 pin on the CM108 chip. This is nice since it allows application software
 to read the COS signal without any additional hardware, but it can create
-strange behaviors if your desktop environment things that you want to turn 
+strange behaviors if your desktop environment thinks that you want to turn 
 the audio volume down every time a carrier is detected. This behavior 
 depends on your desktop configuration, but I've had this problem on Windows
 and Linux.
 
-Linux provides a way to fix this behavior. It turns out the CM108 volume
+Linux provides a way to work around this. It turns out the CM108 volume
 down pin is mapped to a keypress event to achieve the volume function.
 This can be undone.
 
