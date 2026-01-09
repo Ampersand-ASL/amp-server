@@ -3,10 +3,11 @@ Installation Instructions
 
 Install required packages:
 
-    sudo apt install wget net-tools
+    sudo apt install wget net-tools libcurl4-gnutls-dev
 
-An adjustment needs to be made to allow a normal user to access the HID interfaces. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
+An adjustment needs to be made to allow non-root users to access the HID interfaces. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
 
+    # The C-Media vendor ID
     SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
 
 (And include any other devices you plan to use)
@@ -18,15 +19,15 @@ Reboot, or just force reload of rules:
 
 Get the latest install package:
 
-    wget https://mackinnon.info/ampersand/releases/amp-20260106-x86_64.tar.gz
-    tar xvf amp-20260106-x86_64.tar.gz
-    ln -s amp-20260106-x86_64 amp
+    wget https://mackinnon.info/ampersand/releases/amp-20260109-x86_64.tar.gz
+    tar xvf amp-20260109-x86_64.tar.gz
+    ln -s amp-20260100-x86_64 amp
 
 Running the Server
 ==================
 
     cd amp
-    amp-server 
+    ./amp-server 
 
 Command-line options:
 
@@ -39,7 +40,10 @@ Configuration
 =============
 
 
+Things That Aren't Enabled Yet
+==============================
 
-
-    
-
+* DTMF pad
+* CTCSS/PTT functionality
+* List of linked nodes for each node
+* More status messages need to be shown on the main page

@@ -1,4 +1,6 @@
-filename = "ecr_qso_1.txt"
+# rsync bruce@wyse3040:/home/bruce/amp-server/build/capture.txt capture.txt
+
+filename = "ecr_qso_2.txt"
 
 buckets = { }
 low_bucket = 0
