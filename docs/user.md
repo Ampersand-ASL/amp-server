@@ -36,14 +36,32 @@ Command-line options:
 file.
 * --trace Used to turn on extended network tracing.
 
-Configuration
-=============
+Setup/Configuration
+===================
 
+Point your browser to the server using port 8080 (the default), or a different port if you
+have configured one.  The main screen will look like this:
+
+![Amp1](amp-1.jpg)
+
+Press the "Configuration" link at the bottom of the screen to get to the configuration screen
+that looks like this:
+
+![Amp2](amp-2.jpg)
+
+Fill in your node number and password. All other defaults should be enough to get your started.
+
+The audio levels will be the first thing to configure. Your audio level will be displayed in 
+the system log any time you key your transmitter (regardless of whether you are connected to 
+any other nodes). The levels will be displayed like this:
+
+![Amp3](amp-3.jpg)
 
 Things That Aren't Enabled Yet
 ==============================
 
 * DTMF pad
 * CTCSS/PTT functionality
+* Repeater functionality
 * List of linked nodes for each node
 * More status messages need to be shown on the main page
