@@ -22,8 +22,8 @@ An adjustment needs to be made to allow a normal user to access the HID interfac
 
 Create /etc/udev/rules.d/99-mydevice.rules with this contents:
 
+        # C-Media Vendor ID
         SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
-        SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0ade", MODE="0666", TAG+="uaccess"
 
 (And include any other devices you plan to use)
 
@@ -34,11 +34,10 @@ Force reload of rules:
 
 Install the server:
 
-        export AMP_SERVER_VERSION=20260108
+        export AMP_SERVER_VERSION=20260109
         wget https://mackinnon.info/ampersand/releases/amp-$AMP_SERVER_VERSION-x86_64.tar.gz
         tar xvf tar xvf amp-$AMP_SERVER_VERSION-x86_64.tar.gz
-        ln -s amp-$AMP_SERVER_VERSION-x86_64 amp
-        
+        ln -s amp-$AMP_SERVER_VERSION-x86_64 amp       
 
 # Building The Server
 
