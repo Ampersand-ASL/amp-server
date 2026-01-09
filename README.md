@@ -4,6 +4,11 @@ The core server supports linking between radios and nodes on the ASL network.
 
 # One-Time Machine Setup
 
+Make a keypair if necessary:
+
+        # No passphrase used
+        ssh-keygen -t ed25519 -b 4096 -N ''
+
 Get the public SSH key loaded onto the machine to enable login, remote editing, etc.
 
         cd .ssh
