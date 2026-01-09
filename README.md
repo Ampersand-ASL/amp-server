@@ -48,13 +48,10 @@ Install the server:
 
 # Packaging
 
-    export AMP_SERVER_VERSION=20260108
+    export AMP_SERVER_VERSION=20260109
     ../scripts/make-package.sh        
     # Move as needed
     rsync /tmp/amp-$AMP_SERVER_VERSION-x86_64.tar.gz bruce@pi5:/tmp
-
-
-
 
 # (Debug) Getting Line Number From Stack Trace
 
