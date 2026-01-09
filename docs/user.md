@@ -1,15 +1,15 @@
 At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node
 for desktop radio-less use. Future releases will enable more functionality. Send
-comments/question to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
+comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
 
-This is experimental work that is exploring the potential of ASL linking 
+This is experimental work that explores the potential of ASL linking 
 without the use of the Asterisk PBX system. 
 
 All of the testing of this system is happening on either:
-* A Raspberry Pi 5 running Debian 12 Bookworm. This the ARM-64 playform.
-* A Dell Wyse 3040 mini-PC running Debian 13 Trixie. This is the x86-64 platform.
+* A Raspberry Pi 5 running Debian 12 Bookworm. This is an ARM-64 platform.
+* A Dell Wyse 3040 mini-PC running Debian 13 Trixie. This is an x86-64 platform.
 
-A separate build for ARM Corext-M3 microcontroller boards has also been tested.
+A separate build for ARM Cortex-M3 microcontroller boards has also been tested.
 This will be documented separately.
 
 All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
