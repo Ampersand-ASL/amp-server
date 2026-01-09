@@ -86,6 +86,7 @@ add_executable(amp-server
   amp-core/src/SignalIn.cpp
   amp-core/src/ThreadUtil.cpp
   amp-core/src/NRLog.cpp
+  amp-core/src/TraceLog.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp

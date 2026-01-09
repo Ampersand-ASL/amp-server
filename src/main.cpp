@@ -47,11 +47,12 @@
 #include "SignalIn.h"
 #include "ThreadUtil.h"
 #include "service-thread.h"
+#include "TraceLog.h"
 
 using namespace std;
 using namespace kc1fsz;
 
-static const char* VERSION = "20260108.1";
+static const char* VERSION = "20260109.0";
 // ### TODO: FIGURE THIS OUT
 const char* const GIT_HASH = "?";
 
@@ -127,6 +128,11 @@ int main(int argc, const char** argv) {
 
     StdClock clock;
 
+    // A special log used for tracing/performance analysis
+    const unsigned traceLogDataLen = 1024;
+    std::string traceLogData[traceLogDataLen];
+    TraceLog traceLog(clock, traceLogData, traceLogDataLen);
+
     // Get libcurl going
     CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
     if (res) {
@@ -184,7 +190,7 @@ int main(int argc, const char** argv) {
     MultiRouter router;
 
     // The bridge is what provides the conference
-    amp::Bridge bridge10(log, clock, router, amp::BridgeCall::Mode::NORMAL);
+    amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL);
     router.addRoute(&bridge10, 10);
 
     // This is the connection to the USB sound interface
@@ -205,7 +211,8 @@ int main(int argc, const char** argv) {
         iax2Channel1.setTrace(true);
 
     // Instantiate the server for the web-based UI
-    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION);
+    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION,
+        traceLog);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);

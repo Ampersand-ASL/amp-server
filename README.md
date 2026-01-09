@@ -27,9 +27,17 @@ Force reload of rules:
         sudo udevadm control --reload-rules
         sudo udevadm trigger
 
+Install the server:
+
+        export AMP_SERVER_VERSION=20260108
+        wget https://mackinnon.info/ampersand/releases/amp-$AMP_SERVER_VERSION-x86_64.tar.gz
+        tar xvf tar xvf amp-$AMP_SERVER_VERSION-x86_64.tar.gz
+        ln -s amp-$AMP_SERVER_VERSION-x86_64 amp
+        
+
 # Building The Server
 
-    sudo apt install xxd libasound2-dev libcurl4-gnutls-dev
+    sudo apt install cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
     git submodule update --init
@@ -40,10 +48,13 @@ Force reload of rules:
 
 # Packaging
 
-    export AMP_SERVER_VERSION=20260106
+    export AMP_SERVER_VERSION=20260108
     ../scripts/make-package.sh        
+    # Move as needed
+    rsync /tmp/amp-$AMP_SERVER_VERSION-x86_64.tar.gz bruce@pi5:/tmp
 
-# Binary Install
+
+
 
 # (Debug) Getting Line Number From Stack Trace
 
