@@ -22,7 +22,7 @@ There are other detailed sources of information about ASL network configuration 
 I won't repeat everything here. Bottom line:
 
 * Make sure you are clear on what IAX (UDP) port your node is using. This assignment
-happens on the ASL Portal. UDP port 4569 is the common default.
+happens on the [ASL Portal](https://www.allstarlink.org/portal/servers.php). UDP port 4569 is the common default.
 * Make sure that your IAX port is opened/forwarded through your firewall/NAT system.
 * Make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
 running on your machine.
@@ -47,7 +47,7 @@ An adjustment needs to be made to allow non-root users to access the HID interfa
     SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
 
 (And include any other devices you plan to use. I've noticed that the ASL3 installer
-also include vendor ID 1209 in their configuration.)
+also includes vendor ID 1209 in their configuration.)
 
 Reboot, or just force reload of rules:
 
