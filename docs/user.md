@@ -145,8 +145,8 @@ Put this into the file, substituting the **correct** USB vendor ID/product ID:
      KEYBOARD_KEY_c00ea=reserved
 
 The "v0D8Cp0012" above refers the vendor ID/product ID of a common C-Media
-USB audio interface, but it's possible that your device will have a different
-product ID. Please use the lsusb command to validate the IDs being presented
+USB audio interface, but **it's possible that your device will have a different
+product ID**. Please use the lsusb command to validate the IDs being presented
 by your hardware.
 
 And then reload the hwdb:
@@ -199,3 +199,44 @@ call is accepted by a parrot but not by other nodes it is likely that your
 registration is invalid. Check your password.
 * The ASL registration process takes some time to propagate. When your node
 first starts up your calls may not be accepted. Wait about 10 minutes and try again.
+
+Running As A Linux Service
+==========================
+
+You might want to run your AMP Server as a service. This is optional.
+
+Copy the amp-server binary to /usr/bin.
+
+Create a service file called /lib/systemd/system/amp-server.service that looks
+something like this:
+
+    [Unit]
+    Description=AMP Server
+    After=network.target
+    StartLimitIntervalSec=0
+
+    [Service]
+    Type=simple
+    Restart=always
+    RestartSec=1
+    # Change to your id, best not to run as root
+    User=bruce
+    ExecStart=/usr/bin/amp-server
+    WorkingDirectory=/tmp
+    RestrictRealtime=off
+    # Make the process real-time with high priority
+    # The + requests higher privileges.
+    ExecStartPost=+/bin/sh -c "/usr/bin/chrt --rr -p 50 $MAINPID"
+
+    [Install]
+    WantedBy=multi-user.target
+
+Enable and start the service:
+
+    sudo systemctl enable amp-server
+    sudo systemctl start amp-server
+
+You can view the log using this command:
+
+    journalctl -u amp-server -f
+    
