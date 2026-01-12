@@ -27,7 +27,7 @@ add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -O0)
 # Converting an html file into a .c file. The temporary .c file is 
 # created in the build directory.
 set(RESOURCE0 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/index.html")
-set(OBJECT0 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-index.c")
+set(OBJECT0 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-index-html.c")
 set(NAME0 "_amp_core_www_index_html")
 add_custom_command(
     OUTPUT ${OBJECT0}
@@ -41,7 +41,7 @@ add_custom_command(
 )
 
 set(RESOURCE1 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/config.html")
-set(OBJECT1 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-config.c")
+set(OBJECT1 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-config-html.c")
 set(NAME1 "_amp_core_www_config_html")
 add_custom_command(
     OUTPUT ${OBJECT1}
@@ -52,6 +52,20 @@ add_custom_command(
         ${RESOURCE1}
         ${OBJECT1}
     DEPENDS ${RESOURCE1}
+)
+
+set(RESOURCE2 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/main.css")
+set(OBJECT2 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-main-css.c")
+set(NAME2 "_amp_core_www_main_css")
+add_custom_command(
+    OUTPUT ${OBJECT2}
+    COMMAND xxd
+    ARGS 
+        -n ${NAME2}
+        -i 
+        ${RESOURCE2}
+        ${OBJECT2}
+    DEPENDS ${RESOURCE2}
 )
 
 # ----- amp-server ----------------------------------------------------------------
@@ -114,6 +128,7 @@ add_executable(amp-server
 # Here is where the resources are added to the binary
   ${OBJECT0}
   ${OBJECT1}
+  ${OBJECT2}
 )
 
 target_include_directories(amp-server PRIVATE src)
