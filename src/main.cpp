@@ -117,6 +117,7 @@ int main(int argc, const char** argv) {
 
     log.info("Using configuration file %s", cfgFileName.c_str());
 
+    // Create a default/starting config file if this is the first time.
     if (!filesystem::exists(cfgFileName)) {
         log.info("Creating default configuration");
         ofstream cfg(cfgFileName);
@@ -136,7 +137,7 @@ int main(int argc, const char** argv) {
     std::thread serviceThread(service_thread, &args1);
 
     // This is the "bus" that passes Message objects between the rest of the 
-    // components in ths system
+    // components in the system
     MultiRouter router;
 
     // The Bridge is what provides the conference capability
@@ -167,7 +168,7 @@ int main(int argc, const char** argv) {
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);
 
-    // Setup the configuration poller for this thread 
+    // Setup the configuration poller for this thread
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
         [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10]
@@ -186,10 +187,10 @@ int main(int argc, const char** argv) {
         }
     );
 
-    // Main loop        
-    Runnable2* tasks2[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, 
+    // Setup the EventLoop with all of the tasks that need to be run on this thread
+    Runnable2* tasks[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, 
         &cfgPoller };
-    EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, false);
+    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
 
     return 0;
 }
