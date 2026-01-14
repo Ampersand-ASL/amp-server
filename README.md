@@ -3,6 +3,11 @@ on Linux (Debian 13) using arm64 or x86-64 architectures.
 
 [Most of the documentation is here](https://mackinnon.info/ampersand/).
 
+To understand the structure of the server, the best place to start 
+is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp).
+
+**MORE SOFTWARE STRUCTURE DOCUMENTATION TO FOLLOW**
+
 # One-Time Machine Setup (To Run the Server)
 
 Make a keypair if necessary:
