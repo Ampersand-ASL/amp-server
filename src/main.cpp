@@ -138,15 +138,17 @@ int main(int argc, const char** argv) {
     args1.cfgFileName = cfgFileName;
     std::thread serviceThread(service_thread, &args1);
 
-    // This is the "bus" that passes Message objects between the rest of the 
-    // components in the system
+    // This is the router (aka "bus") that passes Message objects between the rest 
+    // of the components in the system. You'll see that everything else below is
+    // wired to the router one way or the other.
     MultiRouter router;
 
-    // The Bridge is what provides the conference capability
+    // The Bridge is what provides the audio conference capability. The various 
+    // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL);
     router.addRoute(&bridge10, 10);
 
-    // This is the connection to the USB sound interface
+    // This is the Line that connects to the USB sound interface
     LineUsb radio2(log, clock, router, 2, 1, 10, 1);
     router.addRoute(&radio2, 2);
 
@@ -155,7 +157,7 @@ int main(int argc, const char** argv) {
         Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
     router.addRoute(&signalIn3, 3);
 
-    // This is the IAX2 network connection
+    // This is the Line that makes the IAX2 network connection
     CallValidatorStd val;
     LocalRegistryStd locReg;
     LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, &val, &locReg, 10);
@@ -163,14 +165,15 @@ int main(int argc, const char** argv) {
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
 
-    // Instantiate the server for the HTTP-based UI
+    // This is the HTTP server that provides the UI
     amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION,
         traceLog);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);
 
-    // Setup the configuration poller for this thread
+    // This is a poller that watches for changes to the configuration file
+    // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
         [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10]
