@@ -79,18 +79,18 @@ Command-line options should be used if you want to override defaults:
 file.
 * --trace Used to turn on extended network tracing.
 
+The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
+have configured one on the command line.  The main screen will look like this:
+
+![Amp1](amp-server-home.jpg)
+
 Setup/Configuration
 ===================
 
-All configuration is done via a web UI. Start the server and point your browser to the server using port 8080 (the default), or a different port if you
-have configured one on the command line.  The main screen will look like this:
-
-![Amp1](amp-1.jpg)
-
-Press the "Configuration" link at the bottom of the screen to get to the configuration screen
+Press the "Configuration" tab at the top of the screen to get to the configuration screen
 that looks like this:
 
-![Amp2](amp-2.jpg)
+![Amp2](amp-server-config.jpg)
 
 This configuration should be very consistent with that used on the ASL system. Fill 
 in your node number, password, and IAX port number. All other defaults should be enough to get your started.
