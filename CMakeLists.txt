@@ -72,6 +72,7 @@ add_custom_command(
 
 add_executable(amp-server
   src/main.cpp
+  src/config-handler.cpp
   amp-core/src/service-thread.cpp
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
