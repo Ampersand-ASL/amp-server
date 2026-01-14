@@ -33,7 +33,7 @@
 #include "kc1fsz-tools/linux/StdClock.h"
 #include "kc1fsz-tools/linux/MTLog.h"
 
-// All of the AMP stuff
+// All of this comes from AMP Core
 #include "TraceLog.h"
 #include "LineIAX2.h"
 #include "LineUsb.h"
@@ -46,6 +46,8 @@
 #include "SignalIn.h"
 #include "ThreadUtil.h"
 #include "service-thread.h"
+
+// And a few things from AMP Server
 #include "CallValidatorStd.h"
 #include "LocalRegistryStd.h"
 #include "config-handler.h"
@@ -84,7 +86,7 @@ int main(int argc, const char** argv) {
     CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
     if (res) {
         log.error("Libcurl failed to initialize %d", res);
-        std::exit(1);
+        std::exit(-1);
     }
 
     // Parse command line arguments
@@ -112,7 +114,7 @@ int main(int argc, const char** argv) {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
         log.error("Argument error: %s", err.what());
-        std::exit(1);
+        std::exit(-2);
     }
 
     log.info("Using configuration file %s", cfgFileName.c_str());
@@ -125,7 +127,7 @@ int main(int argc, const char** argv) {
             cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
         else {
             log.error("Unable to create default configuration");
-            std::exit(1);
+            std::exit(-3);
         }
     }
 
@@ -192,7 +194,9 @@ int main(int argc, const char** argv) {
         &cfgPoller };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
 
-    return 0;
+    // #### TODO: At the moment there is no clean way to get out of the loop
+
+    std::exit(0);
 }
 
 /** 
