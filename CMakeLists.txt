@@ -179,3 +179,15 @@ target_include_directories(hello-mixer PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(hello-mixer PRIVATE cpp-httplib)
 target_link_libraries(hello-mixer -lasound -lusb-1.0)
 
+# ------ cobs-test-1 ---------------------------------------------------------
+
+add_executable(cobs-test-1
+  src/tests/cobs-test-1.cpp
+  kc1fsz-tools-cpp/src/NetUtils.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  cobs-c/cobs.c
+) 
+
+target_include_directories(cobs-test-1 PRIVATE src)
+target_include_directories(cobs-test-1 PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(cobs-test-1 PRIVATE cobs-c)
