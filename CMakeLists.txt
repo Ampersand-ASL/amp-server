@@ -90,6 +90,7 @@ add_executable(amp-server
   amp-core/src/Transcoder_G711_ULAW.cpp
   amp-core/src/Transcoder_SLIN_48K.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
+  amp-core/src/Transcoder_SLIN_8K.cpp
   amp-core/src/Bridge.cpp
   amp-core/src/BridgeCall.cpp
   amp-core/src/BridgeIn.cpp
@@ -102,6 +103,7 @@ add_executable(amp-server
   amp-core/src/ThreadUtil.cpp
   amp-core/src/NRLog.cpp
   amp-core/src/TraceLog.cpp
+  amp-core/src/LineSDRC.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
@@ -110,6 +112,9 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
+  kc1fsz-tools-cpp/src/md5/md5c.c
+  kc1fsz-tools-cpp/src/crc/crc.c
+  cobs-c/cobs.c
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
@@ -134,8 +139,10 @@ add_executable(amp-server
 
 target_include_directories(amp-server PRIVATE src)
 target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
 target_include_directories(amp-server PRIVATE itu-g711-codec/src)
 target_include_directories(amp-server PRIVATE cmsis-dsp-mock/include)
+target_include_directories(amp-server PRIVATE cobs-c)
 target_include_directories(amp-server PRIVATE amp-core/include)
 # TODO: REMOVE
 target_include_directories(amp-server PRIVATE amp-core/src)

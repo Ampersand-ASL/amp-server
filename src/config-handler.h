@@ -25,6 +25,7 @@ namespace kc1fsz {
 class Log;
 class LineIAX2;
 class LineUsb;
+class LineSDRC;
 
 namespace amp {
 
@@ -38,7 +39,7 @@ class Bridge;
  * @throws json::exception On a JSON error (i.e. missing element)
  */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
-    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10);
+    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC&);
 
 }
 
