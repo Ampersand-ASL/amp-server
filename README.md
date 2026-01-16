@@ -1,6 +1,12 @@
-# Ampersand Server
+This is the repo that builds the main server that supports linking between radios and nodes on the ASL network. This project builds
+on Linux (Debian 13) using arm64 or x86-64 architectures.
 
-The core server supports linking between radios and nodes on the ASL network.
+[Most of the documentation is here](https://mackinnon.info/ampersand/).
+
+To understand the structure of the server, the best place to start 
+is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp).
+
+**MORE SOFTWARE STRUCTURE DOCUMENTATION TO FOLLOW**
 
 # One-Time Machine Setup (To Run the Server)
 
@@ -14,7 +20,7 @@ Get the public SSH key loaded onto the machine to enable login, remote editing, 
         cd .ssh
         echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_keys
 
-Tell git to retain credentials:
+Tell git to retain credentials (insecure):
 
         git config --global credential.helper store
 
@@ -42,9 +48,14 @@ Install the server:
         tar xvf tar xvf amp-$AMP_SERVER_VERSION-aarch64.tar.gz
         ln -s amp-$AMP_SERVER_VERSION-x86_64 amp       
 
-# Building The Server
+# Building The Server From Source
+
+Install the prerequisites:
 
     sudo apt install cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev
+
+Get the code and build:
+
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
     git submodule update --init
@@ -53,7 +64,7 @@ Install the server:
     cmake ..
     make
 
-# Packaging
+# Packaging the Build
 
     export AMP_SERVER_VERSION=20260109
     ../scripts/make-package.sh        
@@ -63,4 +74,7 @@ Install the server:
 # (Debug) Getting Line Number From Stack Trace
 
         addr2line -e ./amp-server -fC 0x138a0
-        
+
+# Code Metrics
+
+        cloc --vcs=git --exclude-list-file=.clocignore .
