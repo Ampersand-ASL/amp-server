@@ -114,6 +114,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/crc/crc.c
+  kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
   cobs-c/cobs.c
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
