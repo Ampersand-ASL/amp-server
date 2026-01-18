@@ -199,3 +199,19 @@ add_executable(cobs-test-1
 target_include_directories(cobs-test-1 PRIVATE src)
 target_include_directories(cobs-test-1 PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(cobs-test-1 PRIVATE cobs-c)
+
+# ------ sdrc-msg-test-1 ---------------------------------------------------
+
+add_executable(sdrc-msg-test-1
+  src/tests/sdrc-msg-test-1.cpp
+  kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/crc/crc.c
+  cobs-c/cobs.c
+) 
+
+target_include_directories(sdrc-msg-test-1 PRIVATE src)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-sdrc/sw/src)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
+target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)

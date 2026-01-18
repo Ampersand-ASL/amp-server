@@ -12,33 +12,24 @@ using namespace std;
 using namespace kc1fsz;
 
 int main(int, const char**) {
-    // Audio frame dimension
+    // A demonstration of what happens when you assume the COBS
+    // encoding is a fixed length. It's not because the encoding
+    // size depends on the message content.
     {
-        uint8_t inmsg[320];
-        for (unsigned i = 0; i < 320; i++) 
-            inmsg[i] = 0x18;
-        uint8_t outmsg[322];
-        cobs_encode_result re = cobs_encode(outmsg, 322, inmsg, 320);
-        prettyHexDump(outmsg, 302, cout);
-        assert(re.status == COBS_ENCODE_OK);
-        assert(re.out_len == 322);
-        uint8_t outmsg2[320];
-        cobs_decode_result rd = cobs_decode(outmsg2, 320, outmsg, re.out_len);
-        assert(rd.status == COBS_DECODE_OK);                               
-        assert(memcmp(inmsg, outmsg2, 320) == 0);
-    }
-    {
-        uint8_t inmsg[300];
-        for (unsigned i = 0; i < 300; i++) 
-            inmsg[i] = i;
-        uint8_t outmsg[302];
-        cobs_encode_result re = cobs_encode(outmsg, 302, inmsg, 300);
-        assert(re.status == COBS_ENCODE_OK);
+        uint8_t inmsg[322];
+        for (unsigned i = 0; i < 322; i++) {
+            inmsg[i] = (i % 2 == 0) ? 0x18 : 0x00;
+        }
+        uint8_t outmsg[324];
+        cobs_encode_result re = cobs_encode(outmsg, 324, inmsg, 322);
         //prettyHexDump(outmsg, 302, cout);
-        uint8_t outmsg2[300];
-        cobs_decode_result rd = cobs_decode(outmsg2, 300, outmsg, re.out_len);
-        assert(rd.status == COBS_DECODE_OK);                               
-        assert(memcmp(inmsg, outmsg2, 300) == 0);
+        assert(re.status == COBS_ENCODE_OK);
+        // It's actually 323
+        assert(re.out_len <= 324);
+        uint8_t outmsg2[322];
+        // This will be an error because the encoded buffer is only 323!
+        cobs_decode_result rd = cobs_decode(outmsg2, size(outmsg2), outmsg, 324);
+        assert(rd.status != COBS_DECODE_OK);                               
     }
     {
         uint8_t inmsg[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
