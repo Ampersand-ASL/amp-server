@@ -32,6 +32,7 @@
 #include "kc1fsz-tools/Log.h"
 #include "kc1fsz-tools/linux/StdClock.h"
 #include "kc1fsz-tools/linux/MTLog.h"
+#include "kc1fsz-tools/threadsafequeue2.h"
 
 // All of this comes from AMP Core
 #include "TraceLog.h"
@@ -132,21 +133,20 @@ int main(int argc, const char** argv) {
         }
     }
 
-    // Get the service thread running. This handles non-time-sensitive
-    // stuff like registration, stats, etc.
-    service_thread_args args1;
-    args1.log = &log;
-    args1.cfgFileName = cfgFileName;
-    std::thread serviceThread(service_thread, &args1);
-
     // This is the router (aka "bus") that passes Message objects between the rest 
     // of the components in the system. You'll see that everything else below is
     // wired to the router one way or the other.
-    MultiRouter router;
+    threadsafequeue2<Message> respQueue;
+    MultiRouter router(respQueue);
+
+    // Get the service thread running. This handles non-time-sensitive
+    // stuff like registration, stats, etc.
+    std::thread serviceThread(service_thread, &cfgFileName, &log);
 
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
-    amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL);
+    amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
+        0, 0, 0);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
