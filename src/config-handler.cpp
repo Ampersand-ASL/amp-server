@@ -49,13 +49,15 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         log.error("Failed to open IAX2 line %d", rc);
     }
 
+    /*
     //if (!cfg["sdrcSerialDevice"].is_string()) {
         rc = sdrcLine5.open("/dev/ttyUSB0");
         if (rc < 0) {
             log.error("Failed to open SDRC line %d", rc);
         }
     //}
-
+    */
+    
     string setupMode = cfg["setupMode"].get<std::string>();
 
     // ----- ASL Compatibility Mode -----------------------------------
