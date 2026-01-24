@@ -39,8 +39,8 @@ class Bridge;
  * @throws json::exception On a JSON error (i.e. missing element)
  */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
-    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC&);
-
+    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC&,
+    int iaxPortOverride);
 }
 
 }

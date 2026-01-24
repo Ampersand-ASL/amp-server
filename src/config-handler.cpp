@@ -32,7 +32,8 @@ namespace kc1fsz {
     namespace amp {
 
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
-    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC& sdrcLine5) {
+    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC& sdrcLine5,
+    int iaxPortOverride) {
 
     // Transfer the new configuration into the various places it is needed
     webUi.setConfig(cfg);
@@ -40,11 +41,14 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
     //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
     
-    if (!cfg["iaxPort"].is_string())
-        throw invalid_argument("iaxPort is missing/invalid");
-
-    int rc;
-    rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort"].get<std::string>()), "radio");
+    int iaxPort = iaxPortOverride;
+    if (iaxPort == 0) {
+        if (!cfg["iaxPort"].is_string())
+            throw invalid_argument("iaxPort is missing/invalid");
+        iaxPort = std::stoi(cfg["iaxPort"].get<std::string>());
+    }
+    
+    int rc = iax2Channel1.open(AF_INET, iaxPort, "radio");
     if (rc < 0) {
         log.error("Failed to open IAX2 line %d", rc);
     }

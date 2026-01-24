@@ -112,6 +112,17 @@ int main(int argc, const char** argv) {
         .default_value(false)
         .implicit_value(true);
 
+    int iaxPort = 0;
+    program.add_argument("--iaxport")
+        .store_into(iaxPort)
+        .default_value(0)
+        .help("IAX port, overrides system configuration");
+
+    string callNode;
+    program.add_argument("--callnode")
+        .help("Node to call immediately")
+        .store_into(callNode);
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
@@ -181,18 +192,32 @@ int main(int argc, const char** argv) {
     // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10, &sdrcLine5]
+        [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10, &sdrcLine5,
+         iaxPort]
         (const json& cfg) {
 
             log.info("Configuration change detected");
             cout << cfg.dump() << endl;
 
             try {
-                amp::configHandler(log, cfg, webUi, iax2Channel1, radio2, signalIn3, bridge10, sdrcLine5);
+                amp::configHandler(log, cfg, webUi, iax2Channel1, radio2, signalIn3, 
+                    bridge10, sdrcLine5, iaxPort);
             }
             // ### TODO MORE SPECIFIC
             catch (json::exception& ex) {
                 log.error("Failed to process configuration change %s", ex.what());
+                return;
+            }
+        },
+        // This function will be called once on startup
+        [&log, &iax2Channel1, &callNode]
+        (const json& cfgDoc) {
+            string localNode;
+            if (cfgDoc.contains("node"))
+                localNode = cfgDoc["node"];
+            // If a node was specified on the command line then connect immediately
+            if (!localNode.empty() && !callNode.empty()) {
+                iax2Channel1.call(localNode.c_str(), callNode.c_str());
             }
         }
     );
