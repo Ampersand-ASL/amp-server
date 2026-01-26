@@ -32,6 +32,7 @@ namespace kc1fsz {
     namespace amp {
 
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
+    LocalRegistryStd& locReg,
     LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC& sdrcLine5,
     int iaxPortOverride) {
 

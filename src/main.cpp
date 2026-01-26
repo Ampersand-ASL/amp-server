@@ -50,7 +50,6 @@
 #include "SignalIn.h"
 
 // And a few things from AMP Server
-#include "CallValidatorStd.h"
 #include "LocalRegistryStd.h"
 #include "config-handler.h"
 
@@ -174,9 +173,8 @@ int main(int argc, const char** argv) {
     router.addRoute(&sdrcLine5, 5);
 
     // This is the Line that makes the IAX2 network connection
-    CallValidatorStd val;
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, &val, &locReg, 10);
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10);
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
@@ -192,7 +190,7 @@ int main(int argc, const char** argv) {
     // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10, &sdrcLine5,
+        [&log, &webUi, &iax2Channel1, &locReg, &radio2, &signalIn3, &bridge10, &sdrcLine5,
          iaxPort]
         (const json& cfg) {
 
@@ -200,7 +198,7 @@ int main(int argc, const char** argv) {
             cout << cfg.dump() << endl;
 
             try {
-                amp::configHandler(log, cfg, webUi, iax2Channel1, radio2, signalIn3, 
+                amp::configHandler(log, cfg, webUi, iax2Channel1, locReg, radio2, signalIn3, 
                     bridge10, sdrcLine5, iaxPort);
             }
             // ### TODO MORE SPECIFIC

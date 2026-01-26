@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include "kc1fsz-tools/fixedstring.h"
 #include "LineIAX2.h"
 
 namespace kc1fsz {
@@ -23,7 +24,8 @@ namespace kc1fsz {
 // #### TODO: Need a real implementation for this.
 class LocalRegistryStd : public LocalRegistry {
 public:
-    virtual bool lookup(const char* destNumber, sockaddr_storage& addr) {
+    virtual bool lookup(const char* destNumber, sockaddr_storage& addr, 
+        fixedstring& user, fixedstring& password) {
         // At the moment there is nothing in the local registry
         return false;
     }
