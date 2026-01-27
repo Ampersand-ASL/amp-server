@@ -15,8 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <cstring>
 
 #include "kc1fsz-tools/fixedstring.h"
+#include "kc1fsz-tools/NetUtils.h"
+
 #include "LineIAX2.h"
 
 namespace kc1fsz {
@@ -26,8 +29,18 @@ class LocalRegistryStd : public LocalRegistry {
 public:
     virtual bool lookup(const char* destNumber, sockaddr_storage& addr, 
         fixedstring& user, fixedstring& password) {
-        // At the moment there is nothing in the local registry
-        return false;
+        if (strcmp(destNumber, "2000") == 0) {
+            addr.ss_family = AF_INET;
+            setIPAddr(addr,"192.168.8.143");
+            setIPPort(addr, 4569);
+            user = "bruce";
+            password = "hello";
+            return true;
+        }
+        else {
+            // At the moment there is nothing in the local registry
+            return false;
+        }
     }
 };
 
