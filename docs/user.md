@@ -58,7 +58,7 @@ Installation steps:
 
     export AMP_SERVER_VERSION=20260128
     export AMP_ARCH=$(uname -m)
-    wget https://mackinnon.info/ampersand/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+    wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     ln -s amp-${AMP_SERVER_VERSION}-${AMP_ARCH} amp
 

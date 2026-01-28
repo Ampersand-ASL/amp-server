@@ -41,12 +41,10 @@ Force reload of rules:
 Install the server:
 
         export AMP_SERVER_VERSION=20260128
-        wget https://mackinnon.info/ampersand/releases/amp-$AMP_SERVER_VERSION-x86_64.tar.gz
-        # For x86-64:
-        tar xvf tar xvf amp-$AMP_SERVER_VERSION-x86_64.tar.gz
-        # For arm64:
-        tar xvf tar xvf amp-$AMP_SERVER_VERSION-aarch64.tar.gz
-        ln -s amp-$AMP_SERVER_VERSION-x86_64 amp       
+        export AMP_ARCH=$(uname -m)
+        wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+        tar xvf tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+        ln -s amp-$AMP_SERVER_VERSION-${AMP_ARCH} amp       
 
 # Building The Server From Source
 
@@ -59,17 +57,16 @@ Get the code and build:
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
     git submodule update --init
-    mkdir build
-    cd build
-    cmake ..
-    make
-
+    cmake -B build
+    cmake --build build 
+    
 # Packaging the Build
 
     export AMP_SERVER_VERSION=20260128
-    ../scripts/make-package.sh        
+    export AMP_ARCH=$(uname -m)
+    scripts/make-package.sh        
     # Move as needed
-    rsync /tmp/amp-$AMP_SERVER_VERSION-x86_64.tar.gz bruce@pi5:/tmp
+    scp /tmp/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz bruce@pi5:/tmp
     # And them move the .tar.gz to the Ampersand S3 bucket
 
 # (Debug) Getting Line Number From Stack Trace
