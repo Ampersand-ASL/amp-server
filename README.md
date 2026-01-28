@@ -9,6 +9,8 @@ is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp
 Most of what is on this page is relevant to development. The
 [normal installation/user instructions are here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md).
 
+ <span style="color:red">**If you are just looking to install/run the server, you probably want to [start here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md)!**</span>
+
 # One-Time Developer Machine Setup 
 
 Make a keypair if necessary:
