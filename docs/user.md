@@ -3,7 +3,7 @@ for desktop radio-less use. Future releases will enable more functionality. Send
 comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
 
 This is experimental work that explores the potential of ASL linking 
-without the use of the Asterisk PBX system. 
+without the use of the Asterisk PBX system. [Project documentation is here](https://mackinnon.info/ampersand/).
 
 All of the testing of this system is happening on either:
 * A Raspberry Pi 5 running Debian 12 Bookworm. This is an ARM-64 platform.
@@ -23,11 +23,14 @@ I won't repeat everything here. Bottom line:
 
 * Make sure you are clear on what IAX (UDP) port your node is using. This assignment
 happens on the [ASL Portal](https://www.allstarlink.org/portal/servers.php). UDP port 4569 is the common default.
-* Make sure that your IAX port is opened/forwarded through your firewall/NAT system.
-* Make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
-running on your machine.
 * Make sure that your IAX port is properly configured on the Ampersand Configuration 
 screen (see below).
+* If you expect to receive inbound calls make sure that your IAX port is opened/forwarded through your firewall/NAT system.
+* If you expect to receive inbound calls make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
+running on your machine.
+* You can test your network connection using the 61057 parrot. If the 61057 parrot
+tells you that your "network test succeeded" that means that your firewall is open
+and that you can accept inbound calls.
 
 Network Setup (IPv6)
 ====================
@@ -41,7 +44,7 @@ Install required packages:
 
     sudo apt install wget net-tools libcurl4-gnutls-dev
 
-An adjustment needs to be made to allow non-root users to access the HID interfaces. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
+An adjustment needs to be made to allow non-root users to access the HID interfaces. This is relevant to the COS/PTT signals. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
 
     # The C-Media vendor ID
     SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
