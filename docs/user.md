@@ -192,23 +192,6 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
 
-Network Debugging Hints
-=======================
-
-* Pay close attention to the UDP port number you are using. Each ASL Node 
-number is associated with an ASL Server. Each ASL Server is assigned a 
-UDP port for IAX traffic. Sometimes people get confused about this when they
-start running multiple nodes.
-* Just because your node can call out doesn't mean that you can accept 
-calls. The firewall/NAT adjustments described above aren't required to 
-make outgoing calls - only to receive incoming ones.
-* A valid ASL registration is required for some nodes to accept your call.
-*ASL parrots often do not require registration* so if you find that your
-call is accepted by a parrot but not by other nodes it is likely that your 
-registration is invalid. Check your password.
-* The ASL registration process takes some time to propagate. When your node
-first starts up your calls may not be accepted. Wait about 10 minutes and try again.
-
 Running As A Linux Service
 ==========================
 
@@ -249,3 +232,29 @@ You can view the log using this command:
 
     journalctl -u amp-server -f
     
+Network Debugging Hints
+=======================
+
+* Pay close attention to the UDP port number you are using. Each ASL Node 
+number is associated with an ASL Server. Each ASL Server is assigned a 
+UDP port for IAX traffic. Sometimes people get confused about this when they
+start running multiple nodes.
+* Just because your node can call out doesn't mean that you can accept 
+calls. The firewall/NAT adjustments described above aren't required to 
+make outgoing calls - only to receive incoming ones.
+* A valid ASL registration is required for some nodes to accept your call.
+*ASL parrots often do not require registration* so if you find that your
+call is accepted by a parrot but not by other nodes it is likely that your 
+registration is invalid. Check your password.
+* The ASL registration process takes some time to propagate. When your node
+first starts up your calls may not be accepted. Wait about 10 minutes and try again.
+* Test using parrot 61057 **before asking for network help**. This parrot will provide 
+information about whether (a) your node is registered and (b) whether your 
+node is reachable from the outside.
+
+Asking For Help
+===============
+
+I'm happy to take any questions, but keep in mind that I'm not an expert on
+Linux administration.
+
