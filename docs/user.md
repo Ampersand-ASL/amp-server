@@ -17,6 +17,8 @@ This will be documented separately.
 All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
 chip. 
 
+The [change log is located here](../CHANGELOG.md). I try to keep it up to date.
+
 Network Setup (IPv4)
 ====================
 
@@ -59,8 +61,6 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
-The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz)
-
 Installation steps:
 
     export AMP_SERVER_VERSION=20260128
@@ -68,6 +68,11 @@ Installation steps:
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     ln -s amp-${AMP_SERVER_VERSION}-${AMP_ARCH} amp
+
+In case you need the links:
+
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz)
 
 Running the Server
 ==================
