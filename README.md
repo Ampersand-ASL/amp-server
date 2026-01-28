@@ -1,16 +1,16 @@
 This is the repo that builds the main server that supports linking between radios and nodes on the ASL network. This project builds
 on Linux (Debian 13) using arm64 or x86-64 architectures.
 
-[Most of the documentation is here](https://mackinnon.info/ampersand/).
+[Most of the Ampersand project documentation is here](https://mackinnon.info/ampersand/).
+
+> [!IMPORTANT]
+> **If you are just looking to install/run the server, you probably want to</span> [start here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md)!**
 
 To understand the structure of the server, the best place to start 
 is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp).
 
-Most of what is on this page is relevant to development. The
+Most of what is on the rest of this page is relevant to development. The
 [normal installation/user instructions are here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md).
-
-> [!IMPORTANT]
-> **If you are just looking to install/run the server, you probably want to</span> [start here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md)!**
 
 # One-Time Developer Machine Setup 
 
