@@ -18,11 +18,15 @@
 
 #include "sound-map.h"
 
+// amp-core
 #include "WebUi.h"
 #include "LineIAX2.h"
 #include "LineUsb.h"
 #include "LineSDRC.h"
 #include "SignalIn.h"
+#include "Bridge.h"
+
+// amp-server
 #include "config-handler.h"
 
 using namespace std;
@@ -42,6 +46,12 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
     //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
     
+    if (cfg.contains("node")) {
+        string localNode = cfg["node"];
+        if (!localNode.empty())
+            bridge10.setLocalNodeNumber(localNode.c_str());
+    }
+
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {
         if (!cfg["iaxPort"].is_string())

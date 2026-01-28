@@ -54,17 +54,13 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
-Installing for x86-64:
+Installation steps:
 
-    wget https://mackinnon.info/ampersand/releases/amp-20260109-x86_64.tar.gz
-    tar xvf amp-20260109-x86_64.tar.gz
-    ln -s amp-20260109-x86_64 amp
-
-Installing for aarch64 (ARM):
-
-    wget https://mackinnon.info/ampersand/releases/amp-20260109-aarch64.tar.gz
-    tar xvf amp-20260109-aarch64.tar.gz
-    ln -s amp-20260109-aarch64 amp
+    export AMP_SERVER_VERSION=20260128
+    export AMP_ARCH=$(uname -m)
+    wget https://mackinnon.info/ampersand/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+    tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+    ln -s amp-${AMP_SERVER_VERSION}-${AMP_ARCH} amp
 
 Running the Server
 ==================
@@ -107,14 +103,15 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ![Amp3](amp-4.jpg)
 
-Things That Aren't Enabled Yet
+Current Development In Process
 ==============================
 
-* DTMF pad
-* CTCSS/PTT functionality
-* Repeater functionality
-* List of linked nodes for each node
-* More status messages need to be shown on the main page
+* More status messages need to be shown on the main page, particular when connection fails.
+* Private node support.
+* Kerchunk filter.
+* PTT signal support.
+* Repeater functionality.
+* Display list of linked nodes for each node.
 
 Discarding HID Input
 ====================

@@ -57,7 +57,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260116.0";
+static const char* VERSION = "20260128.0";
 const char* const GIT_HASH = "?";
 
 static void sigHandler(int sig);
@@ -156,7 +156,7 @@ int main(int argc, const char** argv) {
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
-        0, 0, 0);
+        0, 0, 0, 1);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
