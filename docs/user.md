@@ -61,6 +61,11 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
+If you are already running the Ampersand Server (i.e. this is an upgrade),
+you will need to shut down the service:
+
+    sudo systemctl stop amp-server
+
 Installation steps:
 
     export AMP_SERVER_VERSION=20260128
@@ -74,7 +79,7 @@ In case you need the links:
 * The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz)
 * The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz)
 
-Running the Server
+Running the Server 
 ==================
 
     cd amp
@@ -91,6 +96,47 @@ The server is operated via a web UI. Point your browser to the server using port
 have configured one on the command line.  The main screen will look like this:
 
 ![Amp1](amp-server-home.jpg)
+
+Running As A Linux Service
+==========================
+
+You might want to run your AMP Server as a service. This is optional, but
+it will keep the server running after you log out or reboot.
+
+Copy the amp-server binary to /usr/bin.
+
+Create a service file called /lib/systemd/system/amp-server.service that looks
+something like this:
+
+    [Unit]
+    Description=AMP Server
+    After=network.target
+    StartLimitIntervalSec=0
+
+    [Service]
+    Type=simple
+    Restart=always
+    RestartSec=1
+    # Change to your id, best not to run as root
+    User=bruce
+    ExecStart=/usr/bin/amp-server
+    WorkingDirectory=/tmp
+    RestrictRealtime=off
+    # Make the process real-time with high priority
+    # The + requests higher privileges.
+    ExecStartPost=+/bin/sh -c "/usr/bin/chrt --rr -p 50 $MAINPID"
+
+    [Install]
+    WantedBy=multi-user.target
+
+Enable and start the service:
+
+    sudo systemctl enable amp-server
+    sudo systemctl start amp-server
+
+You can view the log using this command:
+
+    journalctl -u amp-server -f
 
 Setup/Configuration
 ===================
@@ -191,46 +237,6 @@ being used for ASL from Pulse Audio control:
 * Go to the Configuration tab.
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
-
-Running As A Linux Service
-==========================
-
-You might want to run your AMP Server as a service. This is optional.
-
-Copy the amp-server binary to /usr/bin.
-
-Create a service file called /lib/systemd/system/amp-server.service that looks
-something like this:
-
-    [Unit]
-    Description=AMP Server
-    After=network.target
-    StartLimitIntervalSec=0
-
-    [Service]
-    Type=simple
-    Restart=always
-    RestartSec=1
-    # Change to your id, best not to run as root
-    User=bruce
-    ExecStart=/usr/bin/amp-server
-    WorkingDirectory=/tmp
-    RestrictRealtime=off
-    # Make the process real-time with high priority
-    # The + requests higher privileges.
-    ExecStartPost=+/bin/sh -c "/usr/bin/chrt --rr -p 50 $MAINPID"
-
-    [Install]
-    WantedBy=multi-user.target
-
-Enable and start the service:
-
-    sudo systemctl enable amp-server
-    sudo systemctl start amp-server
-
-You can view the log using this command:
-
-    journalctl -u amp-server -f
     
 Network Debugging Hints
 =======================
