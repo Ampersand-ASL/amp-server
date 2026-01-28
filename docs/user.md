@@ -1,3 +1,5 @@
+# Ampersand Server User/Install Documentation
+
 At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node
 for desktop radio-less use. Future releases will enable more functionality. Send
 comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
@@ -27,7 +29,7 @@ happens on the [ASL Portal](https://www.allstarlink.org/portal/servers.php). UDP
 screen (see below).
 * If you expect to receive inbound calls make sure that your IAX port is opened/forwarded through your firewall/NAT system.
 * If you expect to receive inbound calls make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
-running on your machine.
+running on your machine (if applicable).
 * You can test your network connection using the 61057 parrot. If the 61057 parrot
 tells you that your "network test succeeded" that means that your firewall is open
 and that you can accept inbound calls.
