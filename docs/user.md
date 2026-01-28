@@ -59,6 +59,8 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
+The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz)
+
 Installation steps:
 
     export AMP_SERVER_VERSION=20260128
