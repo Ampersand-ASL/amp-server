@@ -2,10 +2,10 @@
 
 At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node
 for desktop radio-less use. Future releases will enable more functionality. Send
-comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
+comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in [QRZ](https://www.qrz.com/db/KC1FSZ).
 
 This is experimental work that explores the potential of ASL linking 
-without the use of the Asterisk PBX system. [Project documentation is here](https://mackinnon.info/ampersand/).
+without the use of the Asterisk PBX system. [Project documentation is here](https://mackinnon.info/ampersand/). 
 
 All of the testing of this system is happening on either:
 * A Raspberry Pi 5 running Debian 12 Bookworm. This is an ARM-64 platform.
