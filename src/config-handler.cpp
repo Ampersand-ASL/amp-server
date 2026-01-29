@@ -48,8 +48,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     
     if (cfg.contains("node")) {
         string localNode = cfg["node"];
-        if (!localNode.empty())
+        if (!localNode.empty()) {
             bridge10.setLocalNodeNumber(localNode.c_str());
+            // #### TODO: MULTIPLE NODES AS SOME POINT
+            iax2Channel1.setPokeNodeNumber(localNode.c_str());
+        }
     }
 
     int iaxPort = iaxPortOverride;

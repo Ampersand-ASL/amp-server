@@ -178,6 +178,9 @@ int main(int argc, const char** argv) {
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
+    iax2Channel1.setPokeEnabled(true);
+    iax2Channel1.setPokeAddr("52.8.197.124:4570");
+    iax2Channel1.setDirectedPokeEnabled(true);
 
     // This is the HTTP server that provides the UI
     amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION,
