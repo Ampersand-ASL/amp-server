@@ -58,7 +58,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260128.0";
+static const char* VERSION = "20260130.0";
 const char* const GIT_HASH = "?";
 
 static void sigHandler(int sig);

@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-01-30
+
+- Changed shape of low-pass filters used for decimation/interpolation
+to improve audio quality.
+
 ## 2026-01-28
 
 - Web UI switched to dark mode per NR9V suggestion.
