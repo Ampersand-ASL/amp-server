@@ -48,6 +48,7 @@
 #include "WebUi.h"
 #include "ConfigPoller.h"
 #include "SignalIn.h"
+#include "TimerTask.h"
 
 // And a few things from AMP Server
 #include "LocalRegistryStd.h"
@@ -149,9 +150,12 @@ int main(int argc, const char** argv) {
     threadsafequeue2<Message> respQueue;
     MultiRouter router(respQueue);
 
+    copyableatomic<std::string> pokeAddr;
+
     // Get the service thread running. This handles non-time-sensitive
     // stuff like registration, stats, etc.
-    std::thread serviceThread(service_thread, &cfgFileName, &log);
+    std::thread serviceThread(service_thread, &cfgFileName, &log, VERSION, 
+        &pokeAddr);
 
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
@@ -223,9 +227,19 @@ int main(int argc, const char** argv) {
         }
     );
 
+    // Setup a timer that takes the poke address generated from the service
+    // thread and puts it into the IAX line.
+    TimerTask timer1(log, clock, 10, 
+        [&log, &pokeAddr, &iax2Channel1]() {
+            std::string addr = pokeAddr.getCopy();
+            if (!addr.empty())
+                iax2Channel1.setPokeAddr(addr.c_str());
+        }
+    );
+
     // Setup the EventLoop with all of the tasks that need to be run on this thread
     Runnable2* tasks[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, 
-        &cfgPoller, &sdrcLine5 };
+        &cfgPoller, &sdrcLine5, &timer1 };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
 
     // #### TODO: At the moment there is no clean way to get out of the loop
