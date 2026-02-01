@@ -144,10 +144,15 @@ int main(int argc, const char** argv) {
         }
     }
 
+    // A queue used by other threads to pass messages into the main thread's
+    // router.
+    threadsafequeue2<Message> respQueue;
+    // A wrapper that makes the response queue look like a MessageConsumer
+    QueueConsumer respQueueConsumer(respQueue);
+
     // This is the router (aka "bus") that passes Message objects between the rest 
     // of the components in the system. You'll see that everything else below is
     // wired to the router one way or the other.
-    threadsafequeue2<Message> respQueue;
     MultiRouter router(respQueue);
 
     copyableatomic<std::string> pokeAddr;
@@ -187,11 +192,14 @@ int main(int argc, const char** argv) {
     iax2Channel1.setDirectedPokeEnabled(true);
 
     // This is the HTTP server that provides the UI
-    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION,
-        traceLog);
+    amp::WebUi webUi(log, clock, respQueueConsumer, uiPort, 1, 2, 
+        cfgFileName.c_str(), VERSION, traceLog);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
-    router.addRoute(&webUi, MultiRouter::BROADCAST);
+    router.addRoute(&webUi, MultiRouter::BROADCAST);   
+
+    // Get the UI thread going
+    std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer);
 
     // This is a poller that watches for changes to the configuration file
     // and applies those changes to everything on the main thread.
@@ -227,6 +235,14 @@ int main(int argc, const char** argv) {
         }
     );
 
+    // Setup a poller that looks at the bridge status and passes any updates
+    // over to the web UI.
+    amp::BridgeStatusDocPoller statusPoller(clock, bridge10, 
+        [&webUi](const json& statusDoc) {
+            webUi.setBridgeStatus(statusDoc);
+        }
+    );
+
     // Setup a timer that takes the poke address generated from the service
     // thread and puts it into the IAX line.
     TimerTask timer1(log, clock, 10, 
@@ -239,7 +255,7 @@ int main(int argc, const char** argv) {
 
     // Setup the EventLoop with all of the tasks that need to be run on this thread
     Runnable2* tasks[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, 
-        &cfgPoller, &sdrcLine5, &timer1 };
+        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
 
     // #### TODO: At the moment there is no clean way to get out of the loop
