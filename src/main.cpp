@@ -236,8 +236,8 @@ int main(int argc, const char** argv) {
     );
 
     // Setup a poller that looks at the bridge status and passes any updates
-    // over to the web UI.
-    amp::BridgeStatusDocPoller statusPoller(clock, bridge10, 
+    // over to the web UI. We will get an event *AT LEAST* every 10 seconds.
+    amp::BridgeStatusDocPoller statusPoller(log, clock, bridge10, 10 * 1000,
         [&webUi](const json& statusDoc) {
             webUi.setBridgeStatus(statusDoc);
         }
