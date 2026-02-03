@@ -55,6 +55,29 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         }
     }
 
+    // Kerchunk filter configuration
+    if (cfg.contains("kfnodes")) {
+        // The nodes are comma-separated
+        string kfnodes = cfg["kfnodes"].get<std::string>();
+        vector<string> l;
+        // This is a comma-delimited list
+        std::istringstream tokenStream(kfnodes);
+        string token;
+        while (std::getline(tokenStream, token, ',')) {
+            trim(token);
+            if (token.empty())
+                continue;
+            l.push_back(token);
+        }
+        bridge10.setKerchunkFilterNodes(l);
+    }
+
+    if (cfg.contains("kfdelay")) {
+        // The nodes are comma-separated
+        string kfdelay = cfg["kfdelay"].get<std::string>();
+        bridge10.setKerchunkFilterDelayMs(stoi(kfdelay));
+    }
+
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {
         if (!cfg["iaxPort"].is_string())
