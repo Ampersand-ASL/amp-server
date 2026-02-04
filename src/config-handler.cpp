@@ -45,6 +45,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
 
     //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
     //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
+
+    if (cfg.contains("callsign")) {
+        string c = cfg["callsign"];
+        radio2.setCallsign(c.c_str());
+    }
     
     if (cfg.contains("node")) {
         string localNode = cfg["node"];
