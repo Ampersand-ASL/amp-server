@@ -58,7 +58,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260202.0";
+static const char* VERSION = "20260204.0";
 const char* const GIT_HASH = "?";
 
 static void sigHandler(int sig);
@@ -183,7 +183,7 @@ int main(int argc, const char** argv) {
 
     // This is the Line that makes the IAX2 network connection
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10);
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10, "radio");
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);

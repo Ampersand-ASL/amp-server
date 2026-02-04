@@ -85,7 +85,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         iaxPort = std::stoi(cfg["iaxPort"].get<std::string>());
     }
     
-    int rc = iax2Channel1.open(AF_INET, iaxPort, "radio");
+    int rc = iax2Channel1.open(AF_INET, iaxPort);
     if (rc < 0) {
         log.error("Failed to open IAX2 line %d", rc);
     }
