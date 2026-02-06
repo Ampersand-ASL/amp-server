@@ -138,6 +138,8 @@ add_executable(amp-server
   ${OBJECT1}
   ${OBJECT2}
 )
+# NOTE: Compiler optimizations are turned on
+target_compile_options(amp-server PRIVATE -fstack-protector-all -Wall -Wpedantic -g -O3 -mtune=native)
 
 target_include_directories(amp-server PRIVATE src)
 target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
