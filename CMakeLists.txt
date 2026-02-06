@@ -101,7 +101,6 @@ add_executable(amp-server
   amp-core/src/WebUi.cpp
   amp-core/src/SignalIn.cpp
   amp-core/src/ThreadUtil.cpp
-  amp-core/src/NRLog.cpp
   amp-core/src/TraceLog.cpp
   amp-core/src/LineSDRC.cpp
   amp-core/src/KerchunkFilter.cpp

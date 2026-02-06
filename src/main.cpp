@@ -31,7 +31,7 @@
 // Non-AMP stuff from my C++ tools library
 #include "kc1fsz-tools/Log.h"
 #include "kc1fsz-tools/linux/StdClock.h"
-#include "kc1fsz-tools/linux/MTLog.h"
+#include "kc1fsz-tools/MTLog2.h"
 #include "kc1fsz-tools/threadsafequeue2.h"
 
 // All of this comes from AMP Core
@@ -70,7 +70,11 @@ int main(int argc, const char** argv) {
     // Install the crash stack handler
     signal(SIGSEGV, sigHandler);
 
-    MTLog log;
+    // Create a logger that holds onto some history for display purposes.
+    // #### TODO: Think about the performance implications of the lock that 
+    // #### is acquired when the UI thread reads the log.
+    MTLog2 log;
+
     log.info("AMP Server");
     log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
     log.info("Copyright (C) 2026, Bruce MacKinnon KC1FSZ");
