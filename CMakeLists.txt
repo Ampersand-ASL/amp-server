@@ -109,6 +109,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
   kc1fsz-tools-cpp/src/MicroDNS.cpp
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/fixed_math.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
