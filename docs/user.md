@@ -164,12 +164,9 @@ the "Receive" in this context is from the perspective of the radio interface har
 Current Development In Process
 ==============================
 
-* More status messages need to be shown on the main page, particular when connection fails.
 * Private node support.
-* Kerchunk filter.
 * PTT signal support.
 * Repeater functionality.
-* Display list of linked nodes for each node.
 
 Discarding HID Input
 ====================
