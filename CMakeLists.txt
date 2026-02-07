@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.13)
 project(ampersand C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
-add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -O0)
+add_compile_options(-fstack-protector-all -Wall -Wpedantic -g -O0)
 
 # ----- Make resource objects ------------------------------------------------
 
