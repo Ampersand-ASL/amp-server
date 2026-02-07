@@ -12,7 +12,7 @@ is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp
 Most of what is on the rest of this page is relevant to development. The
 [normal installation/user instructions are here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md).
 
-# One-Time Developer Machine Setup 
+# One-Time Developer Machine Setup (Linux)
 
 Make a keypair if necessary:
 
@@ -24,7 +24,7 @@ Get the public SSH key loaded onto the machine to enable login, remote editing, 
         cd .ssh
         echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_key
 
-# Building The Server From Source
+# Building The Server From Source (Linux)
 
 Install the prerequisites:
 
@@ -42,9 +42,9 @@ Get the code and build:
     cmake -B build
     cmake --build build 
     
-# Packaging the Build
+# Packaging the Build (Linux)
 
-    export AMP_SERVER_VERSION=20260128
+    export AMP_SERVER_VERSION=20260207
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed

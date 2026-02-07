@@ -41,8 +41,8 @@ Network Setup (IPv6)
 
 (To follow shortly)
 
-Installation Instructions
-=========================
+Installation Instructions (Linux)
+=================================
 
 Install required packages:
 
@@ -68,7 +68,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260128
+    export AMP_SERVER_VERSION=20260207
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -76,11 +76,11 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-x86_64.tar.gz)
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260128-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-aarch64.tar.gz)
 
-Running the Server 
-==================
+Running the Server (Linux)
+==========================
 
     cd amp
     ./amp-server 
@@ -138,8 +138,8 @@ You can view the log using this command:
 
     journalctl -u amp-server -f
 
-Setup/Configuration
-===================
+Setup/Configuration (Linux)
+===========================
 
 Press the "Configuration" tab at the top of the screen to get to the configuration screen
 that looks like this:
@@ -161,15 +161,8 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ![Amp3](amp-4.jpg)
 
-Current Development In Process
-==============================
-
-* Private node support.
-* PTT signal support.
-* Repeater functionality.
-
-Discarding HID Input
-====================
+Discarding HID Input (Linux)
+============================
 
 (Please see [this article for more detail](https://www.florian-wolters.de/posts/discard-hid-input-from-cm108-device/))
 
@@ -206,8 +199,8 @@ And then reload the hwdb:
     udevadm systemd-hwdb update
     udevadm trigger
 
-Another Possible Solution to the "Volume Down" Problem
-======================================================
+Another Possible Solution to the "Volume Down" Problem (Linux)
+==============================================================
 
 Linux installations that include the Pulse Audio system 
 may introduce a different variant of the CM1xx Volume Down 
