@@ -147,7 +147,7 @@ that looks like this:
 ![Amp2](amp-server-config.jpg)
 
 This configuration should be very consistent with that used on the ASL system. Fill 
-in your node number, password, and IAX port number. All other defaults should be enough to get your started.
+in your node number, password, and IAX port number. All other defaults should be enough to get you started.
 
 The audio levels will be the first thing to configure. Your audio level will be displayed in 
 the system log any time you key your microphone (regardless of whether you are connected to 

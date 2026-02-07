@@ -48,7 +48,7 @@ Get the code and build:
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
-    scp /tmp/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz bruce@pi5:/tmp
+    scp bruce@pi5:/tmp/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz .
     # And them move the .tar.gz to the Ampersand S3 bucket
 
 # (Debug) Getting Line Number From Stack Trace

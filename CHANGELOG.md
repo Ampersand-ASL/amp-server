@@ -2,14 +2,27 @@
 
 ## 2026-02-07
 
-- Significant UI overhaul
-- Favorites are user-customizable now, see configuration screen.
-- The connection table now includes the list of connected nodes (separate list for each connection)
-- The connection table highlights the row in blue if it is actively receiving.
-- The connection table include the callsign/name of the last talker, although only for other Ampersand nodes since that is a protocol extension.
-- Any connection failures will be displayed as a status message on the bottom of the main page.
-- Added outbound L telemetry text message to allow other nodes to see the linked stations
-- Windows build is working
+* Major update to the user interface.  Important points:
+  - There are now status/error messages on the bottom of the screen to
+    provide feedback when connections fail.
+  - The list of connected nodes has been enhanced to include active
+    talker (more later) and the list of linked nodes as reported by
+    the "L" text message.
+  - Any nodes that that are actively talking will be highlighted in blue.
+  - Favorites can now be specified on the configuration page in
+    comma-separated "nodenumber:text description" format. For example
+    "61057:ASL Parrot".
+  - A callsign can now be entered on the configuration page. This is
+    used as the Talker ID for transmissions originating from the
+    hardware connected to your node.
+  - The kerchunk filter can be selectively enabled for the comma-separated
+    list of nodes entered on the configuration page.
+* Added outbound L telemetry text message to allow other nodes to see the linked stations
+* An initial implementation of the Talker ID feature has been provided. This
+will pass the callsign of the speaker through the network. Obviously,
+this only works for Ampersand nodes.
+* The coefficients on the various low-pass filters have been refined to improve
+audio performance.
 
 ## 2026-01-30
 
