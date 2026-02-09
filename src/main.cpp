@@ -61,12 +61,14 @@ using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
 static const char* VERSION = "20260209.0";
-const char* const GIT_HASH = "?";
+static const char* const GIT_HASH = "?";
+static const char* PUBLIC_USER = "radio";
 
 static void sigHandler(int sig);
 
-// This is a potentially large structure, so keeping it off the stack
+// These are potentially large structure, so keeping it off the stack
 static amp::BridgeCall callBank[MAX_CALLS];
+static LineIAX2::Call iaxCallBank[MAX_CALLS];
 
 int main(int argc, const char** argv) {
 
@@ -192,7 +194,8 @@ int main(int argc, const char** argv) {
 
     // This is the Line that makes the IAX2 network connection
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10, "radio");
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10, PUBLIC_USER,
+        iaxCallBank, MAX_CALLS);
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
