@@ -254,3 +254,7 @@ Asking For Help
 I'm happy to take any questions, but keep in mind that I'm not an expert on
 Linux administration.
 
+Please **do not** post questions that are specific to the Ampersand Server on the [AllStarLink Community Forum](https://community.allstarlink.org/). That forum
+is friendly and is very useful for general AllStarLink questions, but they are
+primarily focused on supporting the Asterisk/app_rpt based software.
+

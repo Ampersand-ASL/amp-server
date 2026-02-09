@@ -150,7 +150,7 @@ int main(int argc, const char** argv) {
 
     // A queue used by other threads to pass messages into the main thread's
     // router.
-    threadsafequeue2<Message> respQueue;
+    threadsafequeue2<MessageCarrier> respQueue;
     // A wrapper that makes the response queue look like a MessageConsumer
     QueueConsumer respQueueConsumer(respQueue);
 
