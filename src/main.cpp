@@ -54,14 +54,19 @@
 #include "LocalRegistryStd.h"
 #include "config-handler.h"
 
+#define MAX_CALLS (8)
+
 using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260207.0";
+static const char* VERSION = "20260209.0";
 const char* const GIT_HASH = "?";
 
 static void sigHandler(int sig);
+
+// This is a potentially large structure, so keeping it off the stack
+static amp::BridgeCall callBank[MAX_CALLS];
 
 int main(int argc, const char** argv) {
 
@@ -169,7 +174,7 @@ int main(int argc, const char** argv) {
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
-        0, 0, 0, 1);
+        0, 0, 0, 1, callBank, MAX_CALLS);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
