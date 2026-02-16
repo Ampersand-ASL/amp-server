@@ -123,6 +123,7 @@ add_executable(amp-server
   sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
   sound-map/src/usb-dir.c
+  base64.c/base64.c
   ed25519/src/add_scalar.c
   ed25519/src/ge.c
   ed25519/src/keypair.c
@@ -155,6 +156,7 @@ target_include_directories(amp-server PRIVATE ed25519/src)
 target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(amp-server PRIVATE cpp-httplib)
+target_include_directories(amp-server PRIVATE base64.c)
 target_include_directories(amp-server PRIVATE json/include)
 target_include_directories(amp-server PRIVATE argparse/include)
 

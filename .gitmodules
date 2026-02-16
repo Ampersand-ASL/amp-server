@@ -31,3 +31,9 @@
 [submodule "cobs-c"]
 	path = cobs-c
 	url = https://github.com/cmcqueen/cobs-c.git
+[submodule "cpp-base64"]
+	path = cpp-base64
+	url = https://github.com/ReneNyffenegger/cpp-base64.git
+[submodule "base64.c"]
+	path = base64.c
+	url = https://github.com/joedf/base64.c.git

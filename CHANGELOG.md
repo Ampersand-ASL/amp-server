@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-02-16
+
+* The --httppwd command-line option was used to allow a password to be set
+for the user interface. By default there is no authentication required. Thanks to 
+Smitty WB1G for this suggestion.
+* Internal changes have been made to improve performance and scalability.
+* Problems with CODEC negotiation have been addressed.
+
 ## 2026-02-07
 
 * Major update to the user interface.  Important points:

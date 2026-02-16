@@ -68,7 +68,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260207
+    export AMP_SERVER_VERSION=20260216
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -76,8 +76,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-x86_64.tar.gz)
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260207-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -88,12 +88,15 @@ Running the Server (Linux)
 Command-line options should be used if you want to override defaults:
 
 * --httport (defaults to 8080).  Used to change the port that the web UI runs on.
+* --httppwd (defaults to none).  Used to set the password used to access the web UI. Username
+is always "user."
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
 file.
 * --trace Used to turn on extended network tracing.
 
 The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
-have configured one on the command line.  The main screen will look like this:
+have configured one on the command line. If you've set a password you will be prompted to
+log in (username is always "user")  The main screen will look like this:
 
 ![Amp1](amp-server-home.jpg)
 

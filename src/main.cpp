@@ -60,7 +60,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260214.0";
+static const char* VERSION = "20260216.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -121,6 +121,11 @@ int main(int argc, const char** argv) {
         .store_into(uiPort)
         .default_value(8080)
         .help("Port number for HTTP UI server");
+
+    string uiPwd;
+    program.add_argument("--httppwd")
+        .help("Password for HTTP UI/API authentication")
+        .store_into(uiPwd);
 
     program.add_argument("--trace")
         .help("Turn on network tracing")
@@ -221,6 +226,7 @@ int main(int argc, const char** argv) {
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);   
+    webUi.setUiPWd(uiPwd);
 
     // Get the UI thread going. 
     std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer);
