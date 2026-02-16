@@ -88,8 +88,9 @@ Running the Server (Linux)
 Command-line options should be used if you want to override defaults:
 
 * --httport (defaults to 8080).  Used to change the port that the web UI runs on.
-* --httppwd (defaults to none).  Used to set the password used to access the web UI. Username
-is always "user."
+* --httppwd (defaults to none).  Used to set the password for access to the web UI. Username
+is always "user."  Please pay attention to shell quoting rules when using passwords that 
+contain special characters.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
 file.
 * --trace Used to turn on extended network tracing.
@@ -122,6 +123,7 @@ something like this:
     RestartSec=1
     # Change to your id, best not to run as root
     User=bruce
+    # Can add an optional password here by including --httppwd "YOURPASSWORD"
     ExecStart=/usr/bin/amp-server
     WorkingDirectory=/tmp
     RestrictRealtime=off

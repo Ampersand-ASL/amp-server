@@ -91,6 +91,7 @@ add_executable(amp-server
   amp-core/src/Transcoder_SLIN_48K.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
   amp-core/src/Transcoder_SLIN_8K.cpp
+  amp-core/src/Transcoder_G726.cpp
   amp-core/src/Bridge.cpp
   amp-core/src/BridgeCall.cpp
   amp-core/src/BridgeIn.cpp
@@ -134,6 +135,9 @@ add_executable(amp-server
   ed25519/src/sc.c
   ed25519/src/sha512.c
   ed25519/src/verify.c
+  g726-codec/src/g711.c
+  g726-codec/src/g72x.c
+  g726-codec/src/g726_32.c
 # Here is where the resources are added to the binary
   ${OBJECT0}
   ${OBJECT1}
@@ -159,6 +163,7 @@ target_include_directories(amp-server PRIVATE cpp-httplib)
 target_include_directories(amp-server PRIVATE base64.c)
 target_include_directories(amp-server PRIVATE json/include)
 target_include_directories(amp-server PRIVATE argparse/include)
+target_include_directories(amp-server PRIVATE g726-codec/src)
 
 target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
 
