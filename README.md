@@ -28,11 +28,14 @@ Get the public SSH key loaded onto the machine to enable login, remote editing, 
 
 Install the prerequisites:
 
-    sudo apt install cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev
+    sudo apt update
+    sudo apt -y upgrade
+    sudo apt -y install wget emacs-nox git cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev gdb
 
 Tell git to retain credentials (insecure):
 
         git config --global credential.helper store
+        git config pull.rebase false
 
 Get the code and build:
 

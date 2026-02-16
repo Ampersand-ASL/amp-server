@@ -60,9 +60,13 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260209.0";
+static const char* VERSION = "20260214.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
+
+// Line IDs
+#define LINE_ID_IAX (1)
+#define LINE_ID_STATS (12)
 
 static void sigHandler(int sig);
 
@@ -158,7 +162,9 @@ int main(int argc, const char** argv) {
     // A queue used by other threads to pass messages into the main thread's
     // router.
     threadsafequeue2<MessageCarrier> respQueue;
-    // A wrapper that makes the response queue look like a MessageConsumer
+    // A wrapper that makes the response queue look like a MessageConsumer.
+    // We would use this **outside of the main thread** to put things onto the 
+    // respQueue declared above.
     QueueConsumer respQueueConsumer(respQueue);
 
     // This is the router (aka "bus") that passes Message objects between the rest 
@@ -168,15 +174,21 @@ int main(int argc, const char** argv) {
 
     copyableatomic<std::string> pokeAddr;
 
+    // Setup a way to pass messages over to the service thread
+    threadsafequeue2<MessageCarrier> serviceThreadReqQueue;
+    QueueConsumer serviceThreadReqQueueConsumer(serviceThreadReqQueue);
+    // Pass message from local router up to the service thread
+    router.addRoute(&serviceThreadReqQueueConsumer, LINE_ID_STATS);
+
     // Get the service thread running. This handles non-time-sensitive
     // stuff like registration, stats, etc.
-    std::thread serviceThread(service_thread, &cfgFileName, &log, VERSION, 
-        &pokeAddr);
+    std::thread serviceThread(amp::serviceThread, &cfgFileName, &log, VERSION, 
+        &pokeAddr, &serviceThreadReqQueue);
 
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
-        0, 0, 0, 1, callBank, MAX_CALLS);
+        0, 0, 0, 1, LINE_ID_STATS, callBank, MAX_CALLS);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
@@ -204,13 +216,13 @@ int main(int argc, const char** argv) {
     iax2Channel1.setDirectedPokeEnabled(true);
 
     // This is the HTTP server that provides the UI
-    amp::WebUi webUi(log, clock, respQueueConsumer, uiPort, 1, 2, 
+    amp::WebUi webUi(log, clock, uiPort, 1, 2, 
         cfgFileName.c_str(), VERSION, traceLog);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
     router.addRoute(&webUi, MultiRouter::BROADCAST);   
 
-    // Get the UI thread going
+    // Get the UI thread going. 
     std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer);
 
     // This is a poller that watches for changes to the configuration file

@@ -59,8 +59,12 @@ using namespace kc1fsz;
 static const char* POKE_HOST_NAME = "61057.nodes.allstarlink.org";
 static int POKE_PORT = 4570;
 
-void service_thread(const std::string* cfgFileName, kc1fsz::Log* loga,
-    const char* version, copyableatomic<std::string>* pokeAddr) {
+namespace kc1fsz {
+    namespace amp {
+
+void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
+    const char* version, copyableatomic<std::string>* pokeAddr,
+    threadsafequeue2<MessageCarrier>* reqQueue) {
 
     Log& log = *loga;
 
@@ -74,10 +78,14 @@ void service_thread(const std::string* cfgFileName, kc1fsz::Log* loga,
 
     StdClock clock;
 
+    // This task is responsible for periodically re-asserting the node's registration
     RegisterTask registerTask(log, clock);
 
+    // This task is responsible for periodically re-posting the node's statistics
     StatsTask statsTask(log, clock, version);
 
+    // This task looks at the configuration document and re-processes it when it 
+    // changes.
     amp::ConfigPoller cfgPoller(log, cfgFileName->c_str(), 
         // This function will be called on any update to the configuration document.
         [&log, &registerTask, &statsTask](const json& cfg) {
@@ -137,8 +145,11 @@ void service_thread(const std::string* cfgFileName, kc1fsz::Log* loga,
     );
 
     // Main loop        
-    Runnable2* tasks2[] = { &registerTask, &cfgPoller, &timer1 };
+    Runnable2* tasks2[] = { &registerTask, &statsTask, &cfgPoller, &timer1 };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2));
 
     // #### TODO: NEED A CLEAN WAY TO EXIT THIS THREAD
+}
+
+    }
 }
