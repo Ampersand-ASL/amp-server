@@ -49,6 +49,7 @@
 #include "ConfigPoller.h"
 #include "SignalIn.h"
 #include "TimerTask.h"
+#include "QueueConsumer.h"
 
 // And a few things from AMP Server
 #include "LocalRegistryStd.h"
