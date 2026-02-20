@@ -62,6 +62,9 @@ static int POKE_PORT = 4570;
 namespace kc1fsz {
     namespace amp {
 
+/**
+ * @param reqQueue A queue of inbound requests from other threads.
+ */
 void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
     const char* version, copyableatomic<std::string>* pokeAddr,
     threadsafequeue2<MessageCarrier>* reqQueue) {
@@ -83,6 +86,19 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
 
     // This task is responsible for periodically re-posting the node's statistics
     StatsTask statsTask(log, clock, version);
+
+    // This timer task checks for messages on the request queue 
+    // and distributes them appropriately.
+    TimerTask timer2(log, clock, 5, 
+        [&log, reqQueue, &statsTask]() {
+            MessageCarrier msg;
+            if (reqQueue->try_pop(msg, 10)) {
+                // The node list for stats reporting
+                if (msg.isSignal(Message::SignalType::LINK_REPORT))
+                    statsTask.setNodeList((const char*)msg.body());
+            }
+        }
+    );
 
     // This task looks at the configuration document and re-processes it when it 
     // changes.
@@ -145,7 +161,7 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
     );
 
     // Main loop        
-    Runnable2* tasks2[] = { &registerTask, &statsTask, &cfgPoller, &timer1 };
+    Runnable2* tasks2[] = { &registerTask, &statsTask, &cfgPoller, &timer1, &timer2 };
     EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2));
 
     // #### TODO: NEED A CLEAN WAY TO EXIT THIS THREAD
