@@ -13,104 +13,69 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ *
+ * This file provides the main entry point for the AMP Server. All of the 
+ * major components are instantiated and hooked together in this file so
+ * it should be a good place to start to navigate the rest of the application.
  */
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <execinfo.h>
 #include <signal.h>
-
 #include <iostream>
-#include <queue>
-#include <stdexcept>
 
+// 3rd party HTTP/HTTPS client
 #include <curl/curl.h>
+// 3rd party command-line parser
 #include <argparse/argparse.hpp>
 
+// Non-AMP stuff from my C++ tools library
 #include "kc1fsz-tools/Log.h"
 #include "kc1fsz-tools/linux/StdClock.h"
-#include "kc1fsz-tools/linux/MTLog.h"
-#include "kc1fsz-tools/fixedqueue.h"
-#include "kc1fsz-tools/NetUtils.h"
+#include "kc1fsz-tools/MTLog2.h"
+#include "kc1fsz-tools/threadsafequeue2.h"
 
-#include "sound-map.h"
-
+// All of this comes from AMP Core
+#include "TraceLog.h"
+#include "EventLoop.h"
+#include "ThreadUtil.h"
+#include "service-thread.h"
+#include "MultiRouter.h"
 #include "LineIAX2.h"
 #include "LineUsb.h"
-#include "ManagerTask.h"
-#include "EventLoop.h"
+#include "LineSDRC.h"
 #include "Bridge.h"
 #include "BridgeCall.h"
-#include "MultiRouter.h"
 #include "WebUi.h"
 #include "ConfigPoller.h"
 #include "SignalIn.h"
-#include "ThreadUtil.h"
-#include "service-thread.h"
-#include "TraceLog.h"
+#include "SignalOut.h"
+#include "TimerTask.h"
+#include "QueueConsumer.h"
+
+// And a few things from AMP Server
+#include "LocalRegistryStd.h"
+#include "config-handler.h"
+
+#define MAX_CALLS (8)
 
 using namespace std;
 using namespace kc1fsz;
 
-static const char* VERSION = "20260109.0";
-// ### TODO: FIGURE THIS OUT
-const char* const GIT_HASH = "?";
+// ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
+static const char* VERSION = "20260225.0";
+static const char* const GIT_HASH = "?";
+static const char* PUBLIC_USER = "radio";
 
-// Connects the manager to the IAX channel (TEMPORARY)
-class ManagerSink : public ManagerTask::CommandSink {
-public:
+// Line IDs
+#define LINE_ID_IAX (1)
+#define LINE_ID_STATS (12)
+#define LINE_ID_SIGNAL_OUT (31)
 
-    ManagerSink(LineIAX2& ch) 
-    :   _ch(ch) { }
+static void sigHandler(int sig);
 
-    void execute(const char* cmd) { 
-        _ch.processManagementCommand(cmd);
-    }
-
-private:
-
-    LineIAX2& _ch;
-};
-
-class CallValidatorStd : public CallValidator {
-public:
-    virtual bool isNumberAllowed(const char* targetNumber) const {
-        return true;
-    }
-};
-
-class LocalRegistryStd : public LocalRegistry {
-public:
-    virtual bool lookup(const char* destNumber, sockaddr_storage& addr) {
-        /*
-        //addr.ss_family = AF_INET6;
-        addr.ss_family = AF_INET;
-        //setIPAddr(addr, "::1");
-        setIPAddr(addr, "127.0.0.1");
-        setIPPort(addr, 4569);
-        char temp[64];
-        formatIPAddrAndPort((const sockaddr&)addr, temp, 64);
-        return true;
-        */
-       return false;
-    }
-};
-
-// A crash signal handler that displays stack information
-static void sigHandler(int sig) {
-    void *array[64];
-    size_t size = backtrace(array, 64);
-    fprintf(stderr, "=========================================================\n");
-    fprintf(stderr, "IMPORTANT: Save this stack trace for analysis!\n\n");
-    fprintf(stderr, "Error signal %d:\n", sig);
-    fprintf(stderr, "Version %s Git Hash %s\n\n", VERSION, GIT_HASH);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-    fprintf(stderr, "\naddr2line -r ./amp-server -fC <addr>\n\n");
-    fprintf(stderr, "=========================================================\n");
-    // Now do the regular thing
-    signal(sig, SIG_DFL); 
-    raise(sig);
-}
+// These are potentially large structure, so keeping it off the stack
+static amp::BridgeCall callBank[MAX_CALLS];
+static LineIAX2::Call iaxCallBank[MAX_CALLS];
 
 int main(int argc, const char** argv) {
 
@@ -119,7 +84,11 @@ int main(int argc, const char** argv) {
     // Install the crash stack handler
     signal(SIGSEGV, sigHandler);
 
-    MTLog log;
+    // Create a logger that holds onto some history for display purposes.
+    // #### TODO: Think about the performance implications of the lock that 
+    // #### is acquired when the UI thread reads the log.
+    MTLog2 log;
+
     log.info("AMP Server");
     log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
     log.info("Copyright (C) 2026, Bruce MacKinnon KC1FSZ");
@@ -137,12 +106,11 @@ int main(int argc, const char** argv) {
     CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
     if (res) {
         log.error("Libcurl failed to initialize %d", res);
-        std::exit(1);
+        std::exit(-1);
     }
 
     // Parse command line arguments
     argparse::ArgumentParser program("amp-server", VERSION);
-
     string cfgFileName;
     string defaultCfgFileName = getenv("HOME");
     defaultCfgFileName += "/amp-server.json";
@@ -157,44 +125,82 @@ int main(int argc, const char** argv) {
         .default_value(8080)
         .help("Port number for HTTP UI server");
 
+    string uiPwd;
+    program.add_argument("--httppwd")
+        .help("Password for HTTP UI/API authentication")
+        .store_into(uiPwd);
+
     program.add_argument("--trace")
         .help("Turn on network tracing")
         .default_value(false)
         .implicit_value(true);
 
+    int iaxPort = 0;
+    program.add_argument("--iaxport")
+        .store_into(iaxPort)
+        .default_value(0)
+        .help("IAX port, overrides system configuration");
+
+    string callNode;
+    program.add_argument("--callnode")
+        .help("Node to call immediately")
+        .store_into(callNode);
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception& err) {
         log.error("Argument error: %s", err.what());
-        std::exit(1);
+        std::exit(-2);
     }
 
     log.info("Using configuration file %s", cfgFileName.c_str());
 
+    // Create a default/starting config file if this is the first time.
     if (!filesystem::exists(cfgFileName)) {
         log.info("Creating default configuration");
         ofstream cfg(cfgFileName);
         if (cfg.is_open()) 
             cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
-        else 
+        else {
             log.error("Unable to create default configuration");
+            std::exit(-3);
+        }
     }
 
-    // Get the service thread running (handles registration, stats, etc.)
-    service_thread_args args1;
-    args1.log = &log;
-    args1.cfgFileName = cfgFileName;
-    std::thread serviceThread(service_thread, &args1);
+    // A queue used by other threads to pass messages into the main thread's
+    // router.
+    threadsafequeue2<MessageCarrier> respQueue;
+    // A wrapper that makes the response queue look like a MessageConsumer.
+    // We would use this **outside of the main thread** to put things onto the 
+    // respQueue declared above.
+    QueueConsumer respQueueConsumer(respQueue);
 
-    // This is the "bus" that passes messages between components
-    MultiRouter router;
+    // This is the router (aka "bus") that passes Message objects between the rest 
+    // of the components in the system. You'll see that everything else below is
+    // wired to the router one way or the other.
+    MultiRouter router(respQueue);
 
-    // The bridge is what provides the conference
-    amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL);
+    copyableatomic<std::string> pokeAddr;
+
+    // Setup a way to pass messages over to the service thread
+    threadsafequeue2<MessageCarrier> serviceThreadReqQueue;
+    QueueConsumer serviceThreadReqQueueConsumer(serviceThreadReqQueue);
+    // Pass message from local router up to the service thread
+    router.addRoute(&serviceThreadReqQueueConsumer, LINE_ID_STATS);
+
+    // Get the service thread running. This handles non-time-sensitive
+    // stuff like registration, stats, etc.
+    std::thread serviceThread(amp::serviceThread, &cfgFileName, &log, VERSION, 
+        &pokeAddr, &serviceThreadReqQueue);
+
+    // The Bridge is what provides the audio conference capability. The various 
+    // Lines connect to the Bridge.
+    amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
+        0, 0, 0, 1, LINE_ID_STATS, callBank, MAX_CALLS);
     router.addRoute(&bridge10, 10);
 
-    // This is the connection to the USB sound interface
-    LineUsb radio2(log, clock, router, 2, 1, 10, 1);
+    // This is the Line that connects to the USB sound interface
+    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT);
     router.addRoute(&radio2, 2);
 
     // This manages the COS signal detect
@@ -202,127 +208,113 @@ int main(int argc, const char** argv) {
         Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
     router.addRoute(&signalIn3, 3);
 
-    // This is the IAX2 network connection
-    CallValidatorStd val;
+    // This manages the PTT signal generation
+    amp::SignalOut signalOut31(log, clock, router, 
+        Message::SignalType::PTT_ON, Message::SignalType::PTT_OFF);
+    router.addRoute(&signalOut31, LINE_ID_SIGNAL_OUT);
+
+    // This manages the interface to the SDRC (if any)
+    LineSDRC sdrcLine5(log, traceLog, clock, 5, 1, router, 10);
+    router.addRoute(&sdrcLine5, 5);
+
+    // This is the Line that makes the IAX2 network connection
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, &val, &locReg, 10);
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10, PUBLIC_USER,
+        iaxCallBank, MAX_CALLS);
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
+    iax2Channel1.setPokeEnabled(true);
+    iax2Channel1.setPokeAddr("52.8.197.124:4570");
+    iax2Channel1.setDirectedPokeEnabled(true);
 
-    // Instantiate the server for the web-based UI
-    amp::WebUi webUi(log, clock, router, uiPort, 1, 2, cfgFileName.c_str(), VERSION,
-        traceLog);
+    // This is the HTTP server that provides the UI
+    amp::WebUi webUi(log, clock, uiPort, 1, 2, 
+        cfgFileName.c_str(), VERSION, traceLog);
     // This allow the WebUi to watch all traffic and pull out the things 
     // that are relevant for status display.
-    router.addRoute(&webUi, MultiRouter::BROADCAST);
+    router.addRoute(&webUi, MultiRouter::BROADCAST);   
+    webUi.setUiPWd(uiPwd);
 
-    // Setup the configuration poller for this thread
+    // Get the UI thread going. 
+    std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer);
+
+    // This is a poller that watches for changes to the configuration file
+    // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &radio2, &signalIn3, &bridge10]
+        [&log, &webUi, &iax2Channel1, &locReg, &radio2, &signalIn3, &signalOut31, &bridge10, &sdrcLine5,
+         iaxPort]
         (const json& cfg) {
 
             log.info("Configuration change detected");
             cout << cfg.dump() << endl;
 
-            // Transfer the new configuration into the various places it is needed
-            webUi.setConfig(cfg);
-
             try {
-                //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
-                //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
-                
-                if (!cfg["iaxPort"].is_string())
-                    throw invalid_argument("iaxPort is missing/invalid");
-
-                int rc;
-                rc = iax2Channel1.open(AF_INET, std::stoi(cfg["iaxPort"].get<std::string>()), "radio");
-                if (rc < 0) {
-                    log.error("Failed to open IAX2 connection %d", rc);
-                }
-
-                string setupMode = cfg["setupMode"].get<std::string>();
-
-                // ----- ASL Compatibility Mode -----------------------------------
-
-                if (setupMode.empty() || setupMode == "0") {
-
-                    // Resolve the audio device
-                    string aslAudioDevice = cfg["aslAudioDevice"].get<std::string>();
-                    if (aslAudioDevice.starts_with("usb ")) {
-                        int alsaCard;
-                        string ossDevice;
-                        int rc2 = querySoundMap(aslAudioDevice.substr(4).c_str(), alsaCard, ossDevice);
-                        if (rc2 < 0) {
-                            log.error("Unable to resolve sound device %d", rc2);
-                        } 
-                        else {
-                            log.info("Audio %s mapped to ALSA card %d", 
-                                aslAudioDevice.c_str(), alsaCard);                         
-
-                            // NOTE: ASL uses 0-1000 scale
-                            if (!cfg["aslTxMixASet"].is_string())
-                                throw invalid_argument("aslTxMixASet is missing/invalid");
-                            int txMixASet = std::stoi(cfg["aslTxMixASet"].get<std::string>());
-
-                            if (!cfg["aslTxMixBSet"].is_string())
-                                throw invalid_argument("aslTxMixBSet is missing/invalid");
-                            int txMixBSet = std::stoi(cfg["aslTxMixBSet"].get<std::string>());
-                            
-                            if (!cfg["aslRxMixerSet"].is_string())
-                                throw invalid_argument("aslRxMixerSet is missing/invalid");
-                            int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
-
-                            rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
-                            if (rc < 0) {
-                                if (rc == -12)
-                                    log.error("Unable to open sound device, busy");
-                                else 
-                                    log.error("Unable to open sound device");
-                                return;
-                            }
-                        }
-                    }
-
-                    // Resolve the COS signal
-                    string aslCosFrom = cfg["aslCosFrom"].get<std::string>();
-                    if (aslAudioDevice.starts_with("usb ") && aslCosFrom.starts_with("usb")) {
-
-                        string cosSignalDevice;
-                        int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), cosSignalDevice);
-                        if (rc3 < 0) {
-                            log.error("Unable to resolve HID device %d", rc3);
-                        } 
-                        else {
-                            log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
-                                cosSignalDevice.c_str());
-                            rc = signalIn3.openHid(cosSignalDevice.c_str());
-                            if (rc < 0) {
-                                log.error("Failed to open HID signal connection %d", rc);
-                                return;
-                            }
-                        }
-
-                        // ##### TODO: DEAL WITH INVERT
-                    }
-                }
+                amp::configHandler(log, cfg, webUi, iax2Channel1, locReg, radio2, signalIn3, 
+                    signalOut31, bridge10, sdrcLine5, iaxPort);
             }
             // ### TODO MORE SPECIFIC
             catch (json::exception& ex) {
                 log.error("Failed to process configuration change %s", ex.what());
+                return;
+            }
+        },
+        // This function will be called once on startup
+        [&log, &iax2Channel1, &callNode]
+        (const json& cfgDoc) {
+            string localNode;
+            if (cfgDoc.contains("node"))
+                localNode = cfgDoc["node"];
+            // If a node was specified on the command line then connect immediately
+            if (!localNode.empty() && !callNode.empty()) {
+                iax2Channel1.call(localNode.c_str(), callNode.c_str());
             }
         }
     );
 
-    //ManagerSink mgrSink(iax2Channel1);
-    //ManagerTask mgrTask(log, clock, atoi(getenv("AMP_NODE0_MGR_PORT")));
-    //mgrTask.setCommandSink(&mgrSink);
+    // Setup a poller that looks at the bridge status and passes any updates
+    // over to the web UI. We will get an event *AT LEAST* every 10 seconds.
+    amp::BridgeStatusDocPoller statusPoller(log, clock, bridge10, 10 * 1000,
+        [&webUi](const json& statusDoc) {
+            webUi.setBridgeStatus(statusDoc);
+        }
+    );
 
-    // Main loop        
-    Runnable2* tasks2[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, &cfgPoller };
-    EventLoop::run(log, clock, 0, 0, tasks2, std::size(tasks2), nullptr, false);
+    // Setup a timer that takes the poke address generated from the service
+    // thread and puts it into the IAX line.
+    TimerTask timer1(log, clock, 10, 
+        [&log, &pokeAddr, &iax2Channel1]() {
+            std::string addr = pokeAddr.getCopy();
+            if (!addr.empty())
+                iax2Channel1.setPokeAddr(addr.c_str());
+        }
+    );
 
-    return 0;
+    // Setup the EventLoop with all of the tasks that need to be run on this thread
+    Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
+        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
+    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
+
+    // #### TODO: At the moment there is no clean way to get out of the loop
+
+    std::exit(0);
 }
 
+/** 
+ * A crash signal handler that displays stack information on stdout
+ */
+static void sigHandler(int sig) {
+    void *array[64];
+    size_t size = backtrace(array, 64);
+    fprintf(stderr, "=========================================================\n");
+    fprintf(stderr, "IMPORTANT: Save this stack trace for analysis!\n\n");
+    fprintf(stderr, "Error signal %d:\n", sig);
+    fprintf(stderr, "Version %s Git Hash %s\n\n", VERSION, GIT_HASH);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    fprintf(stderr, "\naddr2line -r ./amp-server -fC <addr>\n\n");
+    fprintf(stderr, "=========================================================\n");
+    // Now do the regular thing
+    signal(sig, SIG_DFL); 
+    raise(sig);
+}

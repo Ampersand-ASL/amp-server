@@ -1,8 +1,18 @@
-# Ampersand Server
+This is the repo that builds the main server that supports linking between radios and nodes on the ASL network. This project builds
+on Linux (Debian 13) using arm64 or x86-64 architectures.
 
-The core server supports linking between radios and nodes on the ASL network.
+[Most of the Ampersand project documentation is here](https://mackinnon.info/ampersand/).
 
-# One-Time Machine Setup (To Run the Server)
+> [!IMPORTANT]
+> **If you are just looking to install/run the server, you probably want to</span> [start here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md)!**
+
+To understand the structure of the server, the best place to start 
+is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp).
+
+Most of what is on the rest of this page is relevant to development. The
+[normal installation/user instructions are here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md).
+
+# One-Time Developer Machine Setup (Linux)
 
 Make a keypair if necessary:
 
@@ -12,55 +22,42 @@ Make a keypair if necessary:
 Get the public SSH key loaded onto the machine to enable login, remote editing, etc.
 
         cd .ssh
-        echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_keys
+        echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_key
 
-Tell git to retain credentials:
+# Building The Server From Source (Linux)
+
+Install the prerequisites:
+
+    sudo apt update
+    sudo apt -y upgrade
+    sudo apt -y install wget emacs-nox git cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev gdb
+
+Tell git to retain credentials (insecure):
 
         git config --global credential.helper store
+        git config pull.rebase false
 
-An adjustment needs to be made to allow a normal user to access the HID interfaces:
+Get the code and build:
 
-Create /etc/udev/rules.d/99-mydevice.rules with this contents:
-
-        # C-Media Vendor ID
-        SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
-
-(And include any other devices you plan to use)
-
-Force reload of rules:
-
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger
-
-Install the server:
-
-        export AMP_SERVER_VERSION=20260109
-        wget https://mackinnon.info/ampersand/releases/amp-$AMP_SERVER_VERSION-x86_64.tar.gz
-        # For x86-64:
-        tar xvf tar xvf amp-$AMP_SERVER_VERSION-x86_64.tar.gz
-        # For arm64:
-        tar xvf tar xvf amp-$AMP_SERVER_VERSION-aarch64.tar.gz
-        ln -s amp-$AMP_SERVER_VERSION-x86_64 amp       
-
-# Building The Server
-
-    sudo apt install cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
     git submodule update --init
-    mkdir build
-    cd build
-    cmake ..
-    make
+    cmake -B build
+    cmake --build build 
+    
+# Packaging the Build (Linux)
 
-# Packaging
-
-    export AMP_SERVER_VERSION=20260109
-    ../scripts/make-package.sh        
+    export AMP_SERVER_VERSION=20260216
+    export AMP_ARCH=$(uname -m)
+    scripts/make-package.sh        
     # Move as needed
-    rsync /tmp/amp-$AMP_SERVER_VERSION-x86_64.tar.gz bruce@pi5:/tmp
+    scp bruce@pi5:/tmp/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz .
+    # And them move the .tar.gz to the Ampersand S3 bucket
 
 # (Debug) Getting Line Number From Stack Trace
 
         addr2line -e ./amp-server -fC 0x138a0
-        
+
+# Code Metrics
+
+        cloc --vcs=git --exclude-list-file=.clocignore .

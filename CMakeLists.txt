@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.13)
 project(ampersand C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
-add_compile_options(-fstack-protector-all -Wall -Wpedantic -ggdb -O0)
+add_compile_options(-fstack-protector-all -Wall -Wpedantic -g -O0)
 
 # ----- Make resource objects ------------------------------------------------
 
@@ -72,7 +72,8 @@ add_custom_command(
 
 add_executable(amp-server
   src/main.cpp
-  amp-core/src/service-thread.cpp
+  src/config-handler.cpp
+  src/service-thread.cpp
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
   amp-core/src/Line.cpp
@@ -89,6 +90,8 @@ add_executable(amp-server
   amp-core/src/Transcoder_G711_ULAW.cpp
   amp-core/src/Transcoder_SLIN_48K.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
+  amp-core/src/Transcoder_SLIN_8K.cpp
+  amp-core/src/Transcoder_G726.cpp
   amp-core/src/Bridge.cpp
   amp-core/src/BridgeCall.cpp
   amp-core/src/BridgeIn.cpp
@@ -98,23 +101,33 @@ add_executable(amp-server
   amp-core/src/MultiRouter.cpp
   amp-core/src/WebUi.cpp
   amp-core/src/SignalIn.cpp
+  amp-core/src/SignalOut.cpp
   amp-core/src/ThreadUtil.cpp
-  amp-core/src/NRLog.cpp
   amp-core/src/TraceLog.cpp
+  amp-core/src/LineSDRC.cpp
+  amp-core/src/SerialUtil.cpp
+  amp-core/src/KerchunkFilter.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
   kc1fsz-tools-cpp/src/MicroDNS.cpp
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/fixed_math.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
+  kc1fsz-tools-cpp/src/md5/md5c.c
+  kc1fsz-tools-cpp/src/crc/crc.c
+  kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
+  cobs-c/cobs.c
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
   sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
   sound-map/src/usb-dir.c
+  sound-map/src/serial-map.cpp
+  base64.c/base64.c
   ed25519/src/add_scalar.c
   ed25519/src/ge.c
   ed25519/src/keypair.c
@@ -125,16 +138,23 @@ add_executable(amp-server
   ed25519/src/sc.c
   ed25519/src/sha512.c
   ed25519/src/verify.c
+  g726-codec/src/g711.c
+  g726-codec/src/g72x.c
+  g726-codec/src/g726_32.c
 # Here is where the resources are added to the binary
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
 )
+# NOTE: Compiler optimizations are turned on
+target_compile_options(amp-server PRIVATE -fstack-protector-all -Wall -Wpedantic -g -O3 -mtune=native)
 
 target_include_directories(amp-server PRIVATE src)
 target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
 target_include_directories(amp-server PRIVATE itu-g711-codec/src)
 target_include_directories(amp-server PRIVATE cmsis-dsp-mock/include)
+target_include_directories(amp-server PRIVATE cobs-c)
 target_include_directories(amp-server PRIVATE amp-core/include)
 # TODO: REMOVE
 target_include_directories(amp-server PRIVATE amp-core/src)
@@ -143,8 +163,10 @@ target_include_directories(amp-server PRIVATE ed25519/src)
 target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(amp-server PRIVATE cpp-httplib)
+target_include_directories(amp-server PRIVATE base64.c)
 target_include_directories(amp-server PRIVATE json/include)
 target_include_directories(amp-server PRIVATE argparse/include)
+target_include_directories(amp-server PRIVATE g726-codec/src)
 
 target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
 
@@ -178,3 +200,31 @@ target_include_directories(hello-mixer PRIVATE kc1fsz-sdrc/sw/include)
 target_include_directories(hello-mixer PRIVATE cpp-httplib)
 target_link_libraries(hello-mixer -lasound -lusb-1.0)
 
+# ------ cobs-test-1 ---------------------------------------------------------
+
+add_executable(cobs-test-1
+  src/tests/cobs-test-1.cpp
+  kc1fsz-tools-cpp/src/NetUtils.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  cobs-c/cobs.c
+) 
+
+target_include_directories(cobs-test-1 PRIVATE src)
+target_include_directories(cobs-test-1 PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(cobs-test-1 PRIVATE cobs-c)
+
+# ------ sdrc-msg-test-1 ---------------------------------------------------
+
+add_executable(sdrc-msg-test-1
+  src/tests/sdrc-msg-test-1.cpp
+  kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/crc/crc.c
+  cobs-c/cobs.c
+) 
+
+target_include_directories(sdrc-msg-test-1 PRIVATE src)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-sdrc/sw/src)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include)
+target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
+target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)

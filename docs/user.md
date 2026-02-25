@@ -1,9 +1,11 @@
+# Ampersand Server User/Install Documentation
+
 At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node
 for desktop radio-less use. Future releases will enable more functionality. Send
-comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in QRZ.
+comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in [QRZ](https://www.qrz.com/db/KC1FSZ).
 
 This is experimental work that explores the potential of ASL linking 
-without the use of the Asterisk PBX system. 
+without the use of the Asterisk PBX system. [Project documentation is here](https://mackinnon.info/ampersand/). 
 
 All of the testing of this system is happening on either:
 * A Raspberry Pi 5 running Debian 12 Bookworm. This is an ARM-64 platform.
@@ -15,6 +17,8 @@ This will be documented separately.
 All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
 chip. 
 
+The [change log is located here](../CHANGELOG.md). I try to keep it up to date.
+
 Network Setup (IPv4)
 ====================
 
@@ -23,25 +27,28 @@ I won't repeat everything here. Bottom line:
 
 * Make sure you are clear on what IAX (UDP) port your node is using. This assignment
 happens on the [ASL Portal](https://www.allstarlink.org/portal/servers.php). UDP port 4569 is the common default.
-* Make sure that your IAX port is opened/forwarded through your firewall/NAT system.
-* Make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
-running on your machine.
 * Make sure that your IAX port is properly configured on the Ampersand Configuration 
 screen (see below).
+* If you expect to receive inbound calls make sure that your IAX port is opened/forwarded through your firewall/NAT system.
+* If you expect to receive inbound calls make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
+running on your machine (if applicable).
+* You can test your network connection using the 61057 parrot. If the 61057 parrot
+tells you that your "network test succeeded" that means that your firewall is open
+and that you can accept inbound calls.
 
 Network Setup (IPv6)
 ====================
 
 (To follow shortly)
 
-Installation Instructions
-=========================
+Installation Instructions (Linux)
+=================================
 
 Install required packages:
 
     sudo apt install wget net-tools libcurl4-gnutls-dev
 
-An adjustment needs to be made to allow non-root users to access the HID interfaces. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
+An adjustment needs to be made to allow non-root users to access the HID interfaces. This is relevant to the COS/PTT signals. Create /etc/udev/rules.d/99-mydevice.rules with this contents:
 
     # The C-Media vendor ID
     SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
@@ -54,20 +61,26 @@ Reboot, or just force reload of rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
 
-Installing for x86-64:
+If you are already running the Ampersand Server (i.e. this is an upgrade),
+you will need to shut down the service:
 
-    wget https://mackinnon.info/ampersand/releases/amp-20260109-x86_64.tar.gz
-    tar xvf amp-20260109-x86_64.tar.gz
-    ln -s amp-20260109-x86_64 amp
+    sudo systemctl stop amp-server
 
-Installing for aarch64 (ARM):
+Installation steps:
 
-    wget https://mackinnon.info/ampersand/releases/amp-20260109-aarch64.tar.gz
-    tar xvf amp-20260109-aarch64.tar.gz
-    ln -s amp-20260109-aarch64 amp
+    export AMP_SERVER_VERSION=20260216
+    export AMP_ARCH=$(uname -m)
+    wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+    tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
+    ln -s amp-${AMP_SERVER_VERSION}-${AMP_ARCH} amp
 
-Running the Server
-==================
+In case you need the links:
+
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz)
+
+Running the Server (Linux)
+==========================
 
     cd amp
     ./amp-server 
@@ -75,17 +88,63 @@ Running the Server
 Command-line options should be used if you want to override defaults:
 
 * --httport (defaults to 8080).  Used to change the port that the web UI runs on.
+* --httppwd (defaults to none).  Used to set the password for access to the web UI. Username
+is always "user."  Please pay attention to shell quoting rules when using passwords that 
+contain special characters.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
 file.
 * --trace Used to turn on extended network tracing.
 
 The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
-have configured one on the command line.  The main screen will look like this:
+have configured one on the command line. If you've set a password you will be prompted to
+log in (username is always "user")  The main screen will look like this:
 
 ![Amp1](amp-server-home.jpg)
 
-Setup/Configuration
-===================
+Running As A Linux Service
+==========================
+
+You might want to run your AMP Server as a service. This is optional, but
+it will keep the server running after you log out or reboot.
+
+Copy the amp-server binary to /usr/bin.
+
+Create a service file called /lib/systemd/system/amp-server.service that looks
+something like this:
+
+    [Unit]
+    Description=AMP Server
+    After=network.target
+    StartLimitIntervalSec=0
+
+    [Service]
+    Type=simple
+    Restart=always
+    RestartSec=1
+    # Change to your id, best not to run as root
+    User=bruce
+    # Can add an optional password here by including --httppwd "YOURPASSWORD"
+    ExecStart=/usr/bin/amp-server
+    WorkingDirectory=/tmp
+    RestrictRealtime=off
+    # Make the process real-time with high priority
+    # The + requests higher privileges.
+    ExecStartPost=+/bin/sh -c "/usr/bin/chrt --rr -p 50 $MAINPID"
+
+    [Install]
+    WantedBy=multi-user.target
+
+Enable and start the service:
+
+    sudo systemctl enable amp-server
+    sudo systemctl start amp-server
+
+You can view the log using this command:
+
+    journalctl -u amp-server -f
+
+Setup/Configuration (Linux)
+===========================
 
 Press the "Configuration" tab at the top of the screen to get to the configuration screen
 that looks like this:
@@ -93,7 +152,7 @@ that looks like this:
 ![Amp2](amp-server-config.jpg)
 
 This configuration should be very consistent with that used on the ASL system. Fill 
-in your node number, password, and IAX port number. All other defaults should be enough to get your started.
+in your node number, password, and IAX port number. All other defaults should be enough to get you started.
 
 The audio levels will be the first thing to configure. Your audio level will be displayed in 
 the system log any time you key your microphone (regardless of whether you are connected to 
@@ -107,17 +166,8 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ![Amp3](amp-4.jpg)
 
-Things That Aren't Enabled Yet
-==============================
-
-* DTMF pad
-* CTCSS/PTT functionality
-* Repeater functionality
-* List of linked nodes for each node
-* More status messages need to be shown on the main page
-
-Discarding HID Input
-====================
+Discarding HID Input (Linux)
+============================
 
 (Please see [this article for more detail](https://www.florian-wolters.de/posts/discard-hid-input-from-cm108-device/))
 
@@ -154,8 +204,8 @@ And then reload the hwdb:
     udevadm systemd-hwdb update
     udevadm trigger
 
-Another Possible Solution to the "Volume Down" Problem
-======================================================
+Another Possible Solution to the "Volume Down" Problem (Linux)
+==============================================================
 
 Linux installations that include the Pulse Audio system 
 may introduce a different variant of the CM1xx Volume Down 
@@ -182,7 +232,7 @@ being used for ASL from Pulse Audio control:
 * Go to the Configuration tab.
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
-
+    
 Network Debugging Hints
 =======================
 
@@ -199,44 +249,17 @@ call is accepted by a parrot but not by other nodes it is likely that your
 registration is invalid. Check your password.
 * The ASL registration process takes some time to propagate. When your node
 first starts up your calls may not be accepted. Wait about 10 minutes and try again.
+* Test using parrot 61057 **before asking for network help**. This parrot will provide 
+information about whether (a) your node is registered and (b) whether your 
+node is reachable from the outside.
 
-Running As A Linux Service
-==========================
+Asking For Help
+===============
 
-You might want to run your AMP Server as a service. This is optional.
+I'm happy to take any questions, but keep in mind that I'm not an expert on
+Linux administration.
 
-Copy the amp-server binary to /usr/bin.
+Please **do not** post questions that are specific to the Ampersand Server on the [AllStarLink Community Forum](https://community.allstarlink.org/). That forum
+is friendly and is very useful for general AllStarLink questions, but they are
+primarily focused on supporting the Asterisk/app_rpt based software.
 
-Create a service file called /lib/systemd/system/amp-server.service that looks
-something like this:
-
-    [Unit]
-    Description=AMP Server
-    After=network.target
-    StartLimitIntervalSec=0
-
-    [Service]
-    Type=simple
-    Restart=always
-    RestartSec=1
-    # Change to your id, best not to run as root
-    User=bruce
-    ExecStart=/usr/bin/amp-server
-    WorkingDirectory=/tmp
-    RestrictRealtime=off
-    # Make the process real-time with high priority
-    # The + requests higher privileges.
-    ExecStartPost=+/bin/sh -c "/usr/bin/chrt --rr -p 50 $MAINPID"
-
-    [Install]
-    WantedBy=multi-user.target
-
-Enable and start the service:
-
-    sudo systemctl enable amp-server
-    sudo systemctl start amp-server
-
-You can view the log using this command:
-
-    journalctl -u amp-server -f
-    
