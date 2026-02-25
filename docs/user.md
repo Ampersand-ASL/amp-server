@@ -78,8 +78,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz)
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -103,7 +103,7 @@ log in (username is always "user")  The main screen will look like this:
 
 ![Amp1](amp-server-home.jpg)
 
-Running As A Linux Service
+Running as a Linux Service
 ==========================
 
 You might want to run your AMP Server as a service. This is optional, but
@@ -174,6 +174,10 @@ I know these devices have a mixed reputation (depending on supplier) so I'm
 not necessarily advocating/recommending any particular unit. Ampersand has 
 been tested with a few SHARI variants and it seems to work fine. 
 
+My SA818 reports this version string:
+
+    +VERSION :SA818S_V1.2
+
 Given the wide use of these devices Ampersand provides a basic configuration
 capability. This avoids the need to install other SA818/SHARI configuration tools.
 The configuration page contains these settings:
@@ -181,6 +185,8 @@ The configuration page contains these settings:
 ![SA818](sa818-config.jpg)
 
 Some notes:
+* At the moment any configuration errors will be displayed on the console log. I 
+will improve this in a future release.
 * Many of the SHARI-type devices contain a CM1xx chip, so all of the audio setup 
 described above still applies. Please test/adjust carefully to ensure good audio
 on the AllStar network.
