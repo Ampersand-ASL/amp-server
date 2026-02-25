@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-02-25
+
+* Problems with the 8K linear CODEC have been addressed.
+* The accessibility of the user interface has been improved. (Thanks
+to Joe KA9OPL for his help on this)
+* By popular demand, initial support for SA818/SHARI-style devices has been added.
+* Node statistics have been enabled. 
+
 ## 2026-02-16
 
 * The --httppwd command-line option was added to allow a password to be set

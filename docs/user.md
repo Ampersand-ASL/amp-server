@@ -1,7 +1,6 @@
 # Ampersand Server User/Install Documentation
 
-At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node
-for desktop radio-less use. Future releases will enable more functionality. Send
+At the moment the Ampersand Server (amp-server) provides a basic [All Star Link](https://www.allstarlink.org/) node for desktop radio-less and simple hot-spot use. Future releases will enable more functionality. Send
 comments/questions to Bruce MacKinnon (KC1FSZ) using the e-mail address in [QRZ](https://www.qrz.com/db/KC1FSZ).
 
 This is experimental work that explores the potential of ASL linking 
@@ -11,11 +10,14 @@ All of the testing of this system is happening on either:
 * A Raspberry Pi 5 running Debian 12 Bookworm. This is an ARM-64 platform.
 * A Dell Wyse 3040 mini-PC running Debian 13 Trixie. This is an x86-64 platform.
 
-A separate build for ARM Cortex-M3 microcontroller boards has also been tested.
+A separate build for ARM Cortex-M33 microcontroller boards has also been tested.
 This will be documented separately.
 
 All of my Linux testing has been done using an [AllScan](https://allscan.info/) UCI90 audio interface or the [Repeater Builder](https://www.repeater-builder.com/products/stm32-dvm.html) RB-USB RIM Lite module. Both are based on the C-Media C1xx audio 
 chip. 
+
+If you are looking for a cloud-based "virtual or "hub" server, the [Ampersand Hub Project](https://github.com/Ampersand-ASL/amp-hub) is a 
+better choice for you.
 
 The [change log is located here](../CHANGELOG.md). I try to keep it up to date.
 
@@ -68,7 +70,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260216
+    export AMP_SERVER_VERSION=20260225
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -76,8 +78,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz)
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260216-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -165,6 +167,34 @@ The audio level that you are transmitting into the ASL network is controlled usi
 the "Receive" in this context is from the perspective of the radio interface hardware.
 
 ![Amp3](amp-4.jpg)
+
+# Setup of SA818-Based Hotspot (SHARI and Derivatives) 
+
+I know these devices have a mixed reputation (depending on supplier) so I'm 
+not necessarily advocating/recommending any particular unit. Ampersand has 
+been tested with a few SHARI variants and it seems to work fine. 
+
+Given the wide use of these devices Ampersand provides a basic configuration
+capability. This avoids the need to install other SA818/SHARI configuration tools.
+The configuration page contains these settings:
+
+![SA818](sa818-config.jpg)
+
+Some notes:
+* Many of the SHARI-type devices contain a CM1xx chip, so all of the audio setup 
+described above still applies. Please test/adjust carefully to ensure good audio
+on the AllStar network.
+* The Command Port setting is the serial device that is used to communicate with the
+SA818. Ampersand identifies this port by it's physical address (i.e. USB bus/port
+numbers) to avoid some of the problems associated with multiple serial ports on the
+same machine.
+* I don't have any advice on setting the squelch level. 4 seems to work well in all
+of my testing.
+* The "Volume" setting controls the receive audio level (i.e audio out of the radio 
+module and into the AllStar network). I don't have any advice on setting this level,
+but 8 (highest) has worked fine in my tests. Please note that there is some coordination
+required between this setting and the "Receive Mixer" setting earlier on the configuration
+screen.
 
 Discarding HID Input (Linux)
 ============================
