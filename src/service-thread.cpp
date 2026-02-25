@@ -44,12 +44,15 @@
 #include "kc1fsz-tools/MicroDNS.h"
 #include "kc1fsz-tools/NetUtils.h"
 
+#include "serial-map.h"
+
 #include "RegisterTask.h"
 #include "StatsTask.h"
 #include "EventLoop.h"
 #include "ConfigPoller.h"
 #include "ThreadUtil.h"
 #include "TimerTask.h"
+#include "SerialUtil.h"
 
 #include "service-thread.h"
 
@@ -62,6 +65,14 @@ static int POKE_PORT = 4570;
 namespace kc1fsz {
     namespace amp {
 
+static void checkJSON(json j, const char* name) {
+    if (!j[name].is_string()) {
+        string msg = name;
+        msg += " is missing/invalid";
+        throw invalid_argument(msg);
+    }
+}
+
 /**
  * @param reqQueue A queue of inbound requests from other threads.
  */
@@ -70,7 +81,7 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
     threadsafequeue2<MessageCarrier>* reqQueue) {
 
     Log& log = *loga;
-
+    
     amp::setThreadName("amp-svc");
 
     log.info("service_thread start");
@@ -89,7 +100,7 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
 
     // This timer task checks for messages on the request queue 
     // and distributes them appropriately.
-    TimerTask timer2(log, clock, 5, 
+    TimerTask timer2(log, clock, 2, 
         [&log, reqQueue, &statsTask]() {
             MessageCarrier msg;
             if (reqQueue->try_pop(msg, 10)) {
@@ -126,6 +137,42 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
                 statsTask.configure(
                     cfg["aslStatUrl"].get<std::string>().c_str(), 
                     cfg["node"].get<std::string>().c_str());
+
+                string sa818portQuery = cfg["sa818port"].get<std::string>().c_str();
+                if (!sa818portQuery.empty()) {
+                    string sa818Device;
+                    log.info("SA818 port config [%s]", sa818portQuery.c_str());
+                    if (querySerialDevices(sa818portQuery.c_str(), sa818Device) == 0) {
+
+                        log.info("Resolved to SA818 device %s", sa818Device.c_str());
+
+                        {
+                            // Get the configuration parameters and program the device
+                            checkJSON(cfg, "sa818bw");
+                            unsigned bw = std::stoi(cfg["sa818bw"].get<std::string>());
+                            checkJSON(cfg, "sa818txf");
+                            float f = std::stof(cfg["sa818txf"].get<std::string>());
+                            unsigned txKhz = f * 10000;
+                            checkJSON(cfg, "sa818rxf");
+                            f = std::stof(cfg["sa818rxf"].get<std::string>());
+                            unsigned rxKhz = f * 10000;
+                            checkJSON(cfg, "sa818txpl");
+                            unsigned txPl = std::stoi(cfg["sa818txpl"].get<std::string>());
+                            checkJSON(cfg, "sa818rxpl");
+                            unsigned rxPl = std::stoi(cfg["sa818rxpl"].get<std::string>());
+                            checkJSON(cfg, "sa818sq");
+                            unsigned sq = std::stoi(cfg["sa818sq"].get<std::string>());
+                            checkJSON(cfg, "sa818vol");
+                            unsigned vol = std::stoi(cfg["sa818vol"].get<std::string>());
+
+                            int rc = SerialUtil::configureSA818(log, sa818Device.c_str(), bw, txKhz, rxKhz,
+                                txPl, rxPl, sq, vol);
+                            log.info("SA818 config %d", rc);
+                        }
+                    } else {
+                        log.error("No SA818 found");
+                    }
+                }
             }
             catch (exception& ex) {
                 log.error("Failed to load configuration: %s", ex.what());

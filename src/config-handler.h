@@ -41,7 +41,7 @@ class Bridge;
  */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
     LocalRegistryStd& locReg,
-    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC&,
+    LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, LineSDRC&,
     int iaxPortOverride);
 }
 

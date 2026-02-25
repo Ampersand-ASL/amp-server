@@ -48,6 +48,7 @@
 #include "WebUi.h"
 #include "ConfigPoller.h"
 #include "SignalIn.h"
+#include "SignalOut.h"
 #include "TimerTask.h"
 #include "QueueConsumer.h"
 
@@ -61,13 +62,14 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260216.0";
+static const char* VERSION = "20260225.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
 // Line IDs
 #define LINE_ID_IAX (1)
 #define LINE_ID_STATS (12)
+#define LINE_ID_SIGNAL_OUT (31)
 
 static void sigHandler(int sig);
 
@@ -198,13 +200,18 @@ int main(int argc, const char** argv) {
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
-    LineUsb radio2(log, clock, router, 2, 1, 10, 1);
+    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT);
     router.addRoute(&radio2, 2);
 
     // This manages the COS signal detect
     amp::SignalIn signalIn3(log, clock, router, 2, 
         Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
     router.addRoute(&signalIn3, 3);
+
+    // This manages the PTT signal generation
+    amp::SignalOut signalOut31(log, clock, router, 
+        Message::SignalType::PTT_ON, Message::SignalType::PTT_OFF);
+    router.addRoute(&signalOut31, LINE_ID_SIGNAL_OUT);
 
     // This manages the interface to the SDRC (if any)
     LineSDRC sdrcLine5(log, traceLog, clock, 5, 1, router, 10);
@@ -236,7 +243,7 @@ int main(int argc, const char** argv) {
     // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &locReg, &radio2, &signalIn3, &bridge10, &sdrcLine5,
+        [&log, &webUi, &iax2Channel1, &locReg, &radio2, &signalIn3, &signalOut31, &bridge10, &sdrcLine5,
          iaxPort]
         (const json& cfg) {
 
@@ -245,7 +252,7 @@ int main(int argc, const char** argv) {
 
             try {
                 amp::configHandler(log, cfg, webUi, iax2Channel1, locReg, radio2, signalIn3, 
-                    bridge10, sdrcLine5, iaxPort);
+                    signalOut31, bridge10, sdrcLine5, iaxPort);
             }
             // ### TODO MORE SPECIFIC
             catch (json::exception& ex) {
@@ -285,7 +292,7 @@ int main(int argc, const char** argv) {
     );
 
     // Setup the EventLoop with all of the tasks that need to be run on this thread
-    Runnable2* tasks[] = { &radio2, &signalIn3, &iax2Channel1, &bridge10, &webUi, 
+    Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
         &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
 

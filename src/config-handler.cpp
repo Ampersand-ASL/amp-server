@@ -24,6 +24,7 @@
 #include "LineUsb.h"
 #include "LineSDRC.h"
 #include "SignalIn.h"
+#include "SignalOut.h"
 #include "Bridge.h"
 
 // amp-server
@@ -37,8 +38,8 @@ namespace kc1fsz {
 
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
     LocalRegistryStd& locReg,
-    LineUsb& radio2, SignalIn& signalIn3, Bridge& bridge10, LineSDRC& sdrcLine5,
-    int iaxPortOverride) {
+    LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, 
+    LineSDRC& sdrcLine5, int iaxPortOverride) {
 
     // Transfer the new configuration into the various places it is needed
     webUi.setConfig(cfg);
@@ -160,14 +161,42 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
             else {
                 log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
                     cosSignalDevice.c_str());
-                rc = signalIn3.openHid(cosSignalDevice.c_str());
+                rc = signalIn.openHid(cosSignalDevice.c_str());
                 if (rc < 0) {
-                    log.error("Failed to open HID signal connection %d", rc);
+                    log.error("Failed to open HID signal in connection %d", rc);
                     return -1;
                 }
             }
 
             // ##### TODO: DEAL WITH INVERT
+        }
+        else {
+            signalIn.close();
+        }
+
+        // Resolve the PTT signal
+        string aslPttTo = cfg["aslPttTo"].get<std::string>();
+        if (aslAudioDevice.starts_with("usb ") && aslPttTo.starts_with("usb")) {
+
+            string pttSignalDevice;
+            int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), pttSignalDevice);
+            if (rc3 < 0) {
+                log.error("Unable to resolve HID device %d", rc3);
+                return -1;
+            } 
+            else {
+                log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
+                    pttSignalDevice.c_str());
+                rc = signalOut.openHid(pttSignalDevice.c_str());
+                if (rc < 0) {
+                    log.error("Failed to open HID signal out connection %d", rc);
+                    return -1;
+                }
+            }
+            // ##### TODO: DEAL WITH INVERT
+        }
+        else {
+            signalOut.close();
         }
     }
     else {

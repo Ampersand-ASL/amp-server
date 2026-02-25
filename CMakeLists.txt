@@ -101,9 +101,11 @@ add_executable(amp-server
   amp-core/src/MultiRouter.cpp
   amp-core/src/WebUi.cpp
   amp-core/src/SignalIn.cpp
+  amp-core/src/SignalOut.cpp
   amp-core/src/ThreadUtil.cpp
   amp-core/src/TraceLog.cpp
   amp-core/src/LineSDRC.cpp
+  amp-core/src/SerialUtil.cpp
   amp-core/src/KerchunkFilter.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
@@ -124,6 +126,7 @@ add_executable(amp-server
   sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
   sound-map/src/usb-dir.c
+  sound-map/src/serial-map.cpp
   base64.c/base64.c
   ed25519/src/add_scalar.c
   ed25519/src/ge.c
