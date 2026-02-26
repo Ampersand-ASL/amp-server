@@ -194,7 +194,8 @@ lines that can be used to receive the COS signal from your radio and to send
 the PTT signal to your radio. These signals are configured using the "Carrier From" and 
 "PTT To" options on the configuration screen.
   - SHARIs also contain a SA818 module that is programmed using a serial 
-interface. This serial interface is selected using the "Command Port" 
+interface. Some SHARI vendors implement this interface using a USB port while others
+implement it using GPIO pins. This serial interface is selected using the "Command Port" 
 menu on the configuration screen.
 * At the moment any configuration errors will be displayed on the console log. I 
 will improve this in a future release.
