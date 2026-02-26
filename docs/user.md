@@ -185,6 +185,16 @@ The configuration page contains these settings:
 ![SA818](sa818-config.jpg)
 
 Some notes:
+* SHARI/SHARI-variants make **two** connections to your computer and both must 
+be configured properly for the device to work:
+  - SHARIs contain a CM1xx USB interface that enables audio to pass between 
+the radio module and your computer. The CM1xx chip also provides some I/Os 
+lines that can be used to receive the COS signal from your radio and to send
+the PTT signal to your radio. This is configured using the "Audio Device"
+menu the configuration screen. 
+  - SHARIs also contain a SA818 module that is programmed using a serial 
+interface. This serial interface is selected using the "Command Port" 
+menu on the configuration screen.
 * At the moment any configuration errors will be displayed on the console log. I 
 will improve this in a future release.
 * Many of the SHARI-type devices contain a CM1xx chip, so all of the audio setup 
