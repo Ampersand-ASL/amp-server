@@ -188,10 +188,11 @@ Some notes:
 * SHARI/SHARI-variants make **two** connections to your computer and both must 
 be configured properly for the device to work:
   - SHARIs contain a CM1xx USB interface that enables audio to pass between 
-the radio module and your computer. The CM1xx chip also provides some I/Os 
+the radio module and your computer. This is configured using the "Audio Device"
+menu the configuration screen. The CM1xx chip also provides some I/O 
 lines that can be used to receive the COS signal from your radio and to send
-the PTT signal to your radio. This is configured using the "Audio Device"
-menu the configuration screen. 
+the PTT signal to your radio. These signals are configured using the "Carrier From" and 
+"PTT To" options on the configuration screen.
   - SHARIs also contain a SA818 module that is programmed using a serial 
 interface. This serial interface is selected using the "Command Port" 
 menu on the configuration screen.
