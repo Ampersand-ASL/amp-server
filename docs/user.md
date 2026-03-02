@@ -168,6 +168,67 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ![Amp3](amp-4.jpg)
 
+### Favorites Configuration
+
+A user-defined list of frequently-called nodes can be configured. 
+
+![Favorites 2](fav2.jpg)
+
+This list is entered on the Configuration Tab. The list should be comma-separated
+with a colon between the node number and text description.  For example:
+
+    2002:ASL Parrot,61057:ASL Parrot,672731:AMP Hub,27339:East Cost Reflector,51018:W6EK SFARC
+
+![Favorites 1](fav1.jpg)
+
+Be sure to press "Save" at the bottom of the screen after making a configuration change.
+
+Audio Level Hints
+=================
+
+Setting audio levels can be tricky because of the many variables involved. There
+are two things that need to be adjusted.
+
+**The audio that you send to the AllStar network** which comes from either (a) your 
+radio receiver or (b) your microphone on a radio-less node. This level is displayed
+on the "USB RX" line of the level meter on the Home tab. It is important to adjust 
+your node to avoid clipping of this audio. A good target is around -6dBFS peak.
+
+**The audio that you receive from the AllStar network** which is sent to either (a)
+your radio transmitter or (b) your speaker on a radio-less node. This level is 
+displayed on the "USB TX" line of the level meter on the Home tab. It is important
+to adjust your system to avoid excessive deviation on a transmitter. 
+
+Use the 61057 parrot to test audio and get feedback on your level. Good receive audio
+should peak around -6dB. 
+
+> [!NOTE]
+> The terminology can be counter-intuitive to users of radio-less nodes
+since they typically think of the audio that comes from their microphone as "transmit" 
+audio. Keep in mind that the terms are defined from the perspective of a radio-connected
+system. When you key the microphone on a radio-less node the level being displayed
+is what is being **received** from the microphone connection.
+
+Network Debugging Hints
+=======================
+
+* Pay close attention to the UDP port number you are using. Each ASL Node 
+number is associated with an ASL Server. Each ASL Server is assigned a 
+UDP port for IAX traffic. Sometimes people get confused about this when they
+start running multiple nodes.
+* Just because your node can call out doesn't mean that you can accept 
+calls. The firewall/NAT adjustments described above aren't required to 
+make outgoing calls - only to receive incoming ones.
+* A valid ASL registration is required for some nodes to accept your call.
+*ASL parrots often do not require registration* so if you find that your
+call is accepted by a parrot but not by other nodes it is likely that your 
+registration is invalid. Check your password.
+* The ASL registration process takes some time to propagate. When your node
+first starts up your calls may not be accepted. Wait about 10 minutes and try again.
+* Test using parrot 61057 **before asking for network help**. This parrot will provide 
+information about whether (a) your node is registered and (b) whether your 
+node is reachable from the outside.
+
 # Setup of SA818-Based Hotspot (SHARI and Derivatives) 
 
 I know these devices have a mixed reputation (depending on supplier) so I'm 
@@ -281,26 +342,6 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
     
-Network Debugging Hints
-=======================
-
-* Pay close attention to the UDP port number you are using. Each ASL Node 
-number is associated with an ASL Server. Each ASL Server is assigned a 
-UDP port for IAX traffic. Sometimes people get confused about this when they
-start running multiple nodes.
-* Just because your node can call out doesn't mean that you can accept 
-calls. The firewall/NAT adjustments described above aren't required to 
-make outgoing calls - only to receive incoming ones.
-* A valid ASL registration is required for some nodes to accept your call.
-*ASL parrots often do not require registration* so if you find that your
-call is accepted by a parrot but not by other nodes it is likely that your 
-registration is invalid. Check your password.
-* The ASL registration process takes some time to propagate. When your node
-first starts up your calls may not be accepted. Wait about 10 minutes and try again.
-* Test using parrot 61057 **before asking for network help**. This parrot will provide 
-information about whether (a) your node is registered and (b) whether your 
-node is reachable from the outside.
-
 Asking For Help
 ===============
 
