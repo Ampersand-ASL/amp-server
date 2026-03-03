@@ -137,7 +137,8 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     throw invalid_argument("aslRxMixerSet is missing/invalid");
                 int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
 
-                rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
+                // #### TODO: MAKE ECHO CONFIGURABLE
+                rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet, false);
                 if (rc < 0) {
                     if (rc == -12)
                         log.error("Unable to open sound device, busy");

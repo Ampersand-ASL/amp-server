@@ -96,6 +96,7 @@ add_executable(amp-server
   amp-core/src/BridgeCall.cpp
   amp-core/src/BridgeIn.cpp
   amp-core/src/BridgeOut.cpp
+  amp-core/src/ProgramUtils.cpp
   amp-core/src/Resampler.cpp
   amp-core/src/ConfigPoller.cpp
   amp-core/src/MultiRouter.cpp
@@ -115,7 +116,6 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/fixed_math.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
-  kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/crc/crc.c
   kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
@@ -147,7 +147,7 @@ add_executable(amp-server
   ${OBJECT2}
 )
 # NOTE: Compiler optimizations are turned on
-target_compile_options(amp-server PRIVATE -fstack-protector-all -Wall -Wpedantic -g -O3 -mtune=native)
+target_compile_options(amp-server PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
 
 target_include_directories(amp-server PRIVATE src)
 target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
