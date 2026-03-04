@@ -21,6 +21,8 @@ better choice for you.
 
 The [change log is located here](../CHANGELOG.md). I try to keep it up to date.
 
+If you are using the AllStarLink system please [make a dontation](https://www.allstarlink.org/about/donate.php) to support the network. 
+
 Network Setup (IPv4)
 ====================
 
