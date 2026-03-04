@@ -6,6 +6,9 @@ on Linux (Debian 13) using arm64 or x86-64 architectures.
 > [!IMPORTANT]
 > **If you are just looking to install/run the server, you probably want to</span> [start here](https://github.com/Ampersand-ASL/amp-server/blob/main/docs/user.md)!**
 
+> [!IMPORTANT]
+> If you are using the AllStarLink system please [make a dontation](https://www.allstarlink.org/about/donate.php) to support the network. 
+
 To understand the structure of the server, the best place to start 
 is [main.cpp](https://github.com/Ampersand-ASL/amp-server/blob/main/src/main.cpp).
 
