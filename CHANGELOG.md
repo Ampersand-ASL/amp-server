@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-03-05
+
+* Added local echo duplex mode and local echo gain.
+
 ## 2026-02-25
 
 * Problems with the 8K linear CODEC have been addressed.

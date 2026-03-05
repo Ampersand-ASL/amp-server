@@ -81,6 +81,7 @@ add_executable(amp-server
   amp-core/src/LineUsb.cpp
   amp-core/src/LineUsb2.cpp
   amp-core/src/LineIAX2.cpp
+  amp-core/src/LineParrot.cpp
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
   amp-core/src/RegisterTask.cpp
