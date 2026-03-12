@@ -62,7 +62,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260305.0";
+static const char* VERSION = "20260312.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -294,7 +294,7 @@ int main(int argc, const char** argv) {
     // Setup the EventLoop with all of the tasks that need to be run on this thread
     Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
         &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
-    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
+    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, true);
 
     // #### TODO: At the moment there is no clean way to get out of the loop
 
