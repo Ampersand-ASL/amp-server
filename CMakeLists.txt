@@ -124,6 +124,7 @@ add_executable(amp-server
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
+  cmsis-dsp-mock/src/main-float.cpp
   sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
   sound-map/src/usb-dir.c
