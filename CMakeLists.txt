@@ -20,6 +20,14 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 add_compile_options(-fstack-protector-all -Wall -Wpedantic -g -O0)
 
+# ==============================================================================
+# NEEDED FOR CPPCHCEK
+#find_program(CPPCHECK_PATH cppcheck)
+#if(CPPCHECK_PATH)
+#    set(CMAKE_CXX_CPPCHECK ${CPPCHECK_PATH} "--enable=all" "--inconclusive")
+#endif()
+# ==============================================================================
+
 # ----- Make resource objects ------------------------------------------------
 
 # xxd -n _www_index_html -i ../amp-core/www/index.html resource-amp-core-www-index.c
@@ -171,6 +179,9 @@ target_include_directories(amp-server PRIVATE argparse/include)
 target_include_directories(amp-server PRIVATE g726-codec/src)
 
 target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
+
+# CPPCHECK
+#set_target_properties(amp-server PROPERTIES CXX_CPPCHECK "${CPPCHECK_PATH};--enable=warning")
 
 # ----- hello-http-server -------------------------------------------------
 
