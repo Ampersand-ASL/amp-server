@@ -50,7 +50,7 @@ Get the code and build:
     
 # Packaging the Build (Linux)
 
-    export AMP_SERVER_VERSION=20260427
+    export AMP_SERVER_VERSION=20260428
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
