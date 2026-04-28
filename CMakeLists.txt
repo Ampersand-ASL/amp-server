@@ -95,7 +95,6 @@ add_executable(amp-server
   amp-core/src/RegisterTask.cpp
   amp-core/src/StatsTask.cpp
   amp-core/src/ManagerTask.cpp
-  amp-core/src/RetransmissionBufferStd.cpp
   amp-core/src/Transcoder_G711_ULAW.cpp
   amp-core/src/Transcoder_SLIN_48K.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
@@ -123,6 +122,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/MicroDNS.cpp
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
   kc1fsz-tools-cpp/src/fixed_math.cpp
+  kc1fsz-tools-cpp/src/TaggedBuffer.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c

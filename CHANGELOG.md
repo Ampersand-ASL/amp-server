@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-04-28
+
+* Refactoring to simplify retransmission buffer. Found an issue with handling
+of VNAK and fixed it.
+
+## 2026-04-27
+
+* Release for Patrick N2DYI, working on resolving a delay issue that shows
+up on the local echo (sidetone) feature after the first transmission.
+
 ## 2026-03-05
 
 * Added local echo duplex mode and local echo gain.
