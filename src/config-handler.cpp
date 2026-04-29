@@ -116,13 +116,13 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         if (aslAudioDevice.starts_with("usb ")) {
             int alsaCard;
             string ossDevice;
+            // The leading "usb " is not part of the query that this function can handle
             int rc2 = querySoundMap(aslAudioDevice.substr(4).c_str(), alsaCard, ossDevice);
             if (rc2 < 0) {
-                log.error("Unable to resolve sound device %d", rc2);
+                log.error("Unable to resolve audio device [%s] %d", aslAudioDevice.c_str(), rc2);
             } 
             else {
-                log.info("Audio %s mapped to ALSA card %d", 
-                    aslAudioDevice.c_str(), alsaCard);                         
+                log.info("Audio device [%s] mapped to ALSA card %d", aslAudioDevice.c_str(), alsaCard);                         
 
                 // NOTE: ASL uses 0-1000 scale
                 if (!cfg["aslTxMixASet"].is_string())
@@ -165,12 +165,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
             string cosSignalDevice;
             int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), cosSignalDevice);
             if (rc3 < 0) {
-                log.error("Unable to resolve HID device %d", rc3);
+                log.error("Unable to resolve COS HID [%s] %d", aslAudioDevice.c_str(), rc3);
                 return -1;
             } 
             else {
-                log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
-                    cosSignalDevice.c_str());
+                log.info("COS HID [%s] mapped to [%s]", aslAudioDevice.c_str(), cosSignalDevice.c_str());
                 rc = signalIn.openHid(cosSignalDevice.c_str());
                 if (rc < 0) {
                     log.error("Failed to open HID signal in connection %d", rc);
@@ -191,11 +190,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
             string pttSignalDevice;
             int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), pttSignalDevice);
             if (rc3 < 0) {
-                log.error("Unable to resolve HID device %d", rc3);
+                log.error("Unable to resolve PTT HID [%s] %d", aslAudioDevice.c_str(), rc3);
                 return -1;
             } 
             else {
-                log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
+                log.info("PTT HID [%s] mapped to [%s]", aslAudioDevice.c_str(),
                     pttSignalDevice.c_str());
                 rc = signalOut.openHid(pttSignalDevice.c_str());
                 if (rc < 0) {
