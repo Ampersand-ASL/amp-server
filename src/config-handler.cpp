@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "sound-map.h"
+#include "serial-map.h"
 
 // amp-core
 #include "WebUi.h"
@@ -113,11 +114,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
 
         // Resolve the audio device
         string aslAudioDevice = cfg["aslAudioDevice"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ")) {
+        if (aslAudioDevice.starts_with("usbaud ")) {
             int alsaCard;
             string ossDevice;
-            // The leading "usb " is not part of the query that this function can handle
-            int rc2 = querySoundMap(aslAudioDevice.substr(4).c_str(), alsaCard, ossDevice);
+            // The leading "usbaud " is not part of the query that this function can handle
+            int rc2 = resolveUSBSoundDevice(aslAudioDevice.substr(7).c_str(), alsaCard, ossDevice);
             if (rc2 < 0) {
                 log.error("Unable to resolve audio device [%s] %d", aslAudioDevice.c_str(), rc2);
             } 
@@ -159,24 +160,49 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         }
 
         // Resolve the COS signal
-        string aslCosFrom = cfg["aslCosFrom"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ") && aslCosFrom.starts_with("usb")) {
-
-            string cosSignalDevice;
-            int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), cosSignalDevice);
-            if (rc3 < 0) {
-                log.error("Unable to resolve COS HID [%s] %d", aslAudioDevice.c_str(), rc3);
-                return -1;
-            } 
-            else {
-                log.info("COS HID [%s] mapped to [%s]", aslAudioDevice.c_str(), cosSignalDevice.c_str());
-                rc = signalIn.openHid(cosSignalDevice.c_str());
-                if (rc < 0) {
-                    log.error("Failed to open HID signal in connection %d", rc);
+        string aslCosDevice;
+        if (cfg["aslCosDevice"].is_string()) 
+            aslCosDevice = cfg["aslCosDevice"].get<std::string>();
+        string aslCosSignal;
+        if (cfg["aslCosSignal"].is_string()) 
+            aslCosSignal = cfg["aslCosSignal"].get<std::string>();
+        
+        if (!aslCosDevice.empty()) {
+            if (aslCosDevice.starts_with("usbaud ")) {
+                string cosDev;
+                int rc3 = resolveUSBHIDDevice(aslCosDevice.substr(7).c_str(), cosDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve COS HID [%s] %d", aslCosDevice.c_str(), rc3);
                     return -1;
+                } 
+                else {
+                    log.info("COS HID [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    rc = signalIn.openHid(cosDev.c_str(), aslCosSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open HID signal in connection %d", rc);
+                        return -1;
+                    }
                 }
             }
-
+            else if (aslCosDevice.starts_with("usbser ")) {
+                string cosDev;
+                int rc3 = resolveUSBSerialDevice(aslCosDevice.substr(7).c_str(), cosDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve COS Serial [%s] %d", aslCosDevice.c_str(), rc3);
+                    return -1;
+                } 
+                else {
+                    log.info("COS Serial [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    rc = signalIn.openSerial(cosDev.c_str(), aslCosSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open serial signal in connection %d", rc);
+                        return -1;
+                    }
+                }
+            }
+            else {
+                // ### TODO: DEAL WITH SERIAL
+            }
             // ##### TODO: DEAL WITH INVERT
         }
         else {
@@ -184,23 +210,27 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         }
 
         // Resolve the PTT signal
-        string aslPttTo = cfg["aslPttTo"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ") && aslPttTo.starts_with("usb")) {
-
-            string pttSignalDevice;
-            int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), pttSignalDevice);
-            if (rc3 < 0) {
-                log.error("Unable to resolve PTT HID [%s] %d", aslAudioDevice.c_str(), rc3);
-                return -1;
-            } 
-            else {
-                log.info("PTT HID [%s] mapped to [%s]", aslAudioDevice.c_str(),
-                    pttSignalDevice.c_str());
-                rc = signalOut.openHid(pttSignalDevice.c_str());
-                if (rc < 0) {
-                    log.error("Failed to open HID signal out connection %d", rc);
+        string aslPttDevice = cfg["aslPttDevice"].get<std::string>();
+        if (!aslPttDevice.empty()) {
+            if (aslPttDevice.starts_with("usbaud ")) {
+                string pttDev;
+                int rc3 = resolveUSBHIDDevice(aslPttDevice.substr(7).c_str(), pttDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve PTT HID [%s] %d", aslPttDevice.c_str(), rc3);
                     return -1;
+                } 
+                else {
+                    log.info("PTT HID [%s] mapped to [%s]", aslPttDevice.c_str(),
+                        pttDev.c_str());
+                    rc = signalOut.openHid(pttDev.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open HID signal out connection %d", rc);
+                        return -1;
+                    }
                 }
+            }
+            else {
+                // #### SERIAL
             }
             // ##### TODO: DEAL WITH INVERT
         }

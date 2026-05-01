@@ -160,7 +160,7 @@ int main(int argc, const char** argv) {
         log.info("Creating default configuration");
         ofstream cfg(cfgFileName);
         if (cfg.is_open()) 
-            cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
+            cfg << "{}" << endl;
         else {
             log.error("Unable to create default configuration");
             std::exit(-3);
