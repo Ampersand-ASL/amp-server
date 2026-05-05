@@ -1,5 +1,11 @@
 # Change Log
 
+## 20250505
+
+* Addressed a problem with sequence-number wrap-around that would cause disconnects.
+* Major change to the way COS/PTT signals are configured. Now fully supporting serial
+control for these signals.
+
 ## 2026-04-28
 
 * Refactoring to simplify retransmission buffer. Found an issue with handling

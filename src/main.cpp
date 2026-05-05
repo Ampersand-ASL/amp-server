@@ -62,7 +62,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260428.0";
+static const char* VERSION = "20260505.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
