@@ -200,9 +200,6 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     }
                 }
             }
-            else {
-                // ### TODO: DEAL WITH SERIAL
-            }
             // ##### TODO: DEAL WITH INVERT
         }
         else {
@@ -210,7 +207,13 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         }
 
         // Resolve the PTT signal
-        string aslPttDevice = cfg["aslPttDevice"].get<std::string>();
+        string aslPttDevice;
+        if (cfg["aslPttDevice"].is_string()) 
+            aslPttDevice = cfg["aslPttDevice"].get<std::string>();
+        string aslPttSignal;
+        if (cfg["aslPttSignal"].is_string()) 
+            aslPttSignal = cfg["aslPttSignal"].get<std::string>();
+
         if (!aslPttDevice.empty()) {
             if (aslPttDevice.starts_with("usbaud ")) {
                 string pttDev;
@@ -222,15 +225,28 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                 else {
                     log.info("PTT HID [%s] mapped to [%s]", aslPttDevice.c_str(),
                         pttDev.c_str());
-                    rc = signalOut.openHid(pttDev.c_str());
+                    rc = signalOut.openHid(pttDev.c_str(), aslPttSignal.c_str());
                     if (rc < 0) {
                         log.error("Failed to open HID signal out connection %d", rc);
                         return -1;
                     }
                 }
             }
-            else {
-                // #### SERIAL
+            else if (aslPttDevice.starts_with("usbser ")) {
+                string pttDev;
+                int rc3 = resolveUSBSerialDevice(aslPttDevice.substr(7).c_str(), pttDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve PTT Serial [%s] %d", aslPttDevice.c_str(), rc3);
+                    return -1;
+                } 
+                else {
+                    log.info("PTT Serial [%s] mapped to [%s]", aslPttDevice.c_str(), pttDev.c_str());
+                    rc = signalOut.openSerial(pttDev.c_str(), aslPttSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open serial signal in connection %d", rc);
+                        return -1;
+                    }
+                }
             }
             // ##### TODO: DEAL WITH INVERT
         }
