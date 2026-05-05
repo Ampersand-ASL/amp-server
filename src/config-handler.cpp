@@ -200,7 +200,12 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     }
                 }
             }
-            // ##### TODO: DEAL WITH INVERT
+
+            // Deal with signal inversion
+            string cosInvert;
+            if (cfg["aslCosInvert"].is_string()) 
+                cosInvert = cfg["aslCosInvert"].get<std::string>();
+            signalIn.setInvert(cosInvert == "1");
         }
         else {
             signalIn.close();
@@ -215,6 +220,14 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
             aslPttSignal = cfg["aslPttSignal"].get<std::string>();
 
         if (!aslPttDevice.empty()) {
+
+            // Deal with signal inversion. This is done first because the open() will 
+            // assert the initial state of the signal.
+            string pttInvert;
+            if (cfg["aslPttInvert"].is_string()) 
+                pttInvert = cfg["aslPttInvert"].get<std::string>();
+            signalOut.setInvert(pttInvert == "1");
+
             if (aslPttDevice.starts_with("usbaud ")) {
                 string pttDev;
                 int rc3 = resolveUSBHIDDevice(aslPttDevice.substr(7).c_str(), pttDev);
@@ -248,7 +261,6 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     }
                 }
             }
-            // ##### TODO: DEAL WITH INVERT
         }
         else {
             signalOut.close();
