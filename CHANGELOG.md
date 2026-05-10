@@ -1,5 +1,10 @@
 # Change Log
 
+## 20250510
+
+* Fixed a problem with USB device hierarchy pointed out by Patrick N2DYI. Tested
+using AllScan UCI80, UCI90, URI110, and ANH95.
+
 ## 20250505
 
 * Addressed a problem with sequence-number wrap-around that would cause disconnects.
