@@ -73,7 +73,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260428
+    export AMP_SERVER_VERSION=20260510
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260505-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260505-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260505-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260505-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -159,7 +159,32 @@ that looks like this:
 This configuration should be very consistent with that used on the ASL system. Fill 
 in your node number, password, and IAX port number. All other defaults should be enough to get you started.
 
-The audio levels will be the first thing to configure. Your audio level will be displayed in 
+### Audio/Signal Configuration
+
+If you are planning to connect a radio/microphone/speaker to your Ampersand server you will need
+to set a few things on the configuration tab:
+
+* The "Audio Device" setting selects the hardware interface used for audio input/output. This will usually
+be a CM10x device connected to a USB port. The setting will default to the first CM10x device found. If you 
+have more than one USB audio device you should pay close attention to the USB port number (something like "1.4.2") 
+to disambiguate devices.
+* The "Carrier Detect Device" controls the hardware interface used to detect an incoming signal. This will be
+either (a) your radio's carrier detect signal (b) your microphone PTT button on a radio-less station. The most
+typical configuration uses the CM10x Volume Down signal. This mode is enabled by selecting your USB audio device
+in the "Carrier Detect Device" menu and selecting "Volume Down" option in the "Carrier Detect Signal" menu. Some 
+systems make use of the signaling interface of a serial port to capture the carrier detect signal. In this case
+select your serial port in the "Carrier Detect Device" menu and select the appropriate signal (either CTS or DCD)
+in the "Carrier Detect Signal" menu.
+* The "PTT Device" controls the hardware interface used to key a radio. The most typical configuration uses the 
+CM10x GPIO3 signal for this purpose. This mode is enabled by selecting your USB audio device
+in the "PTT Device" menu and selecting the "GPIO3" option in the "PTT Signal" menu. Some 
+systems make use of the signaling interface of a serial port to generate the PTT signal. In this case
+select your serial port in the "PTT Device" menu and select the appropriate signal (either RTS or DTR)
+in the "PTT Signal" menu.
+
+### Audio Level Configuration
+
+The audio levels will be the next thing to configure. Your audio level will be displayed in 
 the system log any time you key your microphone (regardless of whether you are connected to 
 any other nodes). The levels will be displayed like this:
 
@@ -171,7 +196,7 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ![Amp3](amp-4.jpg)
 
-### Favorites Configuration
+## Favorites Configuration
 
 A user-defined list of frequently-called nodes can be configured. 
 
