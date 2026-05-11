@@ -241,3 +241,25 @@ target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
 target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)
+
+# ----- hello-audio----------------------------------------------------------------
+
+add_executable(hello-audio
+  src/demos/hello-audio.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  sound-map/src/sound-map.cpp
+  sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-audio PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(hello-audio PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  sound-map/include)
+
+target_link_libraries(hello-audio -lasound -lusb-1.0)
+
