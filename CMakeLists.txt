@@ -215,7 +215,7 @@ target_link_libraries(hello-mixer -lasound -lusb-1.0)
 
 # ------ cobs-test-1 ---------------------------------------------------------
 
-add_executable(cobs-test-1
+add_executable(cobs-test-1 EXCLUDE_FROM_ALL
   src/tests/cobs-test-1.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/Common.cpp
@@ -228,7 +228,7 @@ target_include_directories(cobs-test-1 PRIVATE cobs-c)
 
 # ------ sdrc-msg-test-1 ---------------------------------------------------
 
-add_executable(sdrc-msg-test-1
+add_executable(sdrc-msg-test-1 EXCLUDE_FROM_ALL
   src/tests/sdrc-msg-test-1.cpp
   kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
   kc1fsz-tools-cpp/src/Common.cpp
@@ -244,7 +244,7 @@ target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)
 
 # ----- hello-audio----------------------------------------------------------------
 
-add_executable(hello-audio
+add_executable(hello-audio EXCLUDE_FROM_ALL
   src/demos/hello-audio.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
