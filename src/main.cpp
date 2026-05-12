@@ -135,6 +135,11 @@ int main(int argc, const char** argv) {
         .default_value(false)
         .implicit_value(true);
 
+    program.add_argument("--capture")
+        .help("Turn on network capture")
+        .default_value(false)
+        .implicit_value(true);
+
     int iaxPort = 0;
     program.add_argument("--iaxport")
         .store_into(iaxPort)
@@ -224,6 +229,8 @@ int main(int argc, const char** argv) {
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
+    if (program["--capture"] == true)
+        iax2Channel1.setCapture(true);
     iax2Channel1.setPokeEnabled(true);
     iax2Channel1.setPokeAddr("52.8.197.124:4570");
     iax2Channel1.setDirectedPokeEnabled(true);

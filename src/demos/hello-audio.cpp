@@ -108,11 +108,11 @@ int main(int argc, const char** argv) {
     unsigned int periodTimeUs = 20000;
     snd_pcm_hw_params_set_period_time_near(playH, play_hw_params, &periodTimeUs, 0);
    
-    // Let the buffer store up to 4x 20ms frames of sound. 
+    // Let the buffer store up to 16x 20ms frames of sound. 
     // At 48K, there are 960 samples in a 20ms frame.
     // NOTE: This has been checked and it is working. Nothing here adds delay to the 
     // playout, it just determines the maximum amount of delay that can be supported.
-    unsigned int bufferTimeUs = 20000 * 4;
+    unsigned int bufferTimeUs = 20000 * 16;
     snd_pcm_hw_params_set_buffer_time_near(playH, play_hw_params, &bufferTimeUs, 0);
 
     if ((rc = snd_pcm_hw_params(playH, play_hw_params)) < 0) {
@@ -177,6 +177,9 @@ int main(int argc, const char** argv) {
     bool toneActive = false;
     unsigned lastDelayFrames = 0;
 
+    snd_pcm_status_t *status = 0;
+    snd_pcm_status_alloca(&status);
+
     // Main event loop
     while (true) {
 
@@ -191,8 +194,6 @@ int main(int argc, const char** argv) {
                 toneActive = false;
             }
 
-            snd_pcm_status_t *status = 0;
-            snd_pcm_status_alloca(&status);
             snd_pcm_status(playH, status);
 
             // State 2 = Prepared
@@ -243,7 +244,7 @@ int main(int argc, const char** argv) {
                     } else if (rc == -11) {
                         log.info("Card full");
                     } else {
-                        log.error("Write failed %d", rc);
+                        log.error("Other write error %d", rc);
                         snd_pcm_recover(playH, rc, 0); 
                         // NOTE: PROBLEM SEEN ON 11-MAY-2026, SOME ERRORS (-14) DON'T RECOVER.
                         // MAY NEED TO CLOSE/OPEN CHANNEL.

@@ -38,12 +38,12 @@ Install the prerequisites:
 Tell git to retain credentials (insecure):
 
         git config --global credential.helper store
-        git config pull.rebase false
 
 Get the code and build:
 
     git clone https://github.com/Ampersand-ASL/amp-server.git
     cd amp-server
+    git config pull.rebase false
     git submodule update --init
     cmake -B build
     cmake --build build 
