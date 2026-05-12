@@ -59,6 +59,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
             bridge10.setLocalNodeNumber(localNode.c_str());
             // #### TODO: MULTIPLE NODES AS SOME POINT
             iax2Channel1.setPokeNodeNumber(localNode.c_str());
+            radio2.setLocalNode(localNode.c_str());
         }
     }
 

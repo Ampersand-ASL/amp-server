@@ -196,12 +196,18 @@ int main(int argc, const char** argv) {
 
             snd_pcm_status(playH, status);
 
+            // Delay is distance between current application frame position and sound frame position. 
+            // It's positive and less than buffer size in normal situation, negative on playback underrun 
+            // and greater than buffer size on capture overrun.
+            unsigned delayFrames = snd_pcm_status_get_delay(status);
+
             // State 2 = Prepared
             // State 3 = Running
             // State 4 = Underrun 
             snd_pcm_state_t currentState = snd_pcm_status_get_state(status);
             if (currentState != lastState) {
-                log.info("Playback state change (%u) %d -> %d", loop, lastState, currentState);
+                log.info("Playback state change (%u) %d -> %d [%u]", 
+                    loop, lastState, currentState, delayFrames);
                 lastState = currentState;
             }   
 
@@ -210,10 +216,6 @@ int main(int argc, const char** argv) {
                 snd_pcm_prepare(playH);
             }
 
-            // Delay is distance between current application frame position and sound frame position. 
-            // It's positive and less than buffer size in normal situation, negative on playback underrun 
-            // and greater than buffer size on capture overrun.
-            unsigned delayFrames = snd_pcm_status_get_delay(status);
             if (delayFrames != lastDelayFrames) {
                 log.info("Delay %u frames", delayFrames);
                 lastDelayFrames = delayFrames;

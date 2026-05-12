@@ -205,7 +205,7 @@ int main(int argc, const char** argv) {
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
-    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT);
+    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT, LINE_ID_IAX);
     router.addRoute(&radio2, 2);
 
     // This manages the COS signal detect
