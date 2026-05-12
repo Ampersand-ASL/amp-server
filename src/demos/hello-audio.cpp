@@ -112,7 +112,7 @@ int main(int argc, const char** argv) {
     // At 48K, there are 960 samples in a 20ms frame.
     // NOTE: This has been checked and it is working. Nothing here adds delay to the 
     // playout, it just determines the maximum amount of delay that can be supported.
-    unsigned int bufferTimeUs = 20000 * 4;
+    unsigned int bufferTimeUs = 20000 * 2;
     snd_pcm_hw_params_set_buffer_time_near(playH, play_hw_params, &bufferTimeUs, 0);
 
     if ((rc = snd_pcm_hw_params(playH, play_hw_params)) < 0) {
@@ -177,6 +177,9 @@ int main(int argc, const char** argv) {
     bool toneActive = false;
     unsigned lastDelayFrames = 0;
 
+    snd_pcm_status_t *status = 0;
+    snd_pcm_status_alloca(&status);
+
     // Main event loop
     while (true) {
 
@@ -191,8 +194,6 @@ int main(int argc, const char** argv) {
                 toneActive = false;
             }
 
-            snd_pcm_status_t *status = 0;
-            snd_pcm_status_alloca(&status);
             snd_pcm_status(playH, status);
 
             // State 2 = Prepared
