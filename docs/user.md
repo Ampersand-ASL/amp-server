@@ -73,7 +73,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260510
+    export AMP_SERVER_VERSION=20260511
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260510-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260511-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260511-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260511-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260511-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================

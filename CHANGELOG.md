@@ -1,5 +1,9 @@
 # Change Log
 
+## 20250511
+
+* Improved the management of the USB audio buffer on playback.
+
 ## 20250510
 
 * Fixed a problem with USB device hierarchy pointed out by Patrick N2DYI. Tested
