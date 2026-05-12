@@ -33,7 +33,7 @@ Install the prerequisites:
 
     sudo apt update
     sudo apt -y upgrade
-    sudo apt -y install wget emacs-nox git cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev gdb
+    sudo apt -y install wget emacs-nox git cmake build-essential git xxd libasound2-dev libcurl4-gnutls-dev Libusb-1.0-0-dev gdb 
 
 Tell git to retain credentials (insecure):
 
