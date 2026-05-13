@@ -80,8 +80,16 @@ int main(int argc, const char** argv) {
 
     log.info("Audio device %s mapped to ALSA card %d", port, alsaCard);                         
 
+    // In ALSA (Advanced Linux Sound Architecture), plughw is a virtual plugin device 
+    // that acts as an abstraction layer over raw hardware (hw). It automatically handles 
+    // audio format conversions—such as sample rate (e.g., 44.1kHz to 48kHz, channel 
+    // mapping (e.g., mono to stereo), and bit depth (e.g., 16-bit to 32-bit) if the 
+    // hardware does not support the format directly.
     char alsaDeviceName[16];
-    snprintf(alsaDeviceName, 16, "plughw:%d,0", alsaCard);
+    // Previously we were doing this:
+    //snprintf(alsaDeviceName, 16, "plughw:%d,0", alsaCard);
+    // Now using the hardware directly
+    snprintf(alsaDeviceName, 16, "hw:%d,0", alsaCard);
     snd_pcm_t* playH = 0;
 
     if ((rc = snd_pcm_open(&playH, alsaDeviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
@@ -129,12 +137,21 @@ int main(int argc, const char** argv) {
     unsigned int startThreshold = 960 + ((960 * bufferMs) / 20);
     snd_pcm_sw_params_set_start_threshold(playH, play_sw_params, startThreshold);
 
-    log.info("Start threshold %u (frames)", startThreshold);
-
     if ((rc = snd_pcm_sw_params(playH, play_sw_params)) < 0) {
         log.error("Unable to configure play SW parameters %d", rc);
         return -1;
     }
+
+    snd_pcm_uframes_t t0 = 0;
+    snd_pcm_sw_params_get_start_threshold(play_sw_params, &t0);
+    log.info("Start threshold %d (frames)", t0);
+
+    // For playback devices, an underrun happens when the number of available frames 
+    // (i.e., free space in the buffer) reaches the stop threshold. Underruns can 
+    // happen only with playback devices.
+    snd_pcm_uframes_t t1 = 0;
+    snd_pcm_sw_params_get_stop_threshold(play_sw_params, &t1);
+    log.info("Stop threshold %d (frames)", t1);
 
     // Get the FD's 
     unsigned fdsCapacity = 2;
@@ -244,7 +261,8 @@ int main(int argc, const char** argv) {
                     if (rc == -EPIPE) {
                         log.error("Playback underrun");
                     } else if (rc == -11) {
-                        log.info("Card full");
+                        snd_pcm_state_t state = snd_pcm_status_get_state(status);
+                        log.info("Card full, state %d", state);
                     } else {
                         log.error("Other write error %d", rc);
                         snd_pcm_recover(playH, rc, 0); 
