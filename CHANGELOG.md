@@ -4,7 +4,9 @@
 
 * Improved recovery from USB plug/unplug situation.
 * Added debounce on PTT signal to improve Shari/ANH performance. 
-* 
+* Cleaned up a logic error with re-transmit, not holding all messages (except ACK)
+in the retransmit buffer, regardless of whether ACK is needed.
+* Added audio feedback on DTMF buttons.
 
 ## 20250511
 
