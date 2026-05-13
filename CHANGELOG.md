@@ -1,5 +1,11 @@
 # Change Log
 
+## 20250512
+
+* Improved recovery from USB plug/unplug situation.
+* Added debounce on PTT signal to improve Shari/ANH performance. 
+* 
+
 ## 20250511
 
 * Improved the management of the USB audio buffer on playback.
