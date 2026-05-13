@@ -171,7 +171,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         if (!aslCosDevice.empty()) {
             if (aslCosDevice.starts_with("usbaud ")) {
                 string cosDev;
-                int rc3 = resolveUSBHIDDevice(aslCosDevice.substr(7).c_str(), cosDev);
+                int rc3 = resolveUSBHIDDevice(log, aslCosDevice.substr(7).c_str(), cosDev);
                 if (rc3 < 0) {
                     log.error("Unable to resolve COS HID [%s] %d", aslCosDevice.c_str(), rc3);
                     return -1;
@@ -231,7 +231,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
 
             if (aslPttDevice.starts_with("usbaud ")) {
                 string pttDev;
-                int rc3 = resolveUSBHIDDevice(aslPttDevice.substr(7).c_str(), pttDev);
+                int rc3 = resolveUSBHIDDevice(log, aslPttDevice.substr(7).c_str(), pttDev);
                 if (rc3 < 0) {
                     log.error("Unable to resolve PTT HID [%s] %d", aslPttDevice.c_str(), rc3);
                     return -1;
