@@ -121,6 +121,7 @@ int main(int argc, const char** argv) {
     // NOTE: This has been checked and it is working. Nothing here adds delay to the 
     // playout, it just determines the maximum amount of delay that can be supported.
     unsigned int bufferTimeUs = 20000 * 16;
+    //unsigned int bufferTimeUs = 25000000;
     snd_pcm_hw_params_set_buffer_time_near(playH, play_hw_params, &bufferTimeUs, 0);
 
     if ((rc = snd_pcm_hw_params(playH, play_hw_params)) < 0) {
@@ -156,13 +157,13 @@ int main(int argc, const char** argv) {
     // Get the FD's 
     unsigned fdsCapacity = 2;
     pollfd fds[2];
-    //unsigned pollCount = 0;
+    unsigned pollCount = 0;
     rc = snd_pcm_poll_descriptors(playH, fds, fdsCapacity);
     if (rc < 0) {
         log.error("FD problem");
         return -1;
     } 
-    //pollCount = rc;
+    pollCount = rc;
 
     // Get the initial state of the driver
     snd_pcm_state_t lastState;
@@ -193,12 +194,18 @@ int main(int argc, const char** argv) {
     unsigned loop = 0;
     bool toneActive = false;
     unsigned lastDelayFrames = 0;
+    unsigned skipCount = 0;
 
     snd_pcm_status_t *status = 0;
     snd_pcm_status_alloca(&status);
 
     // Main event loop
     while (true) {
+
+        int pollRc = poll(fds, pollCount, 1);
+        //log.info("poll %d", pollRc);
+        unsigned short revents = 0;
+        snd_pcm_poll_descriptors_revents(playH, fds, pollCount, &revents);
 
         if (timer20ms.poll()) {
 
@@ -211,34 +218,43 @@ int main(int argc, const char** argv) {
                 toneActive = false;
             }
 
-            snd_pcm_status(playH, status);
+            //snd_pcm_status(playH, status);
 
             // Delay is distance between current application frame position and sound frame position. 
             // It's positive and less than buffer size in normal situation, negative on playback underrun 
             // and greater than buffer size on capture overrun.
-            unsigned delayFrames = snd_pcm_status_get_delay(status);
+            snd_pcm_sframes_t availp;
+            snd_pcm_sframes_t delayp;
+            snd_pcm_avail_delay(playH, &availp, &delayp);
+
+            unsigned delayFrames = delayp;
+            unsigned availFrames = availp;
 
             // State 2 = Prepared
             // State 3 = Running
             // State 4 = Underrun 
-            snd_pcm_state_t currentState = snd_pcm_status_get_state(status);
+            snd_pcm_state_t currentState = snd_pcm_state(playH);
             if (currentState != lastState) {
-                log.info("Playback state change (%u) %d -> %d [%u]", 
-                    loop, lastState, currentState, delayFrames);
+                log.info("Playback state change (%u) %d -> %d [%u, %u]", 
+                    loop, lastState, currentState, delayFrames, availFrames);
                 lastState = currentState;
             }   
 
             if (currentState == snd_pcm_state_t::SND_PCM_STATE_XRUN) {
-                log.info("Preparing after underrun (%u)", loop);
+                //log.info("Preparing after underrun (%u)", loop);
                 snd_pcm_prepare(playH);
             }
 
             if (delayFrames != lastDelayFrames) {
-                log.info("Delay %u frames", delayFrames);
+                log.info("Delay/avail %u / %u frames", delayFrames, availFrames);
                 lastDelayFrames = delayFrames;
+                if (delayFrames > 10000) {
+                    log.error("Delay is growing");
+                    skipCount = 10;
+                }
             }
 
-            if (toneActive) {
+            if (skipCount == 0 && toneActive) {
 
                 // Make a stereo buffer (interleaved) and convert to S16_LE. We know this 
                 // buffer is larger than the USB device can accept so the phase pointer will
@@ -261,8 +277,12 @@ int main(int argc, const char** argv) {
                     if (rc == -EPIPE) {
                         log.error("Playback underrun");
                     } else if (rc == -11) {
-                        snd_pcm_state_t state = snd_pcm_status_get_state(status);
-                        log.info("Card full, state %d", state);
+                        snd_pcm_state_t state = snd_pcm_state(playH);
+                        snd_pcm_sframes_t availp;
+                        snd_pcm_sframes_t delayp;
+                        snd_pcm_avail_delay(playH, &availp, &delayp);
+                        log.error("USB BUFFER FULL, state %d %u %u", state, delayp, availp);
+                        skipCount = 100;
                     } else {
                         log.error("Other write error %d", rc);
                         snd_pcm_recover(playH, rc, 0); 
@@ -277,6 +297,9 @@ int main(int argc, const char** argv) {
                     testTonePtr = (testTonePtr + rc) % testToneSize;
                 }
             }
+
+            if (skipCount > 0)
+                skipCount--;
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             loop++;
