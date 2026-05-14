@@ -113,28 +113,23 @@ int main(int argc, const char** argv) {
     snd_pcm_hw_params_set_format(playH, play_hw_params, SND_PCM_FORMAT_S16_LE);
     snd_pcm_hw_params_set_rate(playH, play_hw_params, audioRate, 0);
     snd_pcm_hw_params_set_channels_near(playH, play_hw_params, &channels);
-    unsigned int periodTimeUs = 20000;
-    snd_pcm_hw_params_set_period_time_near(playH, play_hw_params, &periodTimeUs, 0);
-   
-    // Let the buffer store up to 16x 20ms frames of sound. 
+    // Something close to 960
+    snd_pcm_uframes_t periodSize = 1024;
+    snd_pcm_hw_params_set_period_size_near(playH, play_hw_params, &periodSize, 0);   
     // At 48K, there are 960 samples in a 20ms frame.
-    // NOTE: This has been checked and it is working. Nothing here adds delay to the 
-    // playout, it just determines the maximum amount of delay that can be supported.
-    unsigned int bufferTimeUs = 20000 * 16;
-    snd_pcm_hw_params_set_buffer_time_near(playH, play_hw_params, &bufferTimeUs, 0);
+    snd_pcm_uframes_t bufferSize = periodSize * 8;
+    snd_pcm_hw_params_set_buffer_size_near(playH, play_hw_params, &bufferSize);
 
     if ((rc = snd_pcm_hw_params(playH, play_hw_params)) < 0) {
         log.error("Unable to configure play HW parameters %d", rc);
         return -1;
     }
     
-    log.info("USB buffer size %u (us)", bufferTimeUs);
-
     snd_pcm_sw_params_t* play_sw_params;
     snd_pcm_sw_params_alloca(&play_sw_params);
     snd_pcm_sw_params_current(playH, play_sw_params);
     // Set the start threshold at half of the buffer
-    unsigned int startThreshold = 960 + ((960 * bufferMs) / 20);
+    unsigned int startThreshold = periodSize * 2;
     snd_pcm_sw_params_set_start_threshold(playH, play_sw_params, startThreshold);
 
     if ((rc = snd_pcm_sw_params(playH, play_sw_params)) < 0) {
