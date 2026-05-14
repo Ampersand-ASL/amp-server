@@ -263,3 +263,19 @@ target_include_directories(hello-audio PRIVATE
 
 target_link_libraries(hello-audio -lasound -lusb-1.0)
 
+# ===== SOUNDS ================================================================
+
+set(RESOURCE4 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/clips/clip_3.raw")
+set(OBJECT4 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-clips-clip_3_raw.c")
+set(NAME4 "_amp_core_clips_clip_3_raw")
+add_custom_command(
+    OUTPUT ${OBJECT4}
+    COMMAND xxd
+    ARGS 
+        -n ${NAME4}
+        -i 
+        ${RESOURCE4}
+        ${OBJECT4}
+    DEPENDS ${RESOURCE4}
+)
+
