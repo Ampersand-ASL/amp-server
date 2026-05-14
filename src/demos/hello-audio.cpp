@@ -230,8 +230,8 @@ int main(int argc, const char** argv) {
             // State 4 = Underrun 
             snd_pcm_state_t currentState = snd_pcm_state(playH);
             if (currentState != lastState) {
-                log.info("Playback state change (%u) %d -> %d [%u, %u]", 
-                    loop, lastState, currentState, delayFrames, availFrames);
+                //log.info("Playback state change (%u) %d -> %d [%u, %u]", 
+                //    loop, lastState, currentState, delayFrames, availFrames);
                 lastState = currentState;
             }   
 
@@ -241,9 +241,9 @@ int main(int argc, const char** argv) {
             }
 
             if (delayFrames != lastDelayFrames) {
+                log.info("Delay/avail %u / %u frames", delayFrames, availFrames);
                 lastDelayFrames = delayFrames;
                 if (delayFrames > 10000) {
-                    log.info("Delay/avail %u / %u frames", delayFrames, availFrames);
                     skipCount = 10;
                 }
             }
