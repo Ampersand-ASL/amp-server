@@ -242,7 +242,7 @@ target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
 target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)
 
-# ----- hello-audio----------------------------------------------------------------
+# ----- hello-audio ----------------------------------------------------------------
 
 add_executable(hello-audio EXCLUDE_FROM_ALL
   src/demos/hello-audio.cpp
@@ -263,19 +263,48 @@ target_include_directories(hello-audio PRIVATE
 
 target_link_libraries(hello-audio -lasound -lusb-1.0)
 
-# ===== SOUNDS ================================================================
+# ----- hello-audio-2 ----------------------------------------------------------------
 
-set(RESOURCE4 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/clips/clip_3.raw")
-set(OBJECT4 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-clips-clip_3_raw.c")
-set(NAME4 "_amp_core_clips_clip_3_raw")
-add_custom_command(
-    OUTPUT ${OBJECT4}
-    COMMAND xxd
-    ARGS 
-        -n ${NAME4}
-        -i 
-        ${RESOURCE4}
-        ${OBJECT4}
-    DEPENDS ${RESOURCE4}
+add_executable(hello-audio-2 EXCLUDE_FROM_ALL
+  src/demos/hello-audio-2.cpp
+  amp-core/src/EventLoop.cpp
+  amp-core/src/Message.cpp
+  amp-core/src/Line.cpp
+  amp-core/src/LineRadio.cpp
+  amp-core/src/LineUsb.cpp
+  amp-core/src/LineUsb2.cpp
+  amp-core/src/Transcoder_G711_ULAW.cpp
+  amp-core/src/Transcoder_SLIN_48K.cpp
+  amp-core/src/Transcoder_SLIN_16K.cpp
+  amp-core/src/Transcoder_SLIN_8K.cpp
+  amp-core/src/Resampler.cpp
+  amp-core/src/MultiRouter.cpp
+  amp-core/src/tests/TestAudioGenerator.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/DTMFDetector2.cpp
+  sound-map/src/sound-map.cpp
+  sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
+  itu-g711-codec/src/codec.cpp
+  itu-g711-codec/src/Plc.cpp
+  cmsis-dsp-mock/src/main.cpp
+  cmsis-dsp-mock/src/main-float.cpp
 )
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-audio-2 PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
 
+target_include_directories(hello-audio-2 PRIVATE 
+  src
+  amp-core/include
+  amp-core/src
+  kc1fsz-sdrc/sw/src
+  kc1fsz-sdrc/sw/include
+  kc1fsz-tools-cpp/include
+  sound-map/include
+  itu-g711-codec/src
+  cmsis-dsp-mock/include
+  )
+
+target_link_libraries(hello-audio-2 -lasound -lusb-1.0)
