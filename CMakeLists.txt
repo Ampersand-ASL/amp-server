@@ -116,6 +116,7 @@ add_executable(amp-server
   amp-core/src/LineSDRC.cpp
   amp-core/src/SerialUtil.cpp
   amp-core/src/KerchunkFilter.cpp
+  amp-core/src/TTSServiceSimple.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
@@ -155,6 +156,7 @@ add_executable(amp-server
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
+  amp-core/clips/resource_amp_core_clips_clip_calling_node_raw.c
 )
 # NOTE: Compiler optimizations are turned on
 target_compile_options(amp-server PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)

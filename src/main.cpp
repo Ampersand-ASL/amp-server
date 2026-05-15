@@ -51,6 +51,7 @@
 #include "SignalOut.h"
 #include "TimerTask.h"
 #include "QueueConsumer.h"
+#include "TTSServiceSimple.h"
 
 // And a few things from AMP Server
 #include "LocalRegistryStd.h"
@@ -71,6 +72,7 @@ static const char* PUBLIC_USER = "radio";
 #define LINE_ID_STATS (12)
 #define LINE_ID_SIGNAL_OUT (31)
 #define LINE_ID_BRIDGE (10)
+#define LINE_ID_TTS_SIMPLE (19)
 
 static void sigHandler(int sig);
 
@@ -202,7 +204,7 @@ int main(int argc, const char** argv) {
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
-        0, 0, 0, 1, LINE_ID_STATS, callBank, MAX_CALLS);
+        0, 0, 0, 1, LINE_ID_STATS, LINE_ID_TTS_SIMPLE, callBank, MAX_CALLS);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
@@ -300,9 +302,13 @@ int main(int argc, const char** argv) {
         }
     );
 
+    TTSServiceSimple ttsSimple19(log, clock, router, LINE_ID_TTS_SIMPLE,
+        LINE_ID_BRIDGE);
+    router.addRoute(&ttsSimple19, LINE_ID_TTS_SIMPLE);
+
     // Setup the EventLoop with all of the tasks that need to be run on this thread
     Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
-        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
+        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &ttsSimple19, &router };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, true);
 
     // #### TODO: At the moment there is no clean way to get out of the loop
