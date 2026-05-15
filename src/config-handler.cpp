@@ -37,6 +37,11 @@ namespace kc1fsz {
 
     namespace amp {
 
+/**
+ * This function is solely responsible for taking the configuration document (JSON)
+ * and applying it to the entire system. This will be called at startup and at
+ * any time that the configuration is changed.
+ */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
     LocalRegistryStd& locReg,
     LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, 

@@ -62,7 +62,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260513.1";
+static const char* VERSION = "20260515.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -70,6 +70,7 @@ static const char* PUBLIC_USER = "radio";
 #define LINE_ID_IAX (1)
 #define LINE_ID_STATS (12)
 #define LINE_ID_SIGNAL_OUT (31)
+#define LINE_ID_BRIDGE (10)
 
 static void sigHandler(int sig);
 
@@ -205,7 +206,8 @@ int main(int argc, const char** argv) {
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
-    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT, LINE_ID_IAX);
+    LineUsb radio2(log, clock, router, 2, 1, LINE_ID_BRIDGE, Message::UNKNOWN_CALL_ID, 
+        LINE_ID_SIGNAL_OUT, LINE_ID_IAX);
     router.addRoute(&radio2, 2);
 
     // This manages the COS signal detect
