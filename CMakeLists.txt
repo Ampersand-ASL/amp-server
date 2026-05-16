@@ -164,6 +164,8 @@ add_executable(amp-server
   amp-core/clips/resource_amp_core_clips_clip_2_raw.c
   amp-core/clips/resource_amp_core_clips_clip_2_end_raw.c
   amp-core/clips/resource_amp_core_clips_clip_3_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_raw.c
   amp-core/clips/resource_amp_core_clips_clip_4_end_raw.c
   amp-core/clips/resource_amp_core_clips_clip_5_raw.c
   amp-core/clips/resource_amp_core_clips_clip_5_end_raw.c
