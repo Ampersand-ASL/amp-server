@@ -1,23 +1,31 @@
 # Change Log
 
-## 20250512
+## 20260516
+
+* Lots of refactoring of USB audio to try to resolve overrun problem
+demonstrated by David NR9V on his Arduino Uno Q.
+* Improvements to DTMF handling.
+* Corrected some bugs that caused calls to be dropped during unrelated
+configuration changes.
+
+## 20260512
 
 * Improved recovery from USB plug/unplug situation.
 * Added debounce on PTT signal to improve Shari/ANH performance. 
-* Cleaned up a logic error with re-transmit, not holding all messages (except ACK)
+* Cleaned up a logic error with re-transmit, now holding all messages (except ACK)
 in the retransmit buffer, regardless of whether ACK is needed.
 * Per request of Joe KA9OPL, added audio feedback on DTMF buttons.
 
-## 20250511
+## 20260511
 
 * Improved the management of the USB audio buffer on playback.
 
-## 20250510
+## 20260510
 
 * Fixed a problem with USB device hierarchy pointed out by Patrick N2DYI. Tested
 using AllScan UCI80, UCI90, URI110, and ANH95.
 
-## 20250505
+## 20260505
 
 * Addressed a problem with sequence-number wrap-around that would cause disconnects.
 * Major change to the way COS/PTT signals are configured. Now fully supporting serial
