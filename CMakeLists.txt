@@ -152,10 +152,29 @@ add_executable(amp-server
   g726-codec/src/g711.c
   g726-codec/src/g72x.c
   g726-codec/src/g726_32.c
-# Here is where the resources are added to the binary
+  # Here is where the WWW resources are added to the binary
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
+  # Audio clips
+  amp-core/clips/resource_amp_core_clips_clip_0_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_0_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_end_raw.c
   amp-core/clips/resource_amp_core_clips_clip_calling_node_raw.c
 )
 # NOTE: Compiler optimizations are turned on
