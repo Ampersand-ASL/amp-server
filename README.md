@@ -68,3 +68,20 @@ Get the code and build:
 # Code Metrics
 
         cloc --vcs=git --exclude-list-file=.clocignore .
+
+
+bruce@pi5:~ $ sudo wg-quick up wg0
+[#] ip link add wg0 type wireguard
+[#] wg setconf wg0 /dev/fd/63
+[#] ip -4 address add 44.27.134.170/32 dev wg0
+[#] ip -6 address add fe80::3bb4:112d:8f55:127f/128 dev wg0
+[#] ip link set mtu 1380 up dev wg0
+[#] resolvconf -a tun.wg0 -m 0 -x
+/etc/resolvconf/update.d/libc: Warning: /etc/resolv.conf is not a symbolic link to /run/resolvconf/resolv.conf
+[#] wg set wg0 fwmark 51820
+[#] ip -6 route add ::/0 dev wg0 table 51820
+[#] ip -6 rule add not fwmark 51820 table 51820
+[#] ip -6 rule add table main suppress_prefixlength 0
+[#] nft -f /dev/fd/63
+[#] ip -4 route add 0.0.0.0/0 dev wg0 table 51820
+
