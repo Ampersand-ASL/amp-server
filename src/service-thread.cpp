@@ -59,7 +59,7 @@ using namespace std;
 using namespace kc1fsz;
 
 static const char* POKE_HOST_NAME = "61057.nodes.allstarlink.org";
-static int POKE_PORT = 4570;
+static int POKE_PORT = 4569;
 
 namespace kc1fsz {
     namespace amp {
