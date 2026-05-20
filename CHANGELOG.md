@@ -1,5 +1,11 @@
 # Change Log
 
+### 20260520
+
+* Fixed 61057 POKE port number.
+* Addressed a protocol violation with PING/PONG. PONG timestamp is now 
+matching PING.
+
 ## 20260516
 
 * Lots of refactoring of USB audio to try to resolve overrun problem
