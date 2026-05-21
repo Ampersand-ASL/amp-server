@@ -61,6 +61,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     if (cfg.contains("node")) {
         string localNode = cfg["node"];
         if (!localNode.empty()) {
+            log.important("Local node is %s", localNode.c_str());
             bridge10.setLocalNodeNumber(localNode.c_str());
             // #### TODO: MULTIPLE NODES AS SOME POINT
             iax2Channel1.setPokeNodeNumber(localNode.c_str());
@@ -99,9 +100,10 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     }
     
     int rc = iax2Channel1.open(AF_INET, iaxPort);
-    if (rc < 0) {
+    if (rc < 0) 
         log.error("Failed to open IAX2 line %d", rc);
-    }
+    else
+        log.important("Opened IAX connection on port %d", iaxPort);
 
     /*
     //if (!cfg["sdrcSerialDevice"].is_string()) {
@@ -129,7 +131,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                 log.error("Unable to resolve audio device [%s] %d", aslAudioDevice.c_str(), rc2);
             } 
             else {
-                log.info("Audio device [%s] mapped to ALSA card %d", aslAudioDevice.c_str(), alsaCard);                         
+                log.important("Audio device [%s] mapped to ALSA card %d", aslAudioDevice.c_str(), alsaCard);                         
 
                 // NOTE: ASL uses 0-1000 scale
                 if (!cfg["aslTxMixASet"].is_string())
@@ -182,7 +184,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     return -1;
                 } 
                 else {
-                    log.info("COS HID [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    log.important("COS HID [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
                     rc = signalIn.openHid(cosDev.c_str(), aslCosSignal.c_str());
                     if (rc < 0) {
                         log.error("Failed to open HID signal in connection %d", rc);
@@ -198,7 +200,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     return -1;
                 } 
                 else {
-                    log.info("COS Serial [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    log.important("COS Serial [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
                     rc = signalIn.openSerial(cosDev.c_str(), aslCosSignal.c_str());
                     if (rc < 0) {
                         log.error("Failed to open serial signal in connection %d", rc);
@@ -242,7 +244,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     return -1;
                 } 
                 else {
-                    log.info("PTT HID [%s] mapped to [%s]", aslPttDevice.c_str(),
+                    log.important("PTT HID [%s] mapped to [%s]", aslPttDevice.c_str(),
                         pttDev.c_str());
                     rc = signalOut.openHid(pttDev.c_str(), aslPttSignal.c_str());
                     if (rc < 0) {
@@ -259,7 +261,7 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     return -1;
                 } 
                 else {
-                    log.info("PTT Serial [%s] mapped to [%s]", aslPttDevice.c_str(), pttDev.c_str());
+                    log.important("PTT Serial [%s] mapped to [%s]", aslPttDevice.c_str(), pttDev.c_str());
                     rc = signalOut.openSerial(pttDev.c_str(), aslPttSignal.c_str());
                     if (rc < 0) {
                         log.error("Failed to open serial signal in connection %d", rc);

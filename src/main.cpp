@@ -21,6 +21,7 @@
  */
 #include <execinfo.h>
 #include <signal.h>
+#include <syslog.h>
 #include <iostream>
 
 // 3rd party HTTP/HTTPS client
@@ -63,7 +64,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260520.0";
+static const char* VERSION = "20260521.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -80,6 +81,13 @@ static void sigHandler(int sig);
 static amp::BridgeCall callBank[MAX_CALLS];
 static LineIAX2::Call iaxCallBank[MAX_CALLS];
 
+static void logCb(const char* sev, const char* dt, const char* msg) {
+    if (sev[0] == 'E') {
+        syslog(LOG_ERR, msg);
+    }
+    std::cout << sev << " " << dt << " " << msg << std::endl;
+}
+
 int main(int argc, const char** argv) {
 
     // Name the thread
@@ -87,16 +95,27 @@ int main(int argc, const char** argv) {
     // Install the crash stack handler
     signal(SIGSEGV, sigHandler);
 
+    // Open a connection to the system logger
+    // LOG_PID includes the process ID in each entry
+    // LOG_CONS It instructs the program to write log messages directly to the 
+    //   system console (/dev/console) as a fallback if it fails to send them to 
+    //   the main syslog daemon.
+    // LOG_USER identifies the facility (type of program)
+    openlog("amp-server", LOG_PID | LOG_CONS, LOG_USER);
+
     // Create a logger that holds onto some history for display purposes.
     // #### TODO: Think about the performance implications of the lock that 
     // #### is acquired when the UI thread reads the log.
-    MTLog2 log;
+    MTLog2 log(logCb);
 
     log.info("AMP Server");
     log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
     log.info("Copyright (C) 2026, Bruce MacKinnon KC1FSZ");
     log.info("Version %s Git Hash %s", VERSION, GIT_HASH);
     log.info("----------------------------------------------------------------------");
+
+    // syslog startup stuff
+    syslog(LOG_INFO,"AMP Server startup %s", VERSION);
 
     StdClock clock;
 

@@ -323,7 +323,8 @@ target_include_directories(hello-audio-2 PRIVATE
   amp-core/include
   amp-core/src
   kc1fsz-sdrc/sw/src
-  kc1fsz-sdrc/sw/include
+  kc1fsz-sdr
+  c/sw/include
   kc1fsz-tools-cpp/include
   sound-map/include
   itu-g711-codec/src
@@ -331,3 +332,15 @@ target_include_directories(hello-audio-2 PRIVATE
   )
 
 target_link_libraries(hello-audio-2 -lasound -lusb-1.0)
+
+# ----- syslog-1 
+
+add_executable(syslog-1 EXCLUDE_FROM_ALL
+  src/demos/syslog-1.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+) 
+
+target_include_directories(syslog-1 PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  )
