@@ -344,3 +344,28 @@ target_include_directories(syslog-1 PRIVATE
   src
   kc1fsz-tools-cpp/include
   )
+
+# ----- hello-reg ----------------------------------------------------------------
+
+add_executable(hello-reg EXCLUDE_FROM_ALL
+  src/demos/hello-reg.cpp
+  amp-core/src/EventLoop.cpp
+  amp-core/src/RegisterTaskIAX2.cpp
+  amp-core/src/IAX2FrameFull.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/NetUtils.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/StateMachine.cpp
+  kc1fsz-tools-cpp/src/md5/md5c.c
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-reg PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(hello-reg PRIVATE 
+  src
+  amp-core/include
+  amp-core/src
+  kc1fsz-tools-cpp/include
+  )
+
