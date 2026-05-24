@@ -234,7 +234,6 @@ int main(int argc, const char** argv) {
     // This manages the COS signal detect
     amp::SignalIn signalIn3(log, clock, router, 2, 
         Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
-    router.addRoute(&signalIn3, 3);
 
     // This manages the PTT signal generation
     amp::SignalOut signalOut31(log, clock, router, 
