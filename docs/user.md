@@ -398,7 +398,8 @@ Ampersand supports an alternate method of authentication that completely elimina
 A public-key encryption method is used to authenticate inbound calls.
 
 Ampersand uses Ed25519 key-pairs for authentication. Ed25519 is a highly secure, fast, and modern public-key digital signature scheme that is based on elliptic curve cryptography. Importantly,
-the keys are reasonably short (64 characters) which makes setup easy. 
+the keys are reasonably short (64 characters) which makes setup easy. The Ed25519 cryptographic 
+algorithms are well suited to compute/memory-constrained microcontroller implementations.
 
 **NOTE: At the moment this mechanism is only useful for Ampersand-to-Ampersand calls.**
 
