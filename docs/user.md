@@ -402,6 +402,10 @@ the keys are reasonably short (64 characters) which makes setup easy.
 
 **NOTE: At the moment this mechanism is only useful for Ampersand-to-Ampersand calls.**
 
+This authentication mechanism relies on a few extensions to the IAX2 protocol. These extensions
+have been formally proposed to [IANA](https://www.iana.org/) and they are currently under review.
+You can see [the current text of the proposal here](https://github.com/brucemack/rfc5456-update/blob/main/proposal-2.md).
+
 The one-time setup is straight-forward:
 * The caller creates a public/private key pair for ASL use. 
 * The caller creates a DNS subdomain in the [ampr.org domain](https://portal.ampr.org/home) and posts their ASL public key. More on this
