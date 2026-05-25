@@ -453,12 +453,9 @@ You can validate the record using any DNS query tool. [Here is one example of a 
 
 ![Example 2](pk2.jpg)
 
+Finally, configure your private key on the Ampersand configuration page:
 
-
-
-
-
-
+![Example 3](pk3.jpg)
 
 Asking For Help
 ===============
