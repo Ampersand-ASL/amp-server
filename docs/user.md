@@ -385,25 +385,26 @@ The tokens are as follows:
 
 # Using Public Key Authentication
 
-The current AllStarLink network uses source-IP validation to authenticate callers. This method provides
-reasonable security since a secret password is needed to register a node's IP address. Unfortunately, 
-this method also creates an unnecessary link between network addressing and authentication. This problem is exacerbated by a ~15 minute latency in the current process of associating 
-a node number with an IP address. This latency is particularly inconvenient in two situations:
-* When a node starts up after an extended down-time. The current ASL registration server "times out" registrations that aren't refreshed constantly.
+The current AllStarLink network uses source IP address validation to authenticate callers. This method provides
+reasonable security since a secret password is needed to register the association between a node
+number and its IP address. Unfortunately, 
+this method also creates an unnecessary link between network addressing and authentication. The problem is exacerbated by a ~15 minute latency in the current ASL registration process. This latency is particularly inconvenient in two situations:
+* When a node starts up after an extended down-time. The current ASL registration server "times out" registrations that aren't refreshed constantly. Authentication of new calls will
+fail until the new node number/IP address association fully propagates.
 * When a mobile node moves to a different location on the network. Authentication of new calls will
 fail until the new node number/IP address association fully propagates.
 
-Ampersand supports an alternate method of authentication that eliminates the dependency on IP addresses.
-An public-key encryption method is used by a server to authenticate a potential client.
+Ampersand supports an alternate method of authentication that completely eliminates the dependency on IP addresses.
+A public-key encryption method is used to authenticate inbound calls.
 
-Ampersand uses Ed25519 key-pairs for this purpose. Ed25519 is a highly secure, fast, and modern public-key digital signature scheme that is based on elliptic curve cryptography. Importantly,
+Ampersand uses Ed25519 key-pairs for authentication. Ed25519 is a highly secure, fast, and modern public-key digital signature scheme that is based on elliptic curve cryptography. Importantly,
 the keys are reasonably short (64 characters) which makes setup easy. 
 
 **NOTE: At the moment this mechanism is only useful for Ampersand-to-Ampersand calls.**
 
 The one-time setup is straight-forward:
 * The caller creates a public/private key pair for ASL use. 
-* The caller creates a DNS subdomain in the ampr.org domain and posts their ASL public key. More on this
+* The caller creates a DNS subdomain in the [ampr.org domain](https://portal.ampr.org/home) and posts their ASL public key. More on this
 below.
 * The caller configures their Ampersand server with their private key. 
 * The caller configures their Ampersand server with their amateur callsign. 
@@ -415,6 +416,9 @@ When a call is made:
 * The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
 the caller's signature this time.
 * The called node uses the caller's public key to validate the signature.
+
+If no public key is found for the caller the server falls back to the traditional source IP address
+validation mechanism.
 
 ## Generating Key Pair
 
