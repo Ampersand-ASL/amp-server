@@ -92,6 +92,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         bridge10.setKerchunkFilterDelayMs(stoi(kfdelay));
     }
 
+    if (cfg.contains("callsign"))
+        iax2Channel1.setCallSign(cfg["callsign"].get<std::string>().c_str());
+    if (cfg.contains("privateKey"))
+        iax2Channel1.setPrivateKey(cfg["privateKey"].get<std::string>().c_str());
+
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {
         if (!cfg["iaxPort"].is_string())

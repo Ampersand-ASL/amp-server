@@ -97,7 +97,7 @@ Command-line options should be used if you want to override defaults:
 is always "user."  Please pay attention to shell quoting rules when using passwords that 
 contain special characters.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
-file.
+file. This is particularly useful when running more than one server on the same machine.
 * --trace Used to turn on extended network tracing.
 
 The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
@@ -370,6 +370,70 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
     
+# Using Explicit Connection URL
+
+Normally connections are initiated using a node number. DNS is used to convert an ASL node 
+number into a IP address/port number combination. In some situations it is desirably to bypass
+the usual DNS lookup and provide the target address explicitly. This can be accomplished using
+a URI syntax like this:
+
+    iax:radio@192.168.8.143:4568/672732,none
+
+The tokens are as follows:
+
+    iax:username@ip_address:udp_port/node_number,password
+
+# Using Public Key Authentication
+
+The current AllStarLink network uses source-IP validation to authenticate callers. This method provides
+reasonable security since a secret password is needed to register a node's IP address. Unfortunately, 
+this method also creates an unnecessary link between network addressing and authentication. This problem is exacerbated by a ~15 minute latency in the current process of associating 
+a node number with an IP address. This latency is particularly inconvenient in two situations:
+* When a node starts up after an extended down-time. The current ASL registration server "times out" registrations that aren't refreshed constantly.
+* When a mobile node moves to a different location on the network. Authentication of new calls will
+fail until the new node number/IP address association fully propagates.
+
+Ampersand supports an alternate method of authentication that eliminates the dependency on IP addresses.
+An public-key encryption method is used by a server to authenticate a potential client.
+
+Ampersand uses Ed25519 key-pairs for this purpose. Ed25519 is a highly secure, fast, and modern public-key digital signature scheme that is based on elliptic curve cryptography. Importantly,
+the keys are reasonably short (64 characters) which makes setup easy. 
+
+**NOTE: At the moment this mechanism is only useful for Ampersand-to-Ampersand calls.**
+
+The one-time setup is straight-forward:
+* The caller creates a public/private key pair for ASL use. 
+* The caller creates a DNS subdomain in the ampr.org domain and posts their ASL public key. More on this
+below.
+* The caller configures their Ampersand server with their private key. 
+* The caller configures their Ampersand server with their amateur callsign. 
+
+When a call is made:
+* The caller places a call to an Ampersand node. The protocol includes the caller's callsign in the initial message.
+* The called node uses the caller's callsign to check the ampr.org domain for the caller's public key.
+* The called node sends back an Ed25519 authentication challenge to the caller.
+* The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
+the caller's signature this time.
+* The called node uses the caller's public key to validate the signature.
+
+## Generating Key Pair
+
+You can generate the Ed25519 public/private key pair any way you want. [This online tool](https://cyphr.me/ed25519_tool/ed.html) is one easy way, but very paranoid users may not view this as sufficiently 
+secure. Importantly, **the hex string representation of the public and private keys are exactly 64 characters in length.**
+
+Here's an example key pair:
+
+* Private: A2CF5B0FEC039AF4F3EB10294CBFBD021ADFFD3BFEAFBB48136CA3A4C5DA860B
+* Public: 7F406A33164D59F6A42F15C70106F669F4199482F91B5F32A259AE795ECCEA18
+
+## Publishing Your Public Key
+
+Ampersand leverages the [AMPRNet system](https://portal.ampr.org/home) sponsored by the [ARDC](https://www.ardc.net/). 
+
+
+
+
+
 Asking For Help
 ===============
 

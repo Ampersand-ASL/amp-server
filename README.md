@@ -54,7 +54,7 @@ Get the code and build:
     # Update CHANGELOG.md
     # Update version in main.cpp
     # Update version in docs/user.md
-    export AMP_SERVER_VERSION=20260524
+    export AMP_SERVER_VERSION=20260525
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
@@ -69,6 +69,9 @@ Get the code and build:
 
         cloc --vcs=git --exclude-list-file=.clocignore .
 
+
+
+# Wireguard Stuff
 
 bruce@pi5:~ $ sudo wg-quick up wg0
 [#] ip link add wg0 type wireguard

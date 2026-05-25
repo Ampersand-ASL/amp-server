@@ -89,7 +89,9 @@ add_executable(amp-server
   amp-core/src/LineUsb.cpp
   amp-core/src/LineUsb2.cpp
   amp-core/src/LineIAX2.cpp
+  amp-core/src/LineIAX2_base.cpp
   amp-core/src/LineParrot.cpp
+  amp-core/src/LineSDRC.cpp
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
   amp-core/src/RegisterTask.cpp
@@ -113,7 +115,6 @@ add_executable(amp-server
   amp-core/src/SignalOut.cpp
   amp-core/src/ThreadUtil.cpp
   amp-core/src/TraceLog.cpp
-  amp-core/src/LineSDRC.cpp
   amp-core/src/SerialUtil.cpp
   amp-core/src/KerchunkFilter.cpp
   amp-core/src/TTSServiceSimple.cpp
