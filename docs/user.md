@@ -428,7 +428,29 @@ Here's an example key pair:
 
 ## Publishing Your Public Key
 
-Ampersand leverages the [AMPRNet system](https://portal.ampr.org/home) sponsored by the [ARDC](https://www.ardc.net/). 
+Ampersand leverages the [AMPRNet system](https://portal.ampr.org/home) sponsored by the [ARDC](https://www.ardc.net/). There are a few reasons for selecting this method of key publication:
+* The service is free for hams.
+* The ARDC performs a license validation during the account setup process. This provides an added
+level of security and ensures that only licensed hams will be able to use the ASL network.
+* Many hams already have ARDC/44net accounts.
+
+If not done already, setup an AMPRNet account by following the [registration instructions](https://portal.ampr.org/register/step-one).
+
+Using the DNS menu on the AMPR Portal, create a subdomain for your callsign. In my case, I created a subdomain called "kc1fsz.ampr.org."
+
+Under your subdomain, create a DNS resource record of type TXT with hostname "aslpk." The data for this
+record should contain your 64-character public key in quotes. The full DNS record name will be "aslpk.YOURCALLSIGN.ampr.org."  Here's what it looks like in my case:
+
+![Example 1](pk1.jpg)
+
+Wait a few hours for the new record to propagate.
+
+You can validate the record using any DNS query tool. [Here is one example of a lookup tool](https://mxtoolbox.com/txtlookup.aspx). Here's what it looks like in my case:
+
+![Example 2](pk2.jpg)
+
+
+
 
 
 
