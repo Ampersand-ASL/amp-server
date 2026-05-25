@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "sound-map.h"
+#include "serial-map.h"
 
 // amp-core
 #include "WebUi.h"
@@ -36,6 +37,11 @@ namespace kc1fsz {
 
     namespace amp {
 
+/**
+ * This function is solely responsible for taking the configuration document (JSON)
+ * and applying it to the entire system. This will be called at startup and at
+ * any time that the configuration is changed.
+ */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
     LocalRegistryStd& locReg,
     LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, 
@@ -55,9 +61,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     if (cfg.contains("node")) {
         string localNode = cfg["node"];
         if (!localNode.empty()) {
+            log.important("Local node is %s", localNode.c_str());
             bridge10.setLocalNodeNumber(localNode.c_str());
             // #### TODO: MULTIPLE NODES AS SOME POINT
             iax2Channel1.setPokeNodeNumber(localNode.c_str());
+            radio2.setLocalNode(localNode.c_str());
         }
     }
 
@@ -84,6 +92,11 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         bridge10.setKerchunkFilterDelayMs(stoi(kfdelay));
     }
 
+    if (cfg.contains("callsign"))
+        iax2Channel1.setCallSign(cfg["callsign"].get<std::string>().c_str());
+    if (cfg.contains("privateKey"))
+        iax2Channel1.setPrivateKey(cfg["privateKey"].get<std::string>().c_str());
+
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {
         if (!cfg["iaxPort"].is_string())
@@ -92,9 +105,10 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     }
     
     int rc = iax2Channel1.open(AF_INET, iaxPort);
-    if (rc < 0) {
+    if (rc < 0) 
         log.error("Failed to open IAX2 line %d", rc);
-    }
+    else
+        log.important("Opened IAX connection on port %d", iaxPort);
 
     /*
     //if (!cfg["sdrcSerialDevice"].is_string()) {
@@ -113,16 +127,16 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
 
         // Resolve the audio device
         string aslAudioDevice = cfg["aslAudioDevice"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ")) {
+        if (aslAudioDevice.starts_with("usbaud ")) {
             int alsaCard;
             string ossDevice;
-            int rc2 = querySoundMap(aslAudioDevice.substr(4).c_str(), alsaCard, ossDevice);
+            // The leading "usbaud " is not part of the query that this function can handle
+            int rc2 = resolveUSBSoundDevice(aslAudioDevice.substr(7).c_str(), alsaCard, ossDevice);
             if (rc2 < 0) {
-                log.error("Unable to resolve sound device %d", rc2);
+                log.error("Unable to resolve audio device [%s] %d", aslAudioDevice.c_str(), rc2);
             } 
             else {
-                log.info("Audio %s mapped to ALSA card %d", 
-                    aslAudioDevice.c_str(), alsaCard);                         
+                log.important("Audio device [%s] mapped to ALSA card %d", aslAudioDevice.c_str(), alsaCard);                         
 
                 // NOTE: ASL uses 0-1000 scale
                 if (!cfg["aslTxMixASet"].is_string())
@@ -137,7 +151,17 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
                     throw invalid_argument("aslRxMixerSet is missing/invalid");
                 int rxMixerSet = std::stoi(cfg["aslRxMixerSet"].get<std::string>());
 
-                rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet);
+                if (!cfg["duplexmode"].is_string())
+                    throw invalid_argument("duplexmode is missing/invalid");
+                int duplexMode = std::stoi(cfg["duplexmode"].get<std::string>());
+
+                if (!cfg["echogain"].is_string())
+                    throw invalid_argument("echogain is missing/invalid");
+                float echoGainDb = std::stof(cfg["echogain"].get<std::string>());
+
+                // #### TODO: MAKE ECHO CONFIGURABLE
+                rc = radio2.open(alsaCard, txMixASet, txMixBSet, rxMixerSet, duplexMode == 1,
+                    echoGainDb);
                 if (rc < 0) {
                     if (rc == -12)
                         log.error("Unable to open sound device, busy");
@@ -149,51 +173,107 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         }
 
         // Resolve the COS signal
-        string aslCosFrom = cfg["aslCosFrom"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ") && aslCosFrom.starts_with("usb")) {
-
-            string cosSignalDevice;
-            int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), cosSignalDevice);
-            if (rc3 < 0) {
-                log.error("Unable to resolve HID device %d", rc3);
-                return -1;
-            } 
-            else {
-                log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
-                    cosSignalDevice.c_str());
-                rc = signalIn.openHid(cosSignalDevice.c_str());
-                if (rc < 0) {
-                    log.error("Failed to open HID signal in connection %d", rc);
+        string aslCosDevice;
+        if (cfg["aslCosDevice"].is_string()) 
+            aslCosDevice = cfg["aslCosDevice"].get<std::string>();
+        string aslCosSignal;
+        if (cfg["aslCosSignal"].is_string()) 
+            aslCosSignal = cfg["aslCosSignal"].get<std::string>();
+        
+        if (!aslCosDevice.empty()) {
+            if (aslCosDevice.starts_with("usbaud ")) {
+                string cosDev;
+                int rc3 = resolveUSBHIDDevice(log, aslCosDevice.substr(7).c_str(), cosDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve COS HID [%s] %d", aslCosDevice.c_str(), rc3);
                     return -1;
+                } 
+                else {
+                    log.important("COS HID [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    rc = signalIn.openHid(cosDev.c_str(), aslCosSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open HID signal in connection %d", rc);
+                        return -1;
+                    }
+                }
+            }
+            else if (aslCosDevice.starts_with("usbser ")) {
+                string cosDev;
+                int rc3 = resolveUSBSerialDevice(aslCosDevice.substr(7).c_str(), cosDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve COS Serial [%s] %d", aslCosDevice.c_str(), rc3);
+                    return -1;
+                } 
+                else {
+                    log.important("COS Serial [%s] mapped to [%s]", aslCosDevice.c_str(), cosDev.c_str());
+                    rc = signalIn.openSerial(cosDev.c_str(), aslCosSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open serial signal in connection %d", rc);
+                        return -1;
+                    }
                 }
             }
 
-            // ##### TODO: DEAL WITH INVERT
+            // Deal with signal inversion
+            string cosInvert;
+            if (cfg["aslCosInvert"].is_string()) 
+                cosInvert = cfg["aslCosInvert"].get<std::string>();
+            signalIn.setInvert(cosInvert == "1");
         }
         else {
             signalIn.close();
         }
 
         // Resolve the PTT signal
-        string aslPttTo = cfg["aslPttTo"].get<std::string>();
-        if (aslAudioDevice.starts_with("usb ") && aslPttTo.starts_with("usb")) {
+        string aslPttDevice;
+        if (cfg["aslPttDevice"].is_string()) 
+            aslPttDevice = cfg["aslPttDevice"].get<std::string>();
+        string aslPttSignal;
+        if (cfg["aslPttSignal"].is_string()) 
+            aslPttSignal = cfg["aslPttSignal"].get<std::string>();
 
-            string pttSignalDevice;
-            int rc3 = queryHidMap(aslAudioDevice.substr(4).c_str(), pttSignalDevice);
-            if (rc3 < 0) {
-                log.error("Unable to resolve HID device %d", rc3);
-                return -1;
-            } 
-            else {
-                log.info("HID %s mapped to %s", aslAudioDevice.c_str(),
-                    pttSignalDevice.c_str());
-                rc = signalOut.openHid(pttSignalDevice.c_str());
-                if (rc < 0) {
-                    log.error("Failed to open HID signal out connection %d", rc);
+        if (!aslPttDevice.empty()) {
+
+            // Deal with signal inversion. This is done first because the open() will 
+            // assert the initial state of the signal.
+            string pttInvert;
+            if (cfg["aslPttInvert"].is_string()) 
+                pttInvert = cfg["aslPttInvert"].get<std::string>();
+            signalOut.setInvert(pttInvert == "1");
+
+            if (aslPttDevice.starts_with("usbaud ")) {
+                string pttDev;
+                int rc3 = resolveUSBHIDDevice(log, aslPttDevice.substr(7).c_str(), pttDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve PTT HID [%s] %d", aslPttDevice.c_str(), rc3);
                     return -1;
+                } 
+                else {
+                    log.important("PTT HID [%s] mapped to [%s]", aslPttDevice.c_str(),
+                        pttDev.c_str());
+                    rc = signalOut.openHid(pttDev.c_str(), aslPttSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open HID signal out connection %d", rc);
+                        return -1;
+                    }
                 }
             }
-            // ##### TODO: DEAL WITH INVERT
+            else if (aslPttDevice.starts_with("usbser ")) {
+                string pttDev;
+                int rc3 = resolveUSBSerialDevice(aslPttDevice.substr(7).c_str(), pttDev);
+                if (rc3 < 0) {
+                    log.error("Unable to resolve PTT Serial [%s] %d", aslPttDevice.c_str(), rc3);
+                    return -1;
+                } 
+                else {
+                    log.important("PTT Serial [%s] mapped to [%s]", aslPttDevice.c_str(), pttDev.c_str());
+                    rc = signalOut.openSerial(pttDev.c_str(), aslPttSignal.c_str());
+                    if (rc < 0) {
+                        log.error("Failed to open serial signal in connection %d", rc);
+                        return -1;
+                    }
+                }
+            }
         }
         else {
             signalOut.close();

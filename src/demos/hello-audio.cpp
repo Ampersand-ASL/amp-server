@@ -1,0 +1,305 @@
+/**
+ * Copyright (C) 2025, Bruce MacKinnon KC1FSZ
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+// A test program to validate correct timing of USB/ALSA API.
+// Will operate using the first 
+
+
+#include <iostream>
+#include <cmath> 
+#include <chrono>
+#include <thread>
+
+#include <alsa/asoundlib.h>
+
+#include "kc1fsz-tools/Log.h"
+#include "kc1fsz-tools/StdPollTimer.h"
+#include "kc1fsz-tools/linux/StdClock.h"
+
+#include "sound-map.h"
+
+#define CMEDIA_VENDOR_ID ("0d8c")
+
+static const char* defaultPort = "3-2.2";
+static const unsigned bufferMs = 5;
+
+using namespace std;
+using namespace kc1fsz;
+
+int main(int argc, const char** argv) {
+
+    Log log;
+    StdClock clock;
+    StdPollTimer timer20ms(clock, 20000);
+    int rc;
+
+    log.info("Ampersand Audio Test");
+    log.info("Bruce MacKinnon KC1FSZ");
+
+    char port[32];
+    strcpy(port, defaultPort);
+
+    // Try to find a CM108
+    visitUSBDevices2([&port, &log](
+        const char* vendorName, const char* productName, 
+        const char* vendorId, const char* productId,                 
+        const char* portPath, int, int) {
+            if (strcasecmp(vendorId, CMEDIA_VENDOR_ID) == 0) {
+                strcpy(port, portPath);
+                log.info("Audio device found at port %s", port);
+            }
+        }
+    );
+
+    // Check for user-supplied override
+    if (argc > 1) {
+        strcpy(port, argv[1]);
+    }
+
+    int alsaCard;
+    string ossDevice;
+    int rc2 = resolveUSBSoundDevice(port, alsaCard, ossDevice);
+    if (rc2 < 0) {
+        log.error("Unable to resolve audio device %d", rc2);
+        return -1;
+    } 
+
+    log.info("Audio device %s mapped to ALSA card %d", port, alsaCard);                         
+
+    // In ALSA (Advanced Linux Sound Architecture), plughw is a virtual plugin device 
+    // that acts as an abstraction layer over raw hardware (hw). It automatically handles 
+    // audio format conversions—such as sample rate (e.g., 44.1kHz to 48kHz, channel 
+    // mapping (e.g., mono to stereo), and bit depth (e.g., 16-bit to 32-bit) if the 
+    // hardware does not support the format directly.
+    char alsaDeviceName[16];
+    // Previously we were doing this:
+    //snprintf(alsaDeviceName, 16, "plughw:%d,0", alsaCard);
+    // Now using the hardware directly
+    snprintf(alsaDeviceName, 16, "hw:%d,0", alsaCard);
+    snd_pcm_t* playH = 0;
+
+    if ((rc = snd_pcm_open(&playH, alsaDeviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
+        if (rc == -16) {
+            log.error("Can't open sound device %s, busy", alsaDeviceName);
+            return -12;
+        } else {
+            log.error("Cannot open playback device %s %d", alsaDeviceName, rc);
+            return -10;
+        }
+    }
+
+    const unsigned int audioRate = 48000;
+    unsigned int channels = 2;
+
+    // No free needed, alloca() frees memory one function exit
+    snd_pcm_hw_params_t* play_hw_params;
+    snd_pcm_hw_params_alloca(&play_hw_params);
+    snd_pcm_hw_params_any(playH, play_hw_params);
+    snd_pcm_hw_params_set_access(playH, play_hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+    snd_pcm_hw_params_set_format(playH, play_hw_params, SND_PCM_FORMAT_S16_LE);
+    snd_pcm_hw_params_set_rate(playH, play_hw_params, audioRate, 0);
+    snd_pcm_hw_params_set_channels_near(playH, play_hw_params, &channels);
+    // Something close to 960
+    snd_pcm_uframes_t periodSize = 1024;
+    snd_pcm_hw_params_set_period_size_near(playH, play_hw_params, &periodSize, 0);   
+    // At 48K, there are 960 samples in a 20ms frame.
+    snd_pcm_uframes_t bufferSize = periodSize * 8;
+    snd_pcm_hw_params_set_buffer_size_near(playH, play_hw_params, &bufferSize);
+
+    if ((rc = snd_pcm_hw_params(playH, play_hw_params)) < 0) {
+        log.error("Unable to configure play HW parameters %d", rc);
+        return -1;
+    }
+    
+    snd_pcm_sw_params_t* play_sw_params;
+    snd_pcm_sw_params_alloca(&play_sw_params);
+    snd_pcm_sw_params_current(playH, play_sw_params);
+    // Set the start threshold at half of the buffer
+    unsigned int startThreshold = periodSize * 2;
+    snd_pcm_sw_params_set_start_threshold(playH, play_sw_params, startThreshold);
+
+    if ((rc = snd_pcm_sw_params(playH, play_sw_params)) < 0) {
+        log.error("Unable to configure play SW parameters %d", rc);
+        return -1;
+    }
+
+    snd_pcm_uframes_t t0 = 0;
+    snd_pcm_sw_params_get_start_threshold(play_sw_params, &t0);
+    log.info("Start threshold %d (frames)", t0);
+
+    // For playback devices, an underrun happens when the number of available frames 
+    // (i.e., free space in the buffer) reaches the stop threshold. Underruns can 
+    // happen only with playback devices.
+    snd_pcm_uframes_t t1 = 0;
+    snd_pcm_sw_params_get_stop_threshold(play_sw_params, &t1);
+    log.info("Stop threshold %d (frames)", t1);
+
+    // Get the FD's 
+    unsigned fdsCapacity = 2;
+    pollfd fds[2];
+    unsigned pollCount = 0;
+    rc = snd_pcm_poll_descriptors(playH, fds, fdsCapacity);
+    if (rc < 0) {
+        log.error("FD problem");
+        return -1;
+    } 
+    pollCount = rc;
+
+    // Get the initial state of the driver
+    snd_pcm_state_t lastState;
+    {
+        snd_pcm_status_t *status = 0;
+        snd_pcm_status_alloca(&status);
+        snd_pcm_status(playH, status);
+        lastState = snd_pcm_status_get_state(status);
+    }
+
+    // Make a test tone that we can transmit
+    const float testToneHz = 1000;
+    const float omega = 2.0f * 3.1415926f * testToneHz / (float)audioRate;
+    const float amp = 0.25;
+    const unsigned testToneSize = 48000 * 2;
+    float phi = 0;
+    int16_t testTone[testToneSize];
+
+    for (unsigned i = 0; i < testToneSize; i++) {
+        float sample = amp * cos(phi);
+        phi += omega;
+        testTone[i] = 32767.0f * sample;
+    }
+
+    // Used to track phase through the test tone
+    unsigned testTonePtr = 0;
+    unsigned lastWriteSize = 0;
+    unsigned loop = 0;
+    bool toneActive = false;
+    unsigned lastDelayFrames = 0;
+    unsigned skipCount = 0;
+
+    snd_pcm_status_t *status = 0;
+    snd_pcm_status_alloca(&status);
+
+    // Main event loop
+    while (true) {
+
+        // NOTE: Not actually using this, just making sure it doesn't make a 
+        // difference.
+        poll(fds, pollCount, 1);
+        unsigned short revents = 0;
+        snd_pcm_poll_descriptors_revents(playH, fds, pollCount, &revents);
+
+        if (timer20ms.poll()) {
+
+            if (loop % 150 == 0) {
+                //log.info("Turning on tone");
+                toneActive = true;
+            }
+            else if (loop % 150 == 100) {
+                //log.info("Turning off tone");
+                toneActive = false;
+            }
+
+            //snd_pcm_status(playH, status);
+
+            // Delay is distance between current application frame position and sound frame position. 
+            // It's positive and less than buffer size in normal situation, negative on playback underrun 
+            // and greater than buffer size on capture overrun.
+            snd_pcm_sframes_t availp;
+            snd_pcm_sframes_t delayp;
+            snd_pcm_avail_delay(playH, &availp, &delayp);
+
+            unsigned delayFrames = delayp;
+            unsigned availFrames = availp;
+
+            // State 2 = Prepared
+            // State 3 = Running
+            // State 4 = Underrun 
+            snd_pcm_state_t currentState = snd_pcm_state(playH);
+            if (currentState != lastState) {
+                //log.info("Playback state change (%u) %d -> %d [%u, %u]", 
+                //    loop, lastState, currentState, delayFrames, availFrames);
+                lastState = currentState;
+            }   
+
+            if (currentState == snd_pcm_state_t::SND_PCM_STATE_XRUN) {
+                //log.info("Preparing after underrun (%u)", loop);
+                snd_pcm_prepare(playH);
+            }
+
+            if (delayFrames != lastDelayFrames) {
+                log.info("Delay/avail %u / %u frames", delayFrames, availFrames);
+                lastDelayFrames = delayFrames;
+                if (delayFrames > 10000) {
+                    skipCount = 10;
+                }
+            }
+
+            if (skipCount == 0 && toneActive) {
+
+                // Make a stereo buffer (interleaved) and convert to S16_LE. We know this 
+                // buffer is larger than the USB device can accept so the phase pointer will
+                // be tracked carefully based on the actual write size.
+                const int maxBlockSamples = 960;
+                const int usbBufferSize = maxBlockSamples * 2 * 2;
+                uint8_t usbBuffer[usbBufferSize];
+                uint8_t* p2 = usbBuffer;
+                for (unsigned i = 0; i < maxBlockSamples; i++, p2 += 4) {
+                    unsigned t = (testTonePtr + i) % testToneSize;
+                    // Left
+                    pack_int16_le(testTone[t], p2);
+                    // Right
+                    pack_int16_le(testTone[t], p2 + 2);
+                }
+
+                unsigned blockSamples = 960;
+                rc = snd_pcm_writei(playH, usbBuffer, blockSamples);
+                if (rc < 0) {
+                    if (rc == -EPIPE) {
+                        log.error("Playback underrun");
+                    } else if (rc == -11) {
+                        snd_pcm_state_t state = snd_pcm_state(playH);
+                        snd_pcm_sframes_t availp;
+                        snd_pcm_sframes_t delayp;
+                        snd_pcm_avail_delay(playH, &availp, &delayp);
+                        log.error("USB BUFFER FULL, state %d %u %u", state, delayp, availp);
+                        skipCount = 100;
+                    } else {
+                        log.error("Other write error %d", rc);
+                        snd_pcm_recover(playH, rc, 0); 
+                        // NOTE: PROBLEM SEEN ON 11-MAY-2026, SOME ERRORS (-14) DON'T RECOVER.
+                        // MAY NEED TO CLOSE/OPEN CHANNEL.
+                    }
+                } else if (rc > 0) {            
+                    if ((unsigned)rc != lastWriteSize) {
+                        log.info("Wrote %d frames", rc);
+                        lastWriteSize = rc;
+                    }
+                    testTonePtr = (testTonePtr + rc) % testToneSize;
+                }
+            }
+
+            if (skipCount > 0)
+                skipCount--;
+
+            // This sleep is used to prevent the program from consuming 100% CPU
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            loop++;
+        }
+    }
+
+    return 0;
+}

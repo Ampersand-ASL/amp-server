@@ -1,5 +1,56 @@
 # Change Log
 
+### 20260520
+
+* Fixed 61057 POKE port number.
+* Addressed a protocol violation with PING/PONG. PONG timestamp is now 
+matching PING.
+
+## 20260516
+
+* Lots of refactoring of USB audio to try to resolve overrun problem
+demonstrated by David NR9V on his Arduino Uno Q.
+* Improvements to DTMF handling.
+* Corrected some bugs that caused calls to be dropped during unrelated
+configuration changes.
+
+## 20260512
+
+* Improved recovery from USB plug/unplug situation.
+* Added debounce on PTT signal to improve Shari/ANH performance. 
+* Cleaned up a logic error with re-transmit, now holding all messages (except ACK)
+in the retransmit buffer, regardless of whether ACK is needed.
+* Per request of Joe KA9OPL, added audio feedback on DTMF buttons.
+
+## 20260511
+
+* Improved the management of the USB audio buffer on playback.
+
+## 20260510
+
+* Fixed a problem with USB device hierarchy pointed out by Patrick N2DYI. Tested
+using AllScan UCI80, UCI90, URI110, and ANH95.
+
+## 20260505
+
+* Addressed a problem with sequence-number wrap-around that would cause disconnects.
+* Major change to the way COS/PTT signals are configured. Now fully supporting serial
+control for these signals.
+
+## 2026-04-28
+
+* Refactoring to simplify retransmission buffer. Found an issue with handling
+of VNAK and fixed it.
+
+## 2026-04-27
+
+* Release for Patrick N2DYI, working on resolving a delay issue that shows
+up on the local echo (sidetone) feature after the first transmission.
+
+## 2026-03-05
+
+* Added local echo duplex mode and local echo gain.
+
 ## 2026-02-25
 
 * Problems with the 8K linear CODEC have been addressed.

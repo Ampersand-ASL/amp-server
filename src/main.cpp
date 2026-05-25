@@ -21,6 +21,7 @@
  */
 #include <execinfo.h>
 #include <signal.h>
+#include <syslog.h>
 #include <iostream>
 
 // 3rd party HTTP/HTTPS client
@@ -51,6 +52,7 @@
 #include "SignalOut.h"
 #include "TimerTask.h"
 #include "QueueConsumer.h"
+#include "TTSServiceSimple.h"
 
 // And a few things from AMP Server
 #include "LocalRegistryStd.h"
@@ -62,7 +64,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260225.0";
+static const char* VERSION = "20260525.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -70,12 +72,21 @@ static const char* PUBLIC_USER = "radio";
 #define LINE_ID_IAX (1)
 #define LINE_ID_STATS (12)
 #define LINE_ID_SIGNAL_OUT (31)
+#define LINE_ID_BRIDGE (10)
+#define LINE_ID_TTS_SIMPLE (19)
 
 static void sigHandler(int sig);
 
 // These are potentially large structure, so keeping it off the stack
 static amp::BridgeCall callBank[MAX_CALLS];
 static LineIAX2::Call iaxCallBank[MAX_CALLS];
+
+static void logCb(const char* sev, const char* dt, const char* msg) {
+    if (sev[0] == 'E') {
+        syslog(LOG_ERR, msg);
+    }
+    std::cout << sev << " " << dt << " " << msg << std::endl;
+}
 
 int main(int argc, const char** argv) {
 
@@ -84,16 +95,27 @@ int main(int argc, const char** argv) {
     // Install the crash stack handler
     signal(SIGSEGV, sigHandler);
 
+    // Open a connection to the system logger
+    // LOG_PID includes the process ID in each entry
+    // LOG_CONS It instructs the program to write log messages directly to the 
+    //   system console (/dev/console) as a fallback if it fails to send them to 
+    //   the main syslog daemon.
+    // LOG_USER identifies the facility (type of program)
+    openlog("amp-server", LOG_PID | LOG_CONS, LOG_USER);
+
     // Create a logger that holds onto some history for display purposes.
     // #### TODO: Think about the performance implications of the lock that 
     // #### is acquired when the UI thread reads the log.
-    MTLog2 log;
+    MTLog2 log(logCb);
 
     log.info("AMP Server");
     log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
     log.info("Copyright (C) 2026, Bruce MacKinnon KC1FSZ");
     log.info("Version %s Git Hash %s", VERSION, GIT_HASH);
     log.info("----------------------------------------------------------------------");
+
+    // syslog startup stuff
+    syslog(LOG_INFO,"AMP Server startup %s", VERSION);
 
     StdClock clock;
 
@@ -135,6 +157,11 @@ int main(int argc, const char** argv) {
         .default_value(false)
         .implicit_value(true);
 
+    program.add_argument("--capture")
+        .help("Turn on network capture")
+        .default_value(false)
+        .implicit_value(true);
+
     int iaxPort = 0;
     program.add_argument("--iaxport")
         .store_into(iaxPort)
@@ -160,7 +187,7 @@ int main(int argc, const char** argv) {
         log.info("Creating default configuration");
         ofstream cfg(cfgFileName);
         if (cfg.is_open()) 
-            cfg << amp::ConfigPoller::DEFAULT_CONFIG << endl;
+            cfg << "{}" << endl;
         else {
             log.error("Unable to create default configuration");
             std::exit(-3);
@@ -196,17 +223,17 @@ int main(int argc, const char** argv) {
     // The Bridge is what provides the audio conference capability. The various 
     // Lines connect to the Bridge.
     amp::Bridge bridge10(log, traceLog, clock, router, amp::BridgeCall::Mode::NORMAL, 10, 
-        0, 0, 0, 1, LINE_ID_STATS, callBank, MAX_CALLS);
+        0, 0, 0, 1, LINE_ID_STATS, LINE_ID_TTS_SIMPLE, callBank, MAX_CALLS);
     router.addRoute(&bridge10, 10);
 
     // This is the Line that connects to the USB sound interface
-    LineUsb radio2(log, clock, router, 2, 1, 10, 1, LINE_ID_SIGNAL_OUT);
+    LineUsb radio2(log, clock, router, 2, 1, LINE_ID_BRIDGE, Message::UNKNOWN_CALL_ID, 
+        LINE_ID_SIGNAL_OUT, LINE_ID_IAX);
     router.addRoute(&radio2, 2);
 
     // This manages the COS signal detect
     amp::SignalIn signalIn3(log, clock, router, 2, 
         Message::SignalType::COS_ON, Message::SignalType::COS_OFF);
-    router.addRoute(&signalIn3, 3);
 
     // This manages the PTT signal generation
     amp::SignalOut signalOut31(log, clock, router, 
@@ -224,6 +251,8 @@ int main(int argc, const char** argv) {
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);
+    if (program["--capture"] == true)
+        iax2Channel1.setCapture(true);
     iax2Channel1.setPokeEnabled(true);
     iax2Channel1.setPokeAddr("52.8.197.124:4570");
     iax2Channel1.setDirectedPokeEnabled(true);
@@ -291,10 +320,14 @@ int main(int argc, const char** argv) {
         }
     );
 
+    TTSServiceSimple ttsSimple19(log, clock, router, LINE_ID_TTS_SIMPLE,
+        LINE_ID_BRIDGE);
+    router.addRoute(&ttsSimple19, LINE_ID_TTS_SIMPLE);
+
     // Setup the EventLoop with all of the tasks that need to be run on this thread
     Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
-        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &router };
-    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, false);
+        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &ttsSimple19, &router };
+    EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, true);
 
     // #### TODO: At the moment there is no clean way to get out of the loop
 

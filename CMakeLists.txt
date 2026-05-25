@@ -20,6 +20,14 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 add_compile_options(-fstack-protector-all -Wall -Wpedantic -g -O0)
 
+# ==============================================================================
+# NEEDED FOR CPPCHCEK
+#find_program(CPPCHECK_PATH cppcheck)
+#if(CPPCHECK_PATH)
+#    set(CMAKE_CXX_CPPCHECK ${CPPCHECK_PATH} "--enable=all" "--inconclusive")
+#endif()
+# ==============================================================================
+
 # ----- Make resource objects ------------------------------------------------
 
 # xxd -n _www_index_html -i ../amp-core/www/index.html resource-amp-core-www-index.c
@@ -81,12 +89,14 @@ add_executable(amp-server
   amp-core/src/LineUsb.cpp
   amp-core/src/LineUsb2.cpp
   amp-core/src/LineIAX2.cpp
+  amp-core/src/LineIAX2_base.cpp
+  amp-core/src/LineParrot.cpp
+  amp-core/src/LineSDRC.cpp
   amp-core/src/IAX2FrameFull.cpp
   amp-core/src/IAX2Util.cpp
   amp-core/src/RegisterTask.cpp
   amp-core/src/StatsTask.cpp
   amp-core/src/ManagerTask.cpp
-  amp-core/src/RetransmissionBufferStd.cpp
   amp-core/src/Transcoder_G711_ULAW.cpp
   amp-core/src/Transcoder_SLIN_48K.cpp
   amp-core/src/Transcoder_SLIN_16K.cpp
@@ -96,6 +106,7 @@ add_executable(amp-server
   amp-core/src/BridgeCall.cpp
   amp-core/src/BridgeIn.cpp
   amp-core/src/BridgeOut.cpp
+  amp-core/src/ProgramUtils.cpp
   amp-core/src/Resampler.cpp
   amp-core/src/ConfigPoller.cpp
   amp-core/src/MultiRouter.cpp
@@ -104,18 +115,18 @@ add_executable(amp-server
   amp-core/src/SignalOut.cpp
   amp-core/src/ThreadUtil.cpp
   amp-core/src/TraceLog.cpp
-  amp-core/src/LineSDRC.cpp
   amp-core/src/SerialUtil.cpp
   amp-core/src/KerchunkFilter.cpp
+  amp-core/src/TTSServiceSimple.cpp
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
   kc1fsz-tools-cpp/src/MicroDNS.cpp
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
   kc1fsz-tools-cpp/src/fixed_math.cpp
+  kc1fsz-tools-cpp/src/TaggedBuffer.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
-  kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/crc/crc.c
   kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
@@ -123,6 +134,7 @@ add_executable(amp-server
   itu-g711-codec/src/codec.cpp
   itu-g711-codec/src/Plc.cpp
   cmsis-dsp-mock/src/main.cpp
+  cmsis-dsp-mock/src/main-float.cpp
   sound-map/src/sound-map.cpp
   sound-map/src/sound-map-2.cpp
   sound-map/src/usb-dir.c
@@ -141,13 +153,35 @@ add_executable(amp-server
   g726-codec/src/g711.c
   g726-codec/src/g72x.c
   g726-codec/src/g726_32.c
-# Here is where the resources are added to the binary
+  # Here is where the WWW resources are added to the binary
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
+  # Audio clips
+  amp-core/clips/resource_amp_core_clips_clip_0_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_0_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_calling_node_raw.c
 )
 # NOTE: Compiler optimizations are turned on
-target_compile_options(amp-server PRIVATE -fstack-protector-all -Wall -Wpedantic -g -O3 -mtune=native)
+target_compile_options(amp-server PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
 
 target_include_directories(amp-server PRIVATE src)
 target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
@@ -169,6 +203,9 @@ target_include_directories(amp-server PRIVATE argparse/include)
 target_include_directories(amp-server PRIVATE g726-codec/src)
 
 target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
+
+# CPPCHECK
+#set_target_properties(amp-server PROPERTIES CXX_CPPCHECK "${CPPCHECK_PATH};--enable=warning")
 
 # ----- hello-http-server -------------------------------------------------
 
@@ -202,7 +239,7 @@ target_link_libraries(hello-mixer -lasound -lusb-1.0)
 
 # ------ cobs-test-1 ---------------------------------------------------------
 
-add_executable(cobs-test-1
+add_executable(cobs-test-1 EXCLUDE_FROM_ALL
   src/tests/cobs-test-1.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/Common.cpp
@@ -215,7 +252,7 @@ target_include_directories(cobs-test-1 PRIVATE cobs-c)
 
 # ------ sdrc-msg-test-1 ---------------------------------------------------
 
-add_executable(sdrc-msg-test-1
+add_executable(sdrc-msg-test-1 EXCLUDE_FROM_ALL
   src/tests/sdrc-msg-test-1.cpp
   kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
   kc1fsz-tools-cpp/src/Common.cpp
@@ -228,3 +265,108 @@ target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-sdrc/sw/src)
 target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include)
 target_include_directories(sdrc-msg-test-1 PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
 target_include_directories(sdrc-msg-test-1 PRIVATE cobs-c)
+
+# ----- hello-audio ----------------------------------------------------------------
+
+add_executable(hello-audio EXCLUDE_FROM_ALL
+  src/demos/hello-audio.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  sound-map/src/sound-map.cpp
+  sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-audio PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(hello-audio PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  sound-map/include)
+
+target_link_libraries(hello-audio -lasound -lusb-1.0)
+
+# ----- hello-audio-2 ----------------------------------------------------------------
+
+add_executable(hello-audio-2 EXCLUDE_FROM_ALL
+  src/demos/hello-audio-2.cpp
+  amp-core/src/EventLoop.cpp
+  amp-core/src/Message.cpp
+  amp-core/src/Line.cpp
+  amp-core/src/LineRadio.cpp
+  amp-core/src/LineUsb.cpp
+  amp-core/src/LineUsb2.cpp
+  amp-core/src/Transcoder_G711_ULAW.cpp
+  amp-core/src/Transcoder_SLIN_48K.cpp
+  amp-core/src/Transcoder_SLIN_16K.cpp
+  amp-core/src/Transcoder_SLIN_8K.cpp
+  amp-core/src/Resampler.cpp
+  amp-core/src/MultiRouter.cpp
+  amp-core/src/tests/TestAudioGenerator.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/DTMFDetector2.cpp
+  sound-map/src/sound-map.cpp
+  sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
+  itu-g711-codec/src/codec.cpp
+  itu-g711-codec/src/Plc.cpp
+  cmsis-dsp-mock/src/main.cpp
+  cmsis-dsp-mock/src/main-float.cpp
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-audio-2 PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(hello-audio-2 PRIVATE 
+  src
+  amp-core/include
+  amp-core/src
+  kc1fsz-sdrc/sw/src
+  kc1fsz-sdr
+  c/sw/include
+  kc1fsz-tools-cpp/include
+  sound-map/include
+  itu-g711-codec/src
+  cmsis-dsp-mock/include
+  )
+
+target_link_libraries(hello-audio-2 -lasound -lusb-1.0)
+
+# ----- syslog-1 
+
+add_executable(syslog-1 EXCLUDE_FROM_ALL
+  src/demos/syslog-1.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+) 
+
+target_include_directories(syslog-1 PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  )
+
+# ----- hello-reg ----------------------------------------------------------------
+
+add_executable(hello-reg EXCLUDE_FROM_ALL
+  src/demos/hello-reg.cpp
+  amp-core/src/EventLoop.cpp
+  amp-core/src/RegisterTaskIAX2.cpp
+  amp-core/src/IAX2FrameFull.cpp
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/NetUtils.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/StateMachine.cpp
+  kc1fsz-tools-cpp/src/md5/md5c.c
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(hello-reg PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(hello-reg PRIVATE 
+  src
+  amp-core/include
+  amp-core/src
+  kc1fsz-tools-cpp/include
+  )
+

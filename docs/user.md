@@ -21,6 +21,9 @@ better choice for you.
 
 The [change log is located here](../CHANGELOG.md). I try to keep it up to date.
 
+> [!IMPORTANT]
+> If you are using the AllStarLink system please [make a dontation](https://www.allstarlink.org/about/donate.php) to support the network. 
+
 Network Setup (IPv4)
 ====================
 
@@ -70,7 +73,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260225
+    export AMP_SERVER_VERSION=20260516
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -78,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-x86_64.tar.gz)
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260225-aarch64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -94,7 +97,7 @@ Command-line options should be used if you want to override defaults:
 is always "user."  Please pay attention to shell quoting rules when using passwords that 
 contain special characters.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
-file.
+file. This is particularly useful when running more than one server on the same machine.
 * --trace Used to turn on extended network tracing.
 
 The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
@@ -156,7 +159,32 @@ that looks like this:
 This configuration should be very consistent with that used on the ASL system. Fill 
 in your node number, password, and IAX port number. All other defaults should be enough to get you started.
 
-The audio levels will be the first thing to configure. Your audio level will be displayed in 
+### Audio/Signal Configuration
+
+If you are planning to connect a radio/microphone/speaker to your Ampersand server you will need
+to set a few things on the configuration tab:
+
+* The "Audio Device" setting selects the hardware interface used for audio input/output. This will usually
+be a CM10x device connected to a USB port. The setting will default to the first CM10x device found. If you 
+have more than one USB audio device you should pay close attention to the USB port number (something like "1.4.2") 
+to disambiguate devices.
+* The "Carrier Detect Device" controls the hardware interface used to detect an incoming signal. This will be
+either (a) your radio's carrier detect signal (b) your microphone PTT button on a radio-less station. The most
+typical configuration uses the CM10x Volume Down signal. This mode is enabled by selecting your USB audio device
+in the "Carrier Detect Device" menu and selecting "Volume Down" option in the "Carrier Detect Signal" menu. Some 
+systems make use of the signaling interface of a serial port to capture the carrier detect signal. In this case
+select your serial port in the "Carrier Detect Device" menu and select the appropriate signal (either CTS or DCD)
+in the "Carrier Detect Signal" menu.
+* The "PTT Device" controls the hardware interface used to key a radio. The most typical configuration uses the 
+CM10x GPIO3 signal for this purpose. This mode is enabled by selecting your USB audio device
+in the "PTT Device" menu and selecting the "GPIO3" option in the "PTT Signal" menu. Some 
+systems make use of the signaling interface of a serial port to generate the PTT signal. In this case
+select your serial port in the "PTT Device" menu and select the appropriate signal (either RTS or DTR)
+in the "PTT Signal" menu.
+
+### Audio Level Configuration
+
+The audio levels will be the next thing to configure. Your audio level will be displayed in 
 the system log any time you key your microphone (regardless of whether you are connected to 
 any other nodes). The levels will be displayed like this:
 
@@ -167,6 +195,67 @@ The audio level that you are transmitting into the ASL network is controlled usi
 the "Receive" in this context is from the perspective of the radio interface hardware.
 
 ![Amp3](amp-4.jpg)
+
+## Favorites Configuration
+
+A user-defined list of frequently-called nodes can be configured. 
+
+![Favorites 2](fav2.jpg)
+
+This list is entered on the Configuration Tab. The list should be comma-separated
+with a colon between the node number and text description.  For example:
+
+    2002:ASL Parrot,61057:ASL Parrot,672731:AMP Hub,27339:East Cost Reflector,51018:W6EK SFARC
+
+![Favorites 1](fav1.jpg)
+
+Be sure to press "Save" at the bottom of the screen after making a configuration change.
+
+Audio Level Hints
+=================
+
+Setting audio levels can be tricky because of the many variables involved. There
+are two things that need to be adjusted.
+
+**The audio that you send to the AllStar network** which comes from either (a) your 
+radio receiver or (b) your microphone on a radio-less node. This level is displayed
+on the "USB RX" line of the level meter on the Home tab. It is important to adjust 
+your node to avoid clipping of this audio. A good target is around -6dBFS peak.
+
+**The audio that you receive from the AllStar network** which is sent to either (a)
+your radio transmitter or (b) your speaker on a radio-less node. This level is 
+displayed on the "USB TX" line of the level meter on the Home tab. It is important
+to adjust your system to avoid excessive deviation on a transmitter. 
+
+Use the 61057 parrot to test audio and get feedback on your level. Good receive audio
+should peak around -6dB. 
+
+> [!NOTE]
+> The terminology can be counter-intuitive to users of radio-less nodes
+since they typically think of the audio that comes from their microphone as "transmit" 
+audio. Keep in mind that the terms are defined from the perspective of a radio-connected
+system. When you key the microphone on a radio-less node the level being displayed
+is what is being **received** from the microphone connection.
+
+Network Debugging Hints
+=======================
+
+* Pay close attention to the UDP port number you are using. Each ASL Node 
+number is associated with an ASL Server. Each ASL Server is assigned a 
+UDP port for IAX traffic. Sometimes people get confused about this when they
+start running multiple nodes.
+* Just because your node can call out doesn't mean that you can accept 
+calls. The firewall/NAT adjustments described above aren't required to 
+make outgoing calls - only to receive incoming ones.
+* A valid ASL registration is required for some nodes to accept your call.
+*ASL parrots often do not require registration* so if you find that your
+call is accepted by a parrot but not by other nodes it is likely that your 
+registration is invalid. Check your password.
+* The ASL registration process takes some time to propagate. When your node
+first starts up your calls may not be accepted. Wait about 10 minutes and try again.
+* Test using parrot 61057 **before asking for network help**. This parrot will provide 
+information about whether (a) your node is registered and (b) whether your 
+node is reachable from the outside.
 
 # Setup of SA818-Based Hotspot (SHARI and Derivatives) 
 
@@ -185,6 +274,18 @@ The configuration page contains these settings:
 ![SA818](sa818-config.jpg)
 
 Some notes:
+* SHARI/SHARI-variants make **two** connections to your computer and both must 
+be configured properly for the device to work:
+  - SHARIs contain a CM1xx USB interface that enables audio to pass between 
+the radio module and your computer. This is configured using the "Audio Device"
+menu the configuration screen. The CM1xx chip also provides some I/O 
+lines that can be used to receive the COS signal from your radio and to send
+the PTT signal to your radio. These signals are configured using the "Carrier From" and 
+"PTT To" options on the configuration screen.
+  - SHARIs also contain a SA818 module that is programmed using a serial 
+interface. Some SHARI vendors implement this interface using a USB port while others
+implement it using GPIO pins. This serial interface is selected using the "Command Port" 
+menu on the configuration screen.
 * At the moment any configuration errors will be displayed on the console log. I 
 will improve this in a future release.
 * Many of the SHARI-type devices contain a CM1xx chip, so all of the audio setup 
@@ -269,25 +370,95 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
     
-Network Debugging Hints
-=======================
+# Using Explicit Connection URL
 
-* Pay close attention to the UDP port number you are using. Each ASL Node 
-number is associated with an ASL Server. Each ASL Server is assigned a 
-UDP port for IAX traffic. Sometimes people get confused about this when they
-start running multiple nodes.
-* Just because your node can call out doesn't mean that you can accept 
-calls. The firewall/NAT adjustments described above aren't required to 
-make outgoing calls - only to receive incoming ones.
-* A valid ASL registration is required for some nodes to accept your call.
-*ASL parrots often do not require registration* so if you find that your
-call is accepted by a parrot but not by other nodes it is likely that your 
-registration is invalid. Check your password.
-* The ASL registration process takes some time to propagate. When your node
-first starts up your calls may not be accepted. Wait about 10 minutes and try again.
-* Test using parrot 61057 **before asking for network help**. This parrot will provide 
-information about whether (a) your node is registered and (b) whether your 
-node is reachable from the outside.
+Normally connections are initiated using a node number. DNS is used to convert an ASL node 
+number into a IP address/port number combination. In some situations it is desirably to bypass
+the usual DNS lookup and provide the target address explicitly. This can be accomplished using
+a URI syntax like this:
+
+    iax:radio@192.168.8.143:4568/672732,none
+
+The tokens are as follows:
+
+    iax:username@ip_address:udp_port/node_number,password
+
+# Using Public Key Authentication
+
+The current AllStarLink network uses source IP address validation to authenticate callers. This method provides
+reasonable security since a secret password is needed to register the association between a node
+number and its IP address. Unfortunately, 
+this method also creates an unnecessary link between network addressing and authentication. The problem is exacerbated by a ~15 minute latency in the current ASL registration process. This latency is particularly inconvenient in two situations:
+* When a node starts up after an extended down-time. The current ASL registration server "times out" registrations that aren't refreshed constantly. Authentication of new calls will
+fail until the new node number/IP address association fully propagates.
+* When a mobile node moves to a different location on the network. Authentication of new calls will
+fail until the new node number/IP address association fully propagates.
+
+Ampersand supports an alternate method of authentication that completely eliminates the dependency on IP addresses.
+A public-key encryption method is used to authenticate inbound calls.
+
+Ampersand uses Ed25519 key-pairs for authentication. Ed25519 is a highly secure, fast, and modern public-key digital signature scheme that is based on elliptic curve cryptography. Importantly,
+the keys are reasonably short (64 characters) which makes setup easy. 
+
+**NOTE: At the moment this mechanism is only useful for Ampersand-to-Ampersand calls.**
+
+The one-time setup is straight-forward:
+* The caller creates a public/private key pair for ASL use. 
+* The caller creates a DNS subdomain in the [ampr.org domain](https://portal.ampr.org/home) and posts their ASL public key. More on this
+below.
+* The caller configures their Ampersand server with their private key. 
+* The caller configures their Ampersand server with their amateur callsign. 
+
+When a call is made:
+* The caller places a call to an Ampersand node. The protocol includes the caller's callsign in the initial message.
+* The called node uses the caller's callsign to check the ampr.org domain for the caller's public key.
+* The called node sends back an Ed25519 authentication challenge to the caller.
+* The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
+the caller's signature this time.
+* The called node uses the caller's public key to validate the signature.
+
+If no public key is found for the caller the server falls back to the traditional source IP address
+validation mechanism.
+
+## Generating Key Pair
+
+You can generate the Ed25519 public/private key pair any way you want. [This online tool](https://cyphr.me/ed25519_tool/ed.html) is one easy way, but very paranoid users may not view this as sufficiently 
+secure. Importantly, **the hex string representation of the public and private keys are exactly 64 characters in length.**
+
+Here's an example key pair:
+
+* Private: A2CF5B0FEC039AF4F3EB10294CBFBD021ADFFD3BFEAFBB48136CA3A4C5DA860B
+* Public: 7F406A33164D59F6A42F15C70106F669F4199482F91B5F32A259AE795ECCEA18
+
+## Publishing Your Public Key
+
+Ampersand leverages the [AMPRNet system](https://portal.ampr.org/home) sponsored by the [ARDC](https://www.ardc.net/). There are a few reasons for selecting this method of key publication:
+* The service is free for hams.
+* The ARDC performs a license validation during the account setup process. This provides an added
+level of security and ensures that only licensed hams will be able to use the ASL network.
+* Many hams already have ARDC/44net accounts.
+
+If not done already, setup an AMPRNet account by following the [registration instructions](https://portal.ampr.org/register/step-one).
+
+Using the DNS menu on the AMPR Portal, create a subdomain for your callsign. In my case, I created a subdomain called "kc1fsz.ampr.org."
+
+Under your subdomain, create a DNS resource record of type TXT with hostname "aslpk." The data for this
+record should contain your 64-character public key in quotes. The full DNS record name will be "aslpk.YOURCALLSIGN.ampr.org."  Here's what it looks like in my case:
+
+![Example 1](pk1.jpg)
+
+Wait a few hours for the new record to propagate.
+
+You can validate the record using any DNS query tool. [Here is one example of a lookup tool](https://mxtoolbox.com/txtlookup.aspx). Here's what it looks like in my case:
+
+![Example 2](pk2.jpg)
+
+
+
+
+
+
+
 
 Asking For Help
 ===============
