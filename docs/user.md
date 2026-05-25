@@ -449,11 +449,11 @@ record should contain your 64-character public key in quotes. The full DNS recor
 
 Wait a few hours for the new record to propagate.
 
-You can validate the record using any DNS query tool. [Here is one example of a lookup tool](https://mxtoolbox.com/txtlookup.aspx). Here's what it looks like in my case:
+You can validate your public TXT record using any DNS query tool. [Here is one example of a lookup tool](https://mxtoolbox.com/txtlookup.aspx). Here's what it looks like in my case:
 
 ![Example 2](pk2.jpg)
 
-Finally, configure your private key on the Ampersand configuration page:
+Finally, paste your private key into the Ampersand configuration page on your server.
 
 ![Example 3](pk3.jpg)
 
