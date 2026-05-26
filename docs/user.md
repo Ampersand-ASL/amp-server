@@ -426,7 +426,7 @@ below.
 When a call is made:
 * The caller places a call to an Ampersand node. The protocol includes the caller's callsign in the initial message.
 * The called node uses the ASL stats API (ex: http://stats.allstarlink.org/api/stats/61057) to 
-validate that the caller's callsign is associated with the node number that they are using to connect.
+validate that the caller's callsign is associated with the node number that they are calling from.
 * The called node uses the caller's callsign to check the ampr.org domain for the caller's public key.
 * The called node sends back an Ed25519 authentication challenge to the caller.
 * The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
