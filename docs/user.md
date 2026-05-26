@@ -370,18 +370,27 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
     
-# Using Explicit Connection URL
+# Using Explicit Connection URLs
 
 Normally connections are initiated using a node number. DNS is used to convert an ASL node 
-number into a IP address/port number combination. In some situations it is desirably to bypass
+number into a IP address/port number combination. In some situations it is desirable to bypass
 the usual DNS lookup and provide the target address explicitly. This can be accomplished using
 a URI syntax like this:
 
     iax:radio@192.168.8.143:4568/672732,none
 
-The tokens are as follows:
+The tokens of the URI are as follows:
 
-    iax:username@ip_address:udp_port/node_number,password
+    iax:username@ip_address:port/number,password
+
+* iax: - This is a constant
+* username - Per the ASL standard, use "radio" for public nodes or the username provided by the
+node operator when connecting to a private node.
+* ip_address - The IP address of the target node. IPv4 only at the moment.
+* port - The IAX port number of the target node. Defaults to 4569.
+* number - The ASL node number of the target node.
+* password - Ignored when connecting to a public node or the password provided by the node operator
+when connecting to a private node.
 
 # Using Public Key Authentication
 
@@ -416,6 +425,8 @@ below.
 
 When a call is made:
 * The caller places a call to an Ampersand node. The protocol includes the caller's callsign in the initial message.
+* The called node uses the ASL stats API (ex: http://stats.allstarlink.org/api/stats/61057) to 
+validate that the caller's callsign is associated with the node number that they are using to connect.
 * The called node uses the caller's callsign to check the ampr.org domain for the caller's public key.
 * The called node sends back an Ed25519 authentication challenge to the caller.
 * The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
