@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260524-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -198,18 +198,31 @@ the "Receive" in this context is from the perspective of the radio interface har
 
 ## Favorites Configuration
 
-A user-defined list of frequently-called nodes can be configured. 
+A user-defined list of frequently-called nodes can be configured. Green buttons will appear 
+across the top of the home screen.
 
 ![Favorites 2](fav2.jpg)
 
-This list is entered on the Configuration Tab. The list should be comma-separated
-with a colon between the node number and text description.  For example:
-
-    2002:ASL Parrot,61057:ASL Parrot,672731:AMP Hub,27339:East Cost Reflector,51018:W6EK SFARC
+This list is entered on the Configuration Tab. 
 
 ![Favorites 1](fav1.jpg)
 
+The list should be comma-separated with a colon between the node number and text description.
+For example:
+
+    2002:ASL Parrot,61057:ASL Parrot,672731:AMP Hub,27339:East Cost Reflector,51018:W6EK SFARC
+
 Be sure to press "Save" at the bottom of the screen after making a configuration change.
+
+When an explicit connection URI is being used instead of a node number (explained below), the 
+node number will contain colons and commas. To eliminate parsing ambiguity the URI should be 
+enclosed in double-quotes. For example:
+
+    2002:ASL Parrot,"iax:radio@192.168.8.143:4568/672732,none":Local
+
+This will look like this on the home screen:
+
+![Favorites 3](cfg2.jpg)
 
 Audio Level Hints
 =================
@@ -370,12 +383,12 @@ being used for ASL from Pulse Audio control:
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
     
-# Using Explicit Connection URLs
+# Using Explicit Connection URIs
 
 Normally connections are initiated using a node number. DNS is used to convert an ASL node 
 number into a IP address/port number combination. In some situations it is desirable to bypass
 the usual DNS lookup and provide the target address explicitly. This can be accomplished using
-a URI syntax like this:
+an IAX URI syntax like this:
 
     iax:radio@192.168.8.143:4568/672732,none
 
@@ -424,10 +437,10 @@ below.
 * The caller configures their Ampersand server with their amateur callsign. 
 
 When a call is made:
-* The caller places a call to an Ampersand node. The protocol includes the caller's callsign in the initial message.
+* The caller places a call to an Ampersand node. The protocol includes the caller's call sign in the initial message.
 * The called node uses the ASL stats API (ex: http://stats.allstarlink.org/api/stats/61057) to 
-validate that the caller's callsign is associated with the node number that they are calling from.
-* The called node uses the caller's callsign to check the ampr.org domain for the caller's public key.
+validate that the caller's call sign is associated with the node number that they are calling from.
+* The called node uses the caller's call sign to check the ampr.org domain for the caller's public key.
 * The called node sends back an Ed25519 authentication challenge to the caller.
 * The caller signs the challenge using its private key and re-initiates the call. The protocol includes 
 the caller's signature this time.
@@ -436,7 +449,7 @@ the caller's signature this time.
 If no public key is found for the caller the server falls back to the traditional source IP address
 validation mechanism.
 
-## Generating Key Pair
+## Generating Your Key Pair
 
 You can generate the Ed25519 public/private key pair any way you want. [This online tool](https://cyphr.me/ed25519_tool/ed.html) is one easy way, but very paranoid users may not view this as sufficiently 
 secure. Importantly, **the hex string representation of the public and private keys are exactly 64 characters in length.**
@@ -456,7 +469,7 @@ level of security and ensures that only licensed hams will be able to use the AS
 
 If not done already, setup an AMPRNet account by following the [registration instructions](https://portal.ampr.org/register/step-one).
 
-Using the DNS menu on the AMPR Portal, create a subdomain for your callsign. In my case, I created a subdomain called "kc1fsz.ampr.org."
+Using the DNS menu on the AMPR Portal, create a subdomain for your call sign. In my case, I created a subdomain called "kc1fsz.ampr.org."
 
 Under your subdomain, create a DNS resource record of type TXT with hostname "aslpk." The data for this
 record should contain your 64-character public key in quotes. The full DNS record name will be "aslpk.YOURCALLSIGN.ampr.org."  Here's what it looks like in my case:

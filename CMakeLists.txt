@@ -111,6 +111,7 @@ add_executable(amp-server
   amp-core/src/ConfigPoller.cpp
   amp-core/src/MultiRouter.cpp
   amp-core/src/WebUi.cpp
+  amp-core/src/WebUi_2.cpp
   amp-core/src/SignalIn.cpp
   amp-core/src/SignalOut.cpp
   amp-core/src/ThreadUtil.cpp
