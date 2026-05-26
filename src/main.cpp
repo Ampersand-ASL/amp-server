@@ -56,6 +56,7 @@
 
 // And a few things from AMP Server
 #include "LocalRegistryStd.h"
+#include "LocalAuthenticatorStd.h"
 #include "config-handler.h"
 
 #define MAX_CALLS (8)
@@ -246,8 +247,10 @@ int main(int argc, const char** argv) {
 
     // This is the Line that makes the IAX2 network connection
     LocalRegistryStd locReg;
-    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 10, PUBLIC_USER,
-        iaxCallBank, MAX_CALLS);
+    LocalAuthenticatorStd locAuth;
+    LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 
+        &locAuth,
+        10, PUBLIC_USER, iaxCallBank, MAX_CALLS);
     router.addRoute(&iax2Channel1, 1);
     if (program["--trace"] == true)
         iax2Channel1.setTrace(true);

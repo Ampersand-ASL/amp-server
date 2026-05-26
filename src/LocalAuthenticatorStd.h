@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2025, Bruce MacKinnon KC1FSZ
+ * Copyright (C) 2026, Bruce MacKinnon KC1FSZ
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,17 +25,10 @@
 namespace kc1fsz {
 
 // #### TODO: Need a real implementation for this.
-class LocalRegistryStd : public LocalRegistry {
+class LocalAuthenticatorStd : public LocalAuthenticator {
 public:
-    virtual bool lookup(const char* destNumber, fixedstring& targetUri) {
-        if (strcmp(destNumber, "2000") == 0) {
-            targetUri = "iax:radio@192.168.8.143:4568/672732,none";
-            return true;
-        }
-        else {
-            // At the moment there is nothing in the local registry
-            return false;
-        }
+    virtual fixedstring getSecret(const char* targetNode, const char* username) const {
+        return fixedstring("999");
     }
 };
 

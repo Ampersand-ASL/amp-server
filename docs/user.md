@@ -486,6 +486,10 @@ Finally, paste your private key into the Ampersand configuration page on your se
 
 ![Example 3](pk3.jpg)
 
+# Private Nodes
+
+    iax:bruce@192.168.8.143:4568/672732,999
+
 Asking For Help
 ===============
 
