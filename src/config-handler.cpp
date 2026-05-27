@@ -29,6 +29,7 @@
 #include "Bridge.h"
 
 // amp-server
+#include "LocalAuthenticatorStd.h"
 #include "config-handler.h"
 
 using namespace std;
@@ -43,7 +44,7 @@ namespace kc1fsz {
  * any time that the configuration is changed.
  */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
-    LocalRegistryStd& locReg,
+    LocalRegistryStd& locReg, LocalAuthenticatorStd& locAuth,
     LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, 
     LineSDRC& sdrcLine5, int iaxPortOverride) {
 
@@ -96,6 +97,8 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         iax2Channel1.setCallSign(cfg["callsign"].get<std::string>().c_str());
     if (cfg.contains("privateKey"))
         iax2Channel1.setPrivateKey(cfg["privateKey"].get<std::string>().c_str());
+    if (cfg.contains("authFile"))
+        locAuth.load(cfg["authFile"].get<std::string>().c_str());
 
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {

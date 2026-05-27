@@ -16,7 +16,9 @@
  */
 #pragma once
 
-#include <cstring>
+#include <string>
+#include <vector>
+#include <utility>
 
 #include "kc1fsz-tools/fixedstring.h"
 
@@ -24,12 +26,21 @@
 
 namespace kc1fsz {
 
-// #### TODO: Need a real implementation for this.
+class Log;
+
 class LocalAuthenticatorStd : public LocalAuthenticator {
 public:
-    virtual fixedstring getSecret(const char* targetNode, const char* username) const {
-        return fixedstring("999");
-    }
+
+    LocalAuthenticatorStd(Log& log);
+
+    bool load(const char* filename);
+
+    fixedstring getSecret(const char* targetNode, const char* username) const;
+
+private:
+
+    Log& _log;
+    std::vector<std::pair<std::string,std::string>> _store;
 };
 
 }

@@ -1,0 +1,11 @@
+# Ampersand ASL Server
+# Example authentication file
+# Bruce MacKinnon KC1FSZ 27-May-2026
+#
+# Each line contains two tokens (space delimited). The first token is the IAX 
+# username and the second token is the password.
+#
+# Blank lines and lines starting with "#" are comments
+
+bruce 999
+

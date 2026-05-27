@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260525-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -487,6 +487,21 @@ Finally, paste your private key into the Ampersand configuration page on your se
 ![Example 3](pk3.jpg)
 
 # Private Nodes
+
+Example authentication file:
+
+    # Ampersand ASL Server
+    # Example authentication file
+    # Bruce MacKinnon KC1FSZ 27-May-2026
+    #
+    # Each line contains two tokens (space delimited). The first token is the IAX 
+    # username and the second token is the password.
+    #
+    # Blank lines and lines starting with "#" are comments
+
+    bruce 999
+
+Example connection string when calling a private node:
 
     iax:bruce@192.168.8.143:4568/672732,999
 

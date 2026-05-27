@@ -82,6 +82,7 @@ add_executable(amp-server
   src/main.cpp
   src/config-handler.cpp
   src/service-thread.cpp
+  src/LocalAuthenticatorStd.cpp
   amp-core/src/EventLoop.cpp
   amp-core/src/Message.cpp
   amp-core/src/Line.cpp

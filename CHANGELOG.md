@@ -1,6 +1,20 @@
 # Change Log
 
-### 20260520
+## 20260527
+
+* Added authentication file for private nodes.
+* Enabled MD5 authentication challenges or private nodes.
+* Improved support for explicit URI connection strings.
+* Enabled Ed25519 authentication based on ampr.org public keys. This takes
+priority over source-IP validation if available.
+* Improved favorites system to include support for explicit URI connection strings. This 
+is particularly relevant for private node connections.
+* Addressed disconnect/reconnect problems pointed out by Patrick N2DYI.
+* Added a "Running" indication on the home page per request of David NR9V.
+* Now writing basic startup information and error messages into the syslog.
+* Made some changes to the home page HTML to improve accessibility for screen readers.
+
+## 20260520
 
 * Fixed 61057 POKE port number.
 * Addressed a protocol violation with PING/PONG. PONG timestamp is now 

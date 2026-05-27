@@ -65,7 +65,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260526.0";
+static const char* VERSION = "20260527.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -247,7 +247,7 @@ int main(int argc, const char** argv) {
 
     // This is the Line that makes the IAX2 network connection
     LocalRegistryStd locReg;
-    LocalAuthenticatorStd locAuth;
+    LocalAuthenticatorStd locAuth(log);
     LineIAX2 iax2Channel1(log, traceLog, clock, 1, router, 0, 0, &locReg, 
         &locAuth,
         10, PUBLIC_USER, iaxCallBank, MAX_CALLS);
@@ -275,7 +275,8 @@ int main(int argc, const char** argv) {
     // and applies those changes to everything on the main thread.
     amp::ConfigPoller cfgPoller(log, cfgFileName.c_str(), 
         // This function will be called on any update to the configuration document.
-        [&log, &webUi, &iax2Channel1, &locReg, &radio2, &signalIn3, &signalOut31, &bridge10, &sdrcLine5,
+        [&log, &webUi, &iax2Channel1, &locReg, &locAuth, &radio2, &signalIn3, &signalOut31, 
+        &bridge10, &sdrcLine5,
          iaxPort]
         (const json& cfg) {
 
@@ -283,7 +284,7 @@ int main(int argc, const char** argv) {
             cout << cfg.dump() << endl;
 
             try {
-                amp::configHandler(log, cfg, webUi, iax2Channel1, locReg, radio2, signalIn3, 
+                amp::configHandler(log, cfg, webUi, iax2Channel1, locReg, locAuth, radio2, signalIn3, 
                     signalOut31, bridge10, sdrcLine5, iaxPort);
             }
             // ### TODO MORE SPECIFIC

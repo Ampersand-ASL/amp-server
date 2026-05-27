@@ -27,6 +27,7 @@ class LineIAX2;
 class LineUsb;
 class LineSDRC;
 class LocalRegistryStd;
+class LocalAuthenticatorStd;
 
 namespace amp {
 
@@ -40,7 +41,7 @@ class Bridge;
  * @throws json::exception On a JSON error (i.e. missing element)
  */
 int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel1, 
-    LocalRegistryStd& locReg,
+    LocalRegistryStd& locReg, LocalAuthenticatorStd& locAuth,
     LineUsb& radio2, SignalIn& signalIn, SignalOut& signalOut, Bridge& bridge10, LineSDRC&,
     int iaxPortOverride);
 }
