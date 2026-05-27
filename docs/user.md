@@ -486,7 +486,33 @@ Finally, paste your private key into the Ampersand configuration page on your se
 
 ![Example 3](pk3.jpg)
 
-# Private Nodes
+# Running a Private Node
+
+A private node is not registered in the ASL directory and are not visible
+using the "normal" ASL tools. The only way to connect to a private node
+is to use a private connection which is described in the next section.
+
+To operate a private node you must do the following:
+* Assign yourself a node number and enter it on the Ampersand configuration 
+screen. Private node numbers are arbitrary but it's best not to re-use
+the number of a public node to avoid confusion.
+* Leave the password field blank on the Ampersand configuration screen. This
+tells your private node not to attempt to register itself in the ASL
+directory.
+* Create an authentication file with the username/passwords for the callers
+who will be allowed to connect to your node. This file is described in the
+next section.
+* Distribute the private node's number, IP address and port number to 
+any authorized callers. Callers will also need their username and password
+to make a private connection.
+
+Private Ampersand nodes will be able to accept connections from non-Ampersand
+callers who follow the correct procedure for sending a username and password
+at connection time. (Include reference to ASL documentation here)
+
+# Private Connections
+
+An Ampersand node can accept a connection from a 
 
 Example authentication file:
 
