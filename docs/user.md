@@ -33,7 +33,7 @@ I won't repeat everything here. Bottom line:
 * Make sure you are clear on what IAX (UDP) port your node is using. This assignment
 happens on the [ASL Portal](https://www.allstarlink.org/portal/servers.php). UDP port 4569 is the common default.
 * Make sure that your IAX port is properly configured on the Ampersand Configuration 
-screen (see below).
+tab (see below).
 * If you expect to receive inbound calls make sure that your IAX port is opened/forwarded through your firewall/NAT system.
 * If you expect to receive inbound calls make sure that your IAX port is opened on any Linux/Windows firewall tools that are 
 running on your machine (if applicable).
@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260527-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260528-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260528-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260528-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260528-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -151,7 +151,7 @@ You can view the log using this command:
 Setup/Configuration (Linux)
 ===========================
 
-Press the "Configuration" tab at the top of the screen to get to the configuration screen
+Press "Configuration" at the top of the screen to get to the configuration tab
 that looks like this:
 
 ![Amp2](amp-server-config.jpg)
@@ -191,7 +191,7 @@ any other nodes). The levels will be displayed like this:
 ![Amp3](amp-3.jpg)
 
 The audio level that you are transmitting into the ASL network is controlled using the 
-"Receive Mixer" level on the configuration screen. This is a bit confusing since
+"Receive Mixer" level on the configuration tab. This is a bit confusing since
 the "Receive" in this context is from the perspective of the radio interface hardware.
 
 ![Amp3](amp-4.jpg)
@@ -282,7 +282,7 @@ My SA818 reports this version string:
 
 Given the wide use of these devices Ampersand provides a basic configuration
 capability. This avoids the need to install other SA818/SHARI configuration tools.
-The configuration page contains these settings:
+The configuration tab contains these settings:
 
 ![SA818](sa818-config.jpg)
 
@@ -291,14 +291,14 @@ Some notes:
 be configured properly for the device to work:
   - SHARIs contain a CM1xx USB interface that enables audio to pass between 
 the radio module and your computer. This is configured using the "Audio Device"
-menu the configuration screen. The CM1xx chip also provides some I/O 
+menu the configuration tab. The CM1xx chip also provides some I/O 
 lines that can be used to receive the COS signal from your radio and to send
 the PTT signal to your radio. These signals are configured using the "Carrier From" and 
-"PTT To" options on the configuration screen.
+"PTT To" options on the configuration tab.
   - SHARIs also contain a SA818 module that is programmed using a serial 
 interface. Some SHARI vendors implement this interface using a USB port while others
 implement it using GPIO pins. This serial interface is selected using the "Command Port" 
-menu on the configuration screen.
+menu on the configuration tab.
 * At the moment any configuration errors will be displayed on the console log. I 
 will improve this in a future release.
 * Many of the SHARI-type devices contain a CM1xx chip, so all of the audio setup 
@@ -482,39 +482,59 @@ You can validate your public TXT record using any DNS query tool. [Here is one e
 
 ![Example 2](pk2.jpg)
 
-Finally, paste your private key into the Ampersand configuration page on your server.
+Finally, paste your private key into the Ampersand configuration tab on your server.
 
 ![Example 3](pk3.jpg)
 
 # Running a Private Node
 
-A private node is not registered in the ASL directory and are not visible
-using the "normal" ASL tools. The only way to connect to a private node
-is to use a private connection which is described in the next section.
+A private node is not registered in the ASL directory and is not visible
+on the "normal" ASL network. This capability may be useful on private IP networks
+or for nodes on the public internet that should not be available to the general public.
+The only way to connect to a private node is to use explicit connection parameters (i.e. 
+address, port, username, password, etc.). The method of connecting to a private node from 
+an Ampersand server is described in the next section.
 
 To operate a private node you must do the following:
 * Assign yourself a node number and enter it on the Ampersand configuration 
-screen. Private node numbers are arbitrary but it's best not to re-use
-the number of a public node to avoid confusion.
-* Leave the password field blank on the Ampersand configuration screen. This
-tells your private node not to attempt to register itself in the ASL
+tab. Private node numbers are arbitrary but it's best not to re-use
+the number of a public node to avoid confusion. Private nodes often use the
+1000–1999 range.
+* Leave the password field blank on the Ampersand configuration tab. This
+tells your private node not to attempt to register itself into the ASL
 directory.
 * Create an authentication file with the username/passwords for the callers
 who will be allowed to connect to your node. This file is described in the
-next section.
+next section. 
 * Distribute the private node's number, IP address and port number to 
-any authorized callers. Callers will also need their username and password
-to make a private connection.
+any authorized callers. Private node callers will also need their username and password.
 
 Private Ampersand nodes will be able to accept connections from non-Ampersand
 callers who follow the correct procedure for sending a username and password
 at connection time. (Include reference to ASL documentation here)
 
-# Private Connections
+# Accepting Private Connections
 
-An Ampersand node can accept a connection from a 
+In this context, the term "private connection" means a connection from a node that is not registered
+in the ASL directory. This situation most often applies to a connection to/from a private node, but 
+there may be other situations where you want to support calls for node numbers that are not in the 
+ASL directory. 
 
-Example authentication file:
+From what understand, the ASL convention assumes that a call using the username "radio" 
+is a public connection that will be authenticated using the ASL registry. This is the default
+behavior of most calls placed on the ASL network. Calls that use any other
+username will treated as private connections.
+
+There are two things that need to happen to establish a private connection:
+* The called node must assign a username password for the caller to use. Remember that the ASL directory
+is not used to authenticate callers in this mode.
+* The caller must provide a valid username/password combination at connection time.
+
+An Ampersand node can accept a private connection from any AllStarLink node assuming authentication
+is configured properly. This feature is not limited to Ampersand-to-Ampersand calls.
+
+The called node must create an authentication file that defines a set of username/password
+combinations. The authentication file looks like this:
 
     # Ampersand ASL Server
     # Example authentication file
@@ -524,12 +544,29 @@ Example authentication file:
     # username and the second token is the password.
     #
     # Blank lines and lines starting with "#" are comments
-
     bruce 999
+    ka1iyr a8urdr0
 
-Example connection string when calling a private node:
+The location of this authentication must be specified on the Configuration tab:
 
-    iax:bruce@192.168.8.143:4568/672732,999
+![Private Node 2](priv2.jpg)
+
+# Establishing a Private Connection
+
+As mentioned above, a private connection makes no use of the ASL registry. Therefore, a private caller
+must provide call parameters explicitly. Per the [IAX2 RFC](https://datatracker.ietf.org/doc/html/rfc5456#page-8), a URI notation is used to provide these details.
+
+When originating a call using a private connection the URI looks like this:
+
+    iax:bruce@192.168.8.143:4568/1002,999
+
+In this example the connection is to node 1002 at address 192.168.8.143 using port 4568. The
+username/password combination used to authenticate the call is bruce/999.
+
+IAX URIs can be entered in the node number field on the Ampersand home tab. IAX URIs can also be
+used in favorites to cut down on typing.
+
+![Private Node 1](priv1.jpg)
 
 Asking For Help
 ===============
