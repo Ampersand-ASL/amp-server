@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <functional>
+
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -33,6 +35,19 @@ namespace amp {
 
 class SignalIn;
 class Bridge;
+class WebUi;
+class SignalOut;
+class SignalIn;
+
+/**
+ * Utility function for pulling a string parameter out of the config JSON
+ */
+bool getCfgString(json cfg, const char* name, std::function<void(const char* c)> f);
+
+/**
+ * Utility function for pulling an integer parameter out of the config JSON
+ */
+bool getCfgUint(json cfg, const char* name, std::function<void(unsigned u)> f);
 
 /**
  * Transfers the configuration settings in a JSON document to all of the 

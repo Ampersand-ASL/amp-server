@@ -35,8 +35,30 @@
 using namespace std;
 
 namespace kc1fsz {
-
     namespace amp {
+
+bool getCfgString(json cfg, const char* name, std::function<void(const char* c)> f) {
+    if (cfg.contains(name) && cfg[name].is_string()) {
+        f(cfg[name].get<std::string>().c_str());
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool getCfgUint(json cfg, const char* name, std::function<void(unsigned u)> f) {
+    if (cfg.contains(name) && cfg[name].is_string()) {
+        try {
+            int u = std::stoi(cfg[name].get<std::string>());
+            f(u);
+            return true;
+        } catch (std::invalid_argument&) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
 
 /**
  * This function is solely responsible for taking the configuration document (JSON)
@@ -51,24 +73,23 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     // Transfer the new configuration into the various places it is needed
     webUi.setConfig(cfg);
 
-    //iax2Channel1.setPrivateKey(getenv("AMP_PRIVATE_KEY"));
     //iax2Channel1.setDNSRoot(getenv("AMP_ASL_DNS_ROOT"));
 
-    if (cfg.contains("callsign")) {
-        string c = cfg["callsign"];
-        radio2.setCallsign(c.c_str());
-    }
-    
-    if (cfg.contains("node")) {
-        string localNode = cfg["node"];
-        if (!localNode.empty()) {
-            log.important("Local node is %s", localNode.c_str());
-            bridge10.setLocalNodeNumber(localNode.c_str());
+    // Pull out each part of the configuration document and route it to the correct
+    // application object.
+
+    getCfgString(cfg, "callsign", [&radio2](const char* c) { radio2.setCallsign(c); });
+    getCfgUint(cfg, "hangDelay",  [&radio2](unsigned i) { radio2.setHangDelay(i); });
+    getCfgString(cfg, "courtesyTone", [&radio2](const char* c) { radio2.setCourtesyTone(c); });
+    getCfgUint(cfg, "courtesyDelay",  [&radio2](unsigned i) { radio2.setCourtesyDelay(i); });
+    getCfgString(cfg, "node", [&log, &bridge10, &iax2Channel1](const char* localNode) {
+        if (localNode[0] != 0) {
+            log.important("Local node is %s", localNode);
+            bridge10.setLocalNodeNumber(localNode);
             // #### TODO: MULTIPLE NODES AS SOME POINT
-            iax2Channel1.setPokeNodeNumber(localNode.c_str());
-            radio2.setLocalNode(localNode.c_str());
+            iax2Channel1.setPokeNodeNumber(localNode);
         }
-    }
+    });
 
     // Kerchunk filter configuration
     if (cfg.contains("kfnodes")) {

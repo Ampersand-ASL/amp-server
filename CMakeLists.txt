@@ -127,6 +127,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/StdPollTimer.cpp
   kc1fsz-tools-cpp/src/fixed_math.cpp
   kc1fsz-tools-cpp/src/TaggedBuffer.cpp
+  kc1fsz-tools-cpp/src/StateMachine.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
@@ -185,24 +186,25 @@ add_executable(amp-server
 # NOTE: Compiler optimizations are turned on
 target_compile_options(amp-server PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
 
-target_include_directories(amp-server PRIVATE src)
-target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include)
-target_include_directories(amp-server PRIVATE kc1fsz-tools-cpp/include/kc1fsz-tools/crc)
-target_include_directories(amp-server PRIVATE itu-g711-codec/src)
-target_include_directories(amp-server PRIVATE cmsis-dsp-mock/include)
-target_include_directories(amp-server PRIVATE cobs-c)
-target_include_directories(amp-server PRIVATE amp-core/include)
-# TODO: REMOVE
-target_include_directories(amp-server PRIVATE amp-core/src)
-target_include_directories(amp-server PRIVATE sound-map/include)
-target_include_directories(amp-server PRIVATE ed25519/src)
-target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/src)
-target_include_directories(amp-server PRIVATE kc1fsz-sdrc/sw/include)
-target_include_directories(amp-server PRIVATE cpp-httplib)
-target_include_directories(amp-server PRIVATE base64.c)
-target_include_directories(amp-server PRIVATE json/include)
-target_include_directories(amp-server PRIVATE argparse/include)
-target_include_directories(amp-server PRIVATE g726-codec/src)
+target_include_directories(amp-server PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  kc1fsz-tools-cpp/include/kc1fsz-tools/crc
+  itu-g711-codec/src
+  cmsis-dsp-mock/include
+  cobs-c
+  amp-core/include
+  amp-core/src
+  sound-map/include
+  ed25519/src
+  kc1fsz-sdrc/sw/src
+  kc1fsz-sdrc/sw/include
+  cpp-httplib
+  base64.c
+  json/include
+  argparse/include
+  g726-codec/src
+  )
 
 target_link_libraries(amp-server -lasound -lcurl -lusb-1.0)
 
@@ -371,4 +373,134 @@ target_include_directories(hello-reg PRIVATE
   amp-core/src
   kc1fsz-tools-cpp/include
   )
+
+# ----- unit-test ----------------------------------------------------------------
+
+add_executable(unit-test EXCLUDE_FROM_ALL
+  src/tests/unit-test-1.cpp
+  src/LocalAuthenticatorStd.cpp
+  src/config-handler.cpp
+  amp-core/src/EventLoop.cpp
+  amp-core/src/Message.cpp
+  amp-core/src/Line.cpp
+  amp-core/src/LineRadio.cpp
+  amp-core/src/LineUsb.cpp
+  amp-core/src/LineUsb2.cpp
+  amp-core/src/LineIAX2.cpp
+  amp-core/src/LineIAX2_base.cpp
+  amp-core/src/LineParrot.cpp
+  amp-core/src/LineSDRC.cpp
+  amp-core/src/IAX2FrameFull.cpp
+  amp-core/src/IAX2Util.cpp
+  amp-core/src/RegisterTask.cpp
+  amp-core/src/StatsTask.cpp
+  amp-core/src/ManagerTask.cpp
+  amp-core/src/Transcoder_G711_ULAW.cpp
+  amp-core/src/Transcoder_SLIN_48K.cpp
+  amp-core/src/Transcoder_SLIN_16K.cpp
+  amp-core/src/Transcoder_SLIN_8K.cpp
+  amp-core/src/Transcoder_G726.cpp
+  amp-core/src/Bridge.cpp
+  amp-core/src/BridgeCall.cpp
+  amp-core/src/BridgeIn.cpp
+  amp-core/src/BridgeOut.cpp
+  amp-core/src/ProgramUtils.cpp
+  amp-core/src/Resampler.cpp
+  amp-core/src/ConfigPoller.cpp
+  amp-core/src/MultiRouter.cpp
+  amp-core/src/WebUi.cpp
+  amp-core/src/WebUi_2.cpp
+  amp-core/src/SignalIn.cpp
+  amp-core/src/SignalOut.cpp
+  amp-core/src/ThreadUtil.cpp
+  amp-core/src/TraceLog.cpp
+  amp-core/src/SerialUtil.cpp
+  amp-core/src/KerchunkFilter.cpp
+  amp-core/src/TTSServiceSimple.cpp
+  # Here is where the WWW resources are added to the binary
+  ${OBJECT0}
+  ${OBJECT1}
+  ${OBJECT2}
+  # Audio clips
+  amp-core/clips/resource_amp_core_clips_clip_0_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_0_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_1_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_2_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_3_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_4_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_5_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_6_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_7_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_8_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_9_end_raw.c
+  amp-core/clips/resource_amp_core_clips_clip_calling_node_raw.c
+  kc1fsz-tools-cpp/src/Common.cpp
+  kc1fsz-tools-cpp/src/NetUtils.cpp
+  kc1fsz-tools-cpp/src/DTMFDetector2.cpp
+  kc1fsz-tools-cpp/src/MicroDNS.cpp
+  kc1fsz-tools-cpp/src/StdPollTimer.cpp
+  kc1fsz-tools-cpp/src/fixed_math.cpp
+  kc1fsz-tools-cpp/src/TaggedBuffer.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/linux/MTLog.cpp
+  kc1fsz-tools-cpp/src/md5/md5c.c
+  kc1fsz-tools-cpp/src/crc/crc.c
+  kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
+  cobs-c/cobs.c
+  itu-g711-codec/src/codec.cpp
+  itu-g711-codec/src/Plc.cpp
+  cmsis-dsp-mock/src/main.cpp
+  cmsis-dsp-mock/src/main-float.cpp
+  sound-map/src/sound-map.cpp
+  sound-map/src/sound-map-2.cpp
+  sound-map/src/usb-dir.c
+  sound-map/src/serial-map.cpp
+  base64.c/base64.c
+  ed25519/src/add_scalar.c
+  ed25519/src/ge.c
+  ed25519/src/keypair.c
+  ed25519/src/seed.c
+  ed25519/src/sign.c
+  ed25519/src/fe.c
+  ed25519/src/key_exchange.c
+  ed25519/src/sc.c
+  ed25519/src/sha512.c
+  ed25519/src/verify.c
+  g726-codec/src/g711.c
+  g726-codec/src/g72x.c
+  g726-codec/src/g726_32.c
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(unit-test PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+
+target_include_directories(unit-test PRIVATE 
+  src
+  kc1fsz-tools-cpp/include
+  kc1fsz-tools-cpp/include/kc1fsz-tools/crc
+  itu-g711-codec/src
+  cmsis-dsp-mock/include
+  cobs-c
+  amp-core/include
+  amp-core/src
+  sound-map/include
+  ed25519/src
+  kc1fsz-sdrc/sw/src
+  kc1fsz-sdrc/sw/include
+  cpp-httplib
+  base64.c
+  json/include
+  argparse/include
+  g726-codec/src
+  )
+
+  target_link_libraries(unit-test -lasound -lcurl -lusb-1.0)
 
