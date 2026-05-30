@@ -82,6 +82,8 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
     getCfgUint(cfg, "hangDelay",  [&radio2](unsigned i) { radio2.setHangDelay(i); });
     getCfgString(cfg, "courtesyTone", [&radio2](const char* c) { radio2.setCourtesyTone(c); });
     getCfgUint(cfg, "courtesyDelay",  [&radio2](unsigned i) { radio2.setCourtesyDelay(i); });
+    getCfgUint(cfg, "rxDelay",  [&radio2](unsigned i) { radio2.setCaptureDelay(i); });
+
     getCfgString(cfg, "node", [&log, &bridge10, &iax2Channel1](const char* localNode) {
         if (localNode[0] != 0) {
             log.important("Local node is %s", localNode);
