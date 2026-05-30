@@ -25,7 +25,7 @@ Make a keypair if necessary:
 Get the public SSH key loaded onto the machine to enable login, remote editing, etc.
 
         cd .ssh
-        echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_key
+        echo "ssh-ed25519 <PUBLIC_SSH_KEY> user@host" >> authorized_keys
 
 # Building The Server From Source (Linux)
 

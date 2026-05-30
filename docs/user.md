@@ -351,8 +351,8 @@ by your hardware.
 
 And then reload the hwdb:
 
-    udevadm systemd-hwdb update
-    udevadm trigger
+    sudo systemd-hwdb update
+    sudo udevadm trigger
 
 Another Possible Solution to the "Volume Down" Problem (Linux)
 ==============================================================
@@ -378,7 +378,8 @@ interface is reduced. This is a frustrating problem.
 This can be resolved by disconnecting the CM1xx interface device 
 being used for ASL from Pulse Audio control:
 
-* Start the pavucontrol tool, which should open a sound control screen.
+* Start the pavucontrol tool, which should open a sound control screen. (Note, you may need
+to install this using sudo apt install pavucontrol.)
 * Go to the Configuration tab.
 * Find your USB audio device.
 * Select the "Off" option on the drop-down menu.
