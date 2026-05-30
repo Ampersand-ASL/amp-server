@@ -88,3 +88,6 @@ bruce@pi5:~ $ sudo wg-quick up wg0
 [#] nft -f /dev/fd/63
 [#] ip -4 route add 0.0.0.0/0 dev wg0 table 51820
 
+# ShariPi Stuff
+
+* Enabled serial hardware using rapsi-config. Got the serial port at /dev/ttyAMA0.

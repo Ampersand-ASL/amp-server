@@ -73,7 +73,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260516
+    export AMP_SERVER_VERSION=20260530
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
