@@ -373,17 +373,25 @@ _(NOTE: If anyone understands this mechanism better, please reach out.)_
 
 It's the second point above that causes the big problem. Every 
 time the COS signal is asserted, the output volume on the audio 
-interface is reduced. This is a frustrating problem.
+interface is reduced. This is a frustrating problem. 
 
-This can be resolved by disconnecting the CM1xx interface device 
-being used for ASL from Pulse Audio control:
+This can be resolved by telling Pulse Audio to ignore all CM1xx devices
+connected to the system. There is a command-line way to force Pulse Audio to 
+release all CM1xxx interfaces:
+
+    # Make sure you have the pactl utility installed:
+    sudo apt install pulseaudio-utils
+    # Set profile to off for each C-Media sound card
+    pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}' | xargs -I {} pactl set-card-profile {} off
+
+This can also be done using to Pulse Audio control program (pavucontrol):
 
 * Start the pavucontrol tool, which should open a sound control screen. (Note, you may need
 to install this using sudo apt install pavucontrol.)
 * Go to the Configuration tab.
 * Find your USB audio device.
-* Select the "Off" option on the drop-down menu.
-    
+* Select the "Off" profile on the drop-down menu.
+
 # Using Explicit Connection URIs
 
 Normally connections are initiated using a node number. DNS is used to convert an ASL node 

@@ -91,3 +91,19 @@ bruce@pi5:~ $ sudo wg-quick up wg0
 # ShariPi Stuff
 
 * Enabled serial hardware using rapsi-config. Got the serial port at /dev/ttyAMA0.
+
+# Resolving CM108 Volume Down/COS Conflict
+
+        sudo apt install pulseaudio-utils
+        pactl list cards short
+        pactl set-card-profile 48 off
+
+        # Find C-Media Cards
+        pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}'
+
+        # Set profile to off for each C-Media sound card
+        pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}' | xargs -I {} pactl set-card-profile {} off
+
+
+
+
