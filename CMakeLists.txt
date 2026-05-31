@@ -130,6 +130,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/StateMachine.cpp
   kc1fsz-tools-cpp/src/linux/StdClock.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
+  kc1fsz-tools-cpp/src/linux/FileUtils.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
   kc1fsz-tools-cpp/src/crc/crc.c
   kc1fsz-sdrc/sw/src/DigitalAudioPortRxHandler.cpp
