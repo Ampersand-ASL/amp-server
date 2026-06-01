@@ -1,5 +1,10 @@
 # Change Log
 
+## 20260601
+
+* Addressed some problems with communications on non-USB serial ports 
+in order to support SHARI programming cleanly.
+
 ## 20260527
 
 * Added authentication file for private nodes.

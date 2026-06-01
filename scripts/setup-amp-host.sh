@@ -9,7 +9,7 @@
 apt install -y wget net-tools libcurl4-gnutls-dev pulseaudio-utils
 
 # Setup permissions to access HID interfaces on any CM108s
-cat << 'EOF' > /etc/udev/rules.d/99-mydevice.rules
+cat << 'EOF' > /etc/udev/rules.d/99-cm108-ampersand.rules
 # The C-Media vendor ID
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0666", TAG+="uaccess"
 EOF
@@ -17,7 +17,7 @@ udevadm control --reload-rules
 udevadm trigger
 
 # Remove the keyboard mapping for the volume down control on the CM108
-cat << 'EOF' > /etc/udev/hwdb.d/50-cm108.hwdb
+cat << 'EOF' > /etc/udev/hwdb.d/50-cm108-ampserand.hwdb
 # Ignore HID input events from CM108 GPIOs. NOTE: Exactly one space
 # before the "KEYBOARD_KEY ..." line.
 evdev:input:b*v0D8Cp0012*
@@ -27,4 +27,4 @@ systemd-hwdb update
 udevadm trigger
 
 # Set profile to off for each C-Media sound card
-pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}' | xargs -I {} pactl set-card-profile {} off
+#pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}' | xargs -I {} pactl set-card-profile {} off

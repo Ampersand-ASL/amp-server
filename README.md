@@ -54,7 +54,7 @@ Get the code and build:
     # Update CHANGELOG.md
     # Update version in main.cpp
     # Update version in docs/user.md
-    export AMP_SERVER_VERSION=20260528
+    export AMP_SERVER_VERSION=20260601
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
@@ -68,8 +68,6 @@ Get the code and build:
 # Code Metrics
 
         cloc --vcs=git --exclude-list-file=.clocignore .
-
-
 
 # Wireguard Stuff
 
@@ -104,6 +102,8 @@ bruce@pi5:~ $ sudo wg-quick up wg0
         # Set profile to off for each C-Media sound card
         pactl list cards short | awk '$2 ~ /C-Media/' | awk '{print $1}' | xargs -I {} pactl set-card-profile {} off
 
+Ran these commands to disable PipeWire:
 
-
+        systemctl --user --now disable pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
+        systemctl --user mask pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
 
