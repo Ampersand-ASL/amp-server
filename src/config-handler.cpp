@@ -120,8 +120,8 @@ int configHandler(Log& log, const json& cfg, WebUi& webUi, LineIAX2& iax2Channel
         iax2Channel1.setCallSign(cfg["callsign"].get<std::string>().c_str());
     if (cfg.contains("privateKey"))
         iax2Channel1.setPrivateKey(cfg["privateKey"].get<std::string>().c_str());
-    if (cfg.contains("authFile"))
-        locAuth.load(cfg["authFile"].get<std::string>().c_str());
+
+    getCfgString(cfg, "authFile", [&locAuth](const char* c) { locAuth.load(c); });
 
     int iaxPort = iaxPortOverride;
     if (iaxPort == 0) {

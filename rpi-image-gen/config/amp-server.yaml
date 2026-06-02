@@ -2,7 +2,7 @@ include:
   file: trixie-minbase.yaml
 
 device:
-  hostname: shariu
+  hostname: amp
   user1: pi
   user1pass: Ampersand1!
   user1sudo: nopasswd

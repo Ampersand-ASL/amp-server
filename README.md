@@ -111,6 +111,16 @@ Ran these commands to disable PipeWire:
 
 https://www.raspberrypi.com/news/how-to-add-your-own-images-to-imager/
 
+
+* Uses bdebstrap - https://github.com/bdrung/bdebstrap
+
+Build command:
+
+        cd rpi-image-gen
+        # Clear previous build
+        sudo rm -rf work
+        ./rpi-image-gen build -S /home/bruce/pico/amp-server/rpi-image-gen/ -c amp-server.yaml
+
 ## cloud-init
 
 A cross-platform, distribution-agnostic tool used to automatically configure

@@ -1,0 +1,22 @@
+#cloud-config
+hostname: amp
+manage_etc_hosts: true
+timezone: UTC
+
+users:
+  - name: amp
+    primary_group: amp
+    groups: [users, adm, dialout, audio, video, plugdev, sudo, input]
+    shell: /bin/bash
+    lock_passwd: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    passwd: "$6$VJH4mJYESOXMed6h$VD1RHthdVETW0RHyx2kWcVCJ67.K9oMsbCcqVQfLe0g9YeXwlxt843.ZccHviF54paxzOwmbEzcpl3YDgjKql/"
+
+# Raspberry Pi specific extensions
+#rpi:
+# interfaces:
+#    i2c: true
+#    spi: false
+
+runcmd:
+  - echo "Image successfully provisioned by cloud-init!" > /var/log/provision.log

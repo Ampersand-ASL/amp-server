@@ -21,8 +21,14 @@ mmdebstrap:
     - libcurl4-gnutls-dev
     - avahi-daemon 
     - libnss-mdns
+    - cloud-init
+    - userconf-pi
+    - rpi-cloud-init-mods
+    - netplan.io
   customize-hooks:
     - |
+      cp cloud-init/meta-data $1/boot/firmware
+      cp cloud-init/user-data $1/boot/firmware
       export AMP_SERVER_VERSION=20260601
       export AMP_ARCH=$(uname -m)
       rm -f amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -30,10 +36,14 @@ mmdebstrap:
       rm -rf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}
       tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
       cp amp-${AMP_SERVER_VERSION}-${AMP_ARCH}/amp-server $1/usr/bin
-      chroot "$1" sh -c "if ! id -u amp >/dev/null 2>&1; then \
-        useradd --system --no-create-home --shell /usr/sbin/nologin amp; \
+      cp /home/bruce/pico/amp-server/build/amp-server $1/usr/bin
+      chroot "$1" sh -c "if ! id -u amp-service >/dev/null 2>&1; then \
+        useradd --system --no-create-home --shell /usr/sbin/nologin amp-service; \
       fi"
       cp 99-cm108-ampersand.rules $1/etc/udev/rules.d/99-cm108-ampersand.rules
+      cp amp-server.service.tpl $1/lib/systemd/system/amp-server.service
+      chroot "$1" systemctl enable amp-server.service
+
 
 
     

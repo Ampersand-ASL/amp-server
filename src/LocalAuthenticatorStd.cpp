@@ -37,7 +37,7 @@ bool LocalAuthenticatorStd::load(const char* filename) {
 
     ifstream inf(filename);
     if (!inf.is_open()) {
-        _log.error("Authentication file not loaded");
+        _log.error("Authentication file not found");
         return false;
     }
 
