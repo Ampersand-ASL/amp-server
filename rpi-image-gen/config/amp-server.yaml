@@ -1,0 +1,15 @@
+include:
+  file: trixie-minbase.yaml
+
+device:
+  hostname: shariu
+  user1: pi
+  user1pass: Ampersand1!
+  user1sudo: nopasswd
+
+image:
+  system_part_size: 1500M 
+  name: amp-server
+
+layer:
+  app: amp-server
