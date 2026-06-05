@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Terminal</title>
+    <style>
+        body {
+            background-color: #0c0c0c;
+            margin: 0;
+            padding: 5px;
+            height: 100vh; /* 100% of the viewport's height */
+            box-sizing: border-box;
+        }
+
+        /* Terminal container */
+        .terminal-window {
+            width: 100%;
+            x-height: 450px;
+            height: 100%;
+            background-color: #000000;
+            border: 2px solid #333;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Header bar */
+        .terminal-header {
+            background-color: #222;
+            padding: 8px 15px;
+            color: #aaa;
+            font-size: 13px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* The scrollable text body */
+        .terminal-body {
+            flex: 1;
+            padding: 10px;
+            color: #33ff33; /* Classic terminal green */
+            font-size: 14px;
+            line-height: 1.25;
+            overflow-y: auto; /* Enables vertical scrolling */
+            white-space: pre-wrap; /* Preserves line breaks and spaces */
+            word-break: break-all;
+            scrollbar-color: #f1f1f1 #222; /* Format: thumb_color track_color */
+        }
+         /* Blinking terminal cursor effect */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 17px;
+            background-color: #33ff33;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+            margin-left: 0px;
+        }
+
+        @keyframes blink {
+            0%, 49% { background-color: #33ff33; }
+            50%, 100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-window">
+        <div class="terminal-header">bash - user@system:~</div>
+        <!-- Content will build up inside this container -->
+        <div class="terminal-body" id="output"></div>
+    </div>
+
+<script>
+    // Sequence of logs to display in the terminal
+    const terminalLines = [
+        "Initializing system core diagnostics...",
+        "Loading kernel extensions... [ OK ]",
+        "Establishing secure handshake protocol with remote mainframe...",
+        "Connection successful over TLS v1.3.",
+        "Downloading encrypted asset matrix package...",
+        "Bypassing proxy configurations... Attempt 1...",
+        "Bypassing proxy configurations... Attempt 2... Success.",
+        "Decrypting filesystem blocks (4096-bit RSA)...",
+        "Extracting dependencies: [####################] 100%",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxxx xxxxx xxxx xxxxx xxxx xxxx xxxx xxxx xxxx xxxx yyyyy yyyy y yyy yyy yyyyy yyyyy ...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "Launching runtime node configuration parameters...",
+        "System fully operational. Standing by for commands."
+    ];
+
+    const outputDiv = document.getElementById("output");
+    let lineIndex = 0;
+
+    // Core functionality to add a line, scroll down, and manage the cursor
+    function addTerminalLine() {
+        if (lineIndex < terminalLines.length) {
+            // Remove existing cursor if it exists
+            const oldCursor = document.querySelector(".cursor");
+            if (oldCursor) oldCursor.remove();
+
+            // Create log text node and append it
+            const lineText = document.createTextNode(`${terminalLines[lineIndex]}\n`);
+            outputDiv.appendChild(lineText);
+
+            // Create a new cursor container and insert it at the end
+            const cursorSpan = document.createElement("span");
+            cursorSpan.className = "cursor";
+            outputDiv.appendChild(cursorSpan);
+
+            // Increment line index for next cycle
+            lineIndex++;
+
+            // Auto-scroll mechanism to snap the scroll view down
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+            // Trigger next line at a randomized, natural speed interval
+            setTimeout(addTerminalLine, 10);
+        }
+    }
+    // Initialize the feed when the document finishes rendering
+    window.onload = () => {
+        // Initial tiny delay before the first line triggers
+        setTimeout(addTerminalLine, 500);
+    };
+</script>
+</body>
+</html>
