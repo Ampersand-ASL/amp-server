@@ -1,5 +1,15 @@
 # Change Log
 
+## 20260608
+
+* Added !!DISCONNECT!! support for HamVOIP compatibility.
+* Removed T TALKERID text message.
+
+## 20260607
+
+* No longer re-transmitting NEW messages on initial connection.
+* Cleaned up a few more IAX protocol issues.
+
 ## 20260601
 
 * Addressed some problems with communications on non-USB serial ports 

@@ -54,7 +54,7 @@ Get the code and build:
     # Update CHANGELOG.md
     # Update version in main.cpp
     # Update version in docs/user.md
-    export AMP_SERVER_VERSION=20260601
+    export AMP_SERVER_VERSION=20260607
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
@@ -106,64 +106,4 @@ Ran these commands to disable PipeWire:
 
         systemctl --user --now disable pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
         systemctl --user mask pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
-
-# Custom Image
-
-https://www.raspberrypi.com/news/how-to-add-your-own-images-to-imager/
-
-
-* Uses bdebstrap - https://github.com/bdrung/bdebstrap
-
-Build command:
-
-        cd rpi-image-gen
-        # Clear previous build
-        sudo rm -rf work
-        ./rpi-image-gen build -S /home/bruce/pico/amp-server/rpi-image-gen/ -c amp-server.yaml
-
-## cloud-init
-
-A cross-platform, distribution-agnostic tool used to automatically configure
-a system on first boot. Can be used to provision a Pi image with users, network settings,
-SSH keys, etc. 
-
-[Official Documentation](https://docs.cloud-init.io/en/latest/explanation/introduction.html).
-
-[More details here](https://www.raspberrypi.com/news/cloud-init-on-raspberry-pi-os/).
-
-Example user-data file:
-
-        #cloud-config
-        # Set the hostname for this device. This will also update /etc/hosts if manage_etc_hosts is enabled.
-        hostname: mypi2025
-        manage_etc_hosts: true
-
-        # Set the system timezone
-        timezone: Europe/London
-
-        # Create a default user account and apply permissions
-        users:
-        - name: pi
-          groups: users,adm,dialout,audio,netdev,video,plugdev,cdrom,games,input,gpio,spi,i2c,render,sudo
-          shell: /bin/bash
-          lock_passwd: false  # Set to true to disable password login entirely
-          plain_text_password: mysecretpassword123  # Alternatively, use 'passwd:' with a hashed password for better security
-          ssh_authorized_keys:
-          - ssh-ed25519 mykeystuff  # Replace with your actual SSH public key
-          sudo: ALL=(ALL) NOPASSWD:ALL  # Allow passwordless sudo for this user
-
-        # Raspberry Pi–specific options (provided by the cc_raspberry_pi module)
-        rpi:
-                spi: true               # Enable SPI interface
-                i2c: true               # Enable I2C interface
-                serial: true            # Enable serial console and UART interface
-                onewire: true           # Enable 1-Wire interface
-                enable_usb_gadget: true # Enable USB gadget mode
-
-        # Additional Raspberry Pi OS option (not available on generic cloud-init images)
-        enable_ssh: true  # Enables the SSH server on first boot
-
-        # Optional: Disable SSH password authentication if using SSH keys only (recommended for security)
-        # ssh_pwauth: false
-
 

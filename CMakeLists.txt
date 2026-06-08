@@ -76,6 +76,22 @@ add_custom_command(
     DEPENDS ${RESOURCE2}
 )
 
+# Converting an html file into a .c file. The temporary .c file is 
+# created in the build directory.
+set(RESOURCE3 "${CMAKE_CURRENT_SOURCE_DIR}/amp-core/www/log.html")
+set(OBJECT3 "${CMAKE_CURRENT_BINARY_DIR}/resource-amp-core-www-log-html.c")
+set(NAME3 "_amp_core_www_log_html")
+add_custom_command(
+    OUTPUT ${OBJECT3}
+    COMMAND xxd
+    ARGS 
+        -n ${NAME3}
+        -i 
+        ${RESOURCE3}
+        ${OBJECT3}
+    DEPENDS ${RESOURCE3}
+)
+
 # ----- amp-server ----------------------------------------------------------------
 
 add_executable(amp-server
@@ -161,6 +177,7 @@ add_executable(amp-server
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
+  ${OBJECT3}
   # Audio clips
   amp-core/clips/resource_amp_core_clips_clip_0_raw.c
   amp-core/clips/resource_amp_core_clips_clip_0_end_raw.c
