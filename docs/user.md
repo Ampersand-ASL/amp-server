@@ -73,7 +73,7 @@ you will need to shut down the service:
 
 Installation steps:
 
-    export AMP_SERVER_VERSION=20260601
+    export AMP_SERVER_VERSION=20260608
     export AMP_ARCH=$(uname -m)
     wget https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
     tar xvf amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz
@@ -81,8 +81,8 @@ Installation steps:
 
 In case you need the links:
 
-* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260601-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260601-aarch64.tar.gz)
-* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260601-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260601-x86_64.tar.gz)
+* The latest package for arm-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260608-aarch64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260608-aarch64.tar.gz)
+* The latest package for x86-64 is here: [https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260608-x86_64.tar.gz](https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/amp-20260608-x86_64.tar.gz)
 
 Running the Server (Linux)
 ==========================
@@ -99,6 +99,8 @@ contain special characters.
 * --config (defaults $HOME/amp-server.json). Used to change the location of the configuration 
 file. This is particularly useful when running more than one server on the same machine.
 * --trace Used to turn on extended network tracing.
+* --capture Used to turn on full network capture. Creates a .pcap file in the current 
+working directory.
 
 The server is operated via a web UI. Point your browser to the server using port 8080 (the default), or a different port if you
 have configured one on the command line. If you've set a password you will be prompted to
