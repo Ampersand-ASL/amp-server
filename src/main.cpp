@@ -32,8 +32,10 @@
 // Non-AMP stuff from my C++ tools library
 #include "kc1fsz-tools/Log.h"
 #include "kc1fsz-tools/linux/StdClock.h"
-#include "kc1fsz-tools/MTLog2.h"
+#include "kc1fsz-tools/MTLog3.h"
 #include "kc1fsz-tools/threadsafequeue2.h"
+#include "kc1fsz-tools/CircularBuffer2.h"
+#include "kc1fsz-tools/CircularBuffer2Locked.h"
 
 // All of this comes from AMP Core
 #include "TraceLog.h"
@@ -65,7 +67,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260608.1";
+static const char* VERSION = "20260609.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -81,13 +83,8 @@ static void sigHandler(int sig);
 // These are potentially large structure, so keeping it off the stack
 static amp::BridgeCall callBank[MAX_CALLS];
 static LineIAX2::Call iaxCallBank[MAX_CALLS];
-
-static void logCb(const char* sev, const char* dt, const char* msg) {
-    if (sev[0] == 'E') {
-        syslog(LOG_ERR, msg);
-    }
-    std::cout << sev << " " << dt << " " << msg << std::endl;
-}
+// Space for holding a bit of log history to drive the log display on the web UI
+static char logBufferSpace[80 * 2048];
 
 int main(int argc, const char** argv) {
 
@@ -104,10 +101,31 @@ int main(int argc, const char** argv) {
     // LOG_USER identifies the facility (type of program)
     openlog("amp-server", LOG_PID | LOG_CONS, LOG_USER);
 
+    // This is where log messages are written so that they can be pulled 
+    // later for display in the UI. Each entry in the log uses a LogEntry structure.
+    CircularBuffer2 logBuffer(logBufferSpace, sizeof(logBufferSpace), sizeof(amp::LogEntry)); 
+    CircularBuffer2Locked lockedLogBuffer(logBuffer);
+    unsigned logSeq = 1;
+
     // Create a logger that holds onto some history for display purposes.
-    // #### TODO: Think about the performance implications of the lock that 
-    // #### is acquired when the UI thread reads the log.
-    MTLog2 log(logCb);
+    MTLog3 log([&logBuffer, &logSeq](const char* sev, const char* dt, const char* msg) {
+        // Certain messages are copied into syslog.
+        if (sev[0] == 'E') {
+            syslog(LOG_ERR, msg);
+        }
+        else if (sev[0] == '!') {
+            syslog(LOG_NOTICE, msg);
+
+        }
+        // Write to standard out
+        std::cout << sev << " " << dt << " " << msg << std::endl;
+
+        // Write log line into the buffer so it is available for the web UI
+        amp::LogEntry entry;
+        entry.seq = logSeq++;
+        snprintf(entry.text, sizeof(entry.text), "%s %s %s", sev, dt, msg);
+        logBuffer.push(&entry, sizeof(amp::LogEntry));
+    });
 
     log.info("AMP Server");
     log.info("Powered by the Ampersand ASL Project https://github.com/Ampersand-ASL");
@@ -269,7 +287,9 @@ int main(int argc, const char** argv) {
     webUi.setUiPWd(uiPwd);
 
     // Get the UI thread going. 
-    std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer);
+    std::thread webUiThread(amp::WebUi::uiThread, &webUi, &respQueueConsumer,
+        &lockedLogBuffer);
+    // CircularBuffer2Locked lockedLogBuffer
 
     // This is a poller that watches for changes to the configuration file
     // and applies those changes to everything on the main thread.
@@ -329,8 +349,8 @@ int main(int argc, const char** argv) {
     router.addRoute(&ttsSimple19, LINE_ID_TTS_SIMPLE);
 
     // Setup the EventLoop with all of the tasks that need to be run on this thread
-    Runnable2* tasks[] = { &radio2, &signalIn3, &signalOut31, &iax2Channel1, &bridge10, &webUi, 
-        &cfgPoller, &sdrcLine5, &timer1, &statusPoller, &ttsSimple19, &router };
+    Runnable2* tasks[] = { &bridge10, &radio2, &iax2Channel1, &signalIn3, &signalOut31, &webUi, 
+        &cfgPoller, &timer1, &statusPoller, &ttsSimple19, &router };
     EventLoop::run(log, clock, 0, 0, tasks, std::size(tasks), nullptr, true);
 
     // #### TODO: At the moment there is no clean way to get out of the loop

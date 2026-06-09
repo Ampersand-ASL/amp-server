@@ -2,6 +2,10 @@
 
 ## 20260608
 
+* Enabled Log tab on web UI.
+
+## 20260608
+
 * Added !!DISCONNECT!! support for HamVOIP compatibility.
 * Removed T TALKERID text message.
 * Cleared up a defect found by Steve KD3CSK. Startup was crashing
