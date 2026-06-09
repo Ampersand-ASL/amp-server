@@ -4,6 +4,8 @@
 
 * Added !!DISCONNECT!! support for HamVOIP compatibility.
 * Removed T TALKERID text message.
+* Cleared up a defect found by Steve KD3CSK. Startup was crashing
+if no USB sound device was attached.
 
 ## 20260607
 
