@@ -48,6 +48,21 @@ Get the code and build:
     cmake -B build
     cmake --build build 
     
+# AWS CLI Setup (One Time)
+
+This is only needed for the official packaging process.
+        
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        aws --version
+
+# AWS Authentication 
+
+        aws login --remote
+        # Paste the URL
+        # Paste the temporary token
+
 # Packaging the Build (Linux)
 
     # Update version number in this file
@@ -58,8 +73,8 @@ Get the code and build:
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
-    scp bruce@pi5:/tmp/amp-${AMP_SERVER_VERSION}-${AMP_ARCH}.tar.gz .
-    # And them move the .tar.gz to the Ampersand S3 bucket
+    aws login --remote
+    aws s3 cp /tmp/amp-20260610-aarch64.tar.gz s3://ampersand-asl/releases/
 
 # (Debug) Getting Line Number From Stack Trace
 

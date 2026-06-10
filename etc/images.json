@@ -30,7 +30,7 @@
             "name": "Ampersand 20260610 (Trixie)",
             "description": "Ampersand Appliance 20260610",
             "website": "https://github.com/Ampersand-ASL",
-            "icon": "https://www.allstarlink.org/assets/images/allstar-logo-small.png",
+            "icon": "https://avatars.githubusercontent.com/u/243554457?s=400&u=cf302a46f5ce3291ee110845cf973504ccdfde4e",
             "url": "https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/image-amp-server-20260610.zip",
             "release_date": "2026-06-10",
             "devices": [ "pi5-64bit", "pi4-64bit" ],
