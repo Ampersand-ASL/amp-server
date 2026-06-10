@@ -54,7 +54,7 @@ Get the code and build:
     # Update CHANGELOG.md
     # Update version in main.cpp
     # Update version in docs/user.md
-    export AMP_SERVER_VERSION=20260608
+    export AMP_SERVER_VERSION=20260609
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
@@ -86,11 +86,13 @@ bruce@pi5:~ $ sudo wg-quick up wg0
 [#] nft -f /dev/fd/63
 [#] ip -4 route add 0.0.0.0/0 dev wg0 table 51820
 
-# ShariPi Stuff
+# SHARI Pi Stuff
 
 * Enabled serial hardware using rapsi-config. Got the serial port at /dev/ttyAMA0.
 
-# Resolving CM108 Volume Down/COS Conflict
+# R&D Related to Resolving CM108 Volume Down/COS Conflict
+
+Diagnostic commands:
 
         sudo apt install pulseaudio-utils
         pactl list cards short

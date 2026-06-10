@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <iostream>
+#include <ctime>
 
 // 3rd party HTTP/HTTPS client
 #include <curl/curl.h>
@@ -31,7 +32,7 @@
 
 // Non-AMP stuff from my C++ tools library
 #include "kc1fsz-tools/Log.h"
-#include "kc1fsz-tools/linux/StdClock.h"
+#include "kc1fsz-tools/linux/StdClock2.h"
 #include "kc1fsz-tools/MTLog3.h"
 #include "kc1fsz-tools/threadsafequeue2.h"
 #include "kc1fsz-tools/CircularBuffer2.h"
@@ -67,7 +68,7 @@ using namespace std;
 using namespace kc1fsz;
 
 // ### TODO: FIGURE OUT HOW TO MAKE THIS AUTOMATIC
-static const char* VERSION = "20260609.0";
+static const char* VERSION = "20260610.0";
 static const char* const GIT_HASH = "?";
 static const char* PUBLIC_USER = "radio";
 
@@ -101,6 +102,9 @@ int main(int argc, const char** argv) {
     // LOG_USER identifies the facility (type of program)
     openlog("amp-server", LOG_PID | LOG_CONS, LOG_USER);
 
+    // syslog startup stuff
+    syslog(LOG_INFO,"AMP Server startup %s", VERSION);
+
     // This is where log messages are written so that they can be pulled 
     // later for display in the UI. Each entry in the log uses a LogEntry structure.
     CircularBuffer2 logBuffer(logBufferSpace, sizeof(logBufferSpace), sizeof(amp::LogEntry)); 
@@ -133,10 +137,15 @@ int main(int argc, const char** argv) {
     log.info("Version %s Git Hash %s", VERSION, GIT_HASH);
     log.info("----------------------------------------------------------------------");
 
-    // syslog startup stuff
-    syslog(LOG_INFO,"AMP Server startup %s", VERSION);
+    // Diagnostic
+    timespec t1;
+    clock_getres(CLOCK_MONOTONIC, &t1);
+    log.info("Clock resolution %lu ns", (unsigned long)t1.tv_nsec);
 
-    StdClock clock;
+    // This is a monotonic clock that won't be impacted by time shifts/NFT. However, 
+    // it can't be used to produce displayable clock times because the epoch is relative
+    // to boot time.
+    StdClock2 clock;
 
     // A special log used for tracing/performance analysis
     const unsigned traceLogDataLen = 1024;

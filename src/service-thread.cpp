@@ -40,7 +40,7 @@
 #include <thread>
 
 #include "kc1fsz-tools/Log.h"
-#include "kc1fsz-tools/linux/StdClock.h"
+#include "kc1fsz-tools/linux/StdClock2.h"
 #include "kc1fsz-tools/MicroDNS.h"
 #include "kc1fsz-tools/NetUtils.h"
 
@@ -80,7 +80,7 @@ void serviceThread(const std::string* cfgFileName, kc1fsz::Log* loga,
     std::this_thread::sleep_for(std::chrono::seconds(10));
     amp::lowerThreadPriority();
 
-    StdClock clock;
+    StdClock2 clock;
 
     // This task is responsible for periodically re-asserting the node's registration
     RegisterTask registerTask(log, clock);

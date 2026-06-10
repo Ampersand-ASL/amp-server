@@ -144,7 +144,7 @@ add_executable(amp-server
   kc1fsz-tools-cpp/src/fixed_math.cpp
   kc1fsz-tools-cpp/src/TaggedBuffer.cpp
   kc1fsz-tools-cpp/src/StateMachine.cpp
-  kc1fsz-tools-cpp/src/linux/StdClock.cpp
+  kc1fsz-tools-cpp/src/linux/StdClock2.cpp
   kc1fsz-tools-cpp/src/linux/MTLog.cpp
   kc1fsz-tools-cpp/src/linux/FileUtils.cpp
   kc1fsz-tools-cpp/src/md5/md5c.c
