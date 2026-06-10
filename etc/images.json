@@ -1,0 +1,40 @@
+{
+    "imager": {
+        "latest_version": "2.0.0",
+        "url": "https://www.raspberrypi.com/software/",
+        "devices": [
+            {
+                "name": "Raspberry Pi 5",
+                "tags": [
+                    "pi5-64bit"
+                ],
+                "default": true,
+                "icon": "https://downloads.raspberrypi.com/imager/icons/RPi_5.png",
+                "description": "Raspberry Pi 5, 500 / 500+, and Compute Module 5",
+                "matching_type": "exclusive"
+            },
+            {
+                "name": "Raspberry Pi 4",
+                "tags": [
+                    "pi4-64bit"
+                ],
+                "default": false,
+                "icon": "https://downloads.raspberrypi.com/imager/icons/RPi_4.png",
+                "description": "Raspberry Pi 4",
+                "matching_type": "exclusive"
+            }
+        ]
+    },
+    "os_list": [
+        {
+            "name": "Ampersand 20260610 (Trixie)",
+            "description": "Ampersand Appliance 20260610",
+            "website": "https://github.com/Ampersand-ASL",
+            "icon": "https://www.allstarlink.org/assets/images/allstar-logo-small.png",
+            "url": "https://ampersand-asl.s3.us-west-1.amazonaws.com/releases/image-amp-server-20260610.zip",
+            "release_date": "2026-06-10",
+            "devices": [ "pi5-64bit", "pi4-64bit" ],
+            "init_format": "cloudinit-rpi"
+        }
+    ]
+}
