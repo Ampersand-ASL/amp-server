@@ -1,5 +1,12 @@
 # Change Log
 
+## 20260610
+
+* Changed internal timing to use a monotonic clock instead of a real-time clock.
+This was done to avoid some strange behavior observed when the NTP-based system
+clock adjustments were happening behind the scenes, particularly during initial 
+boot.
+
 ## 20260608
 
 * Enabled Log tab on web UI.

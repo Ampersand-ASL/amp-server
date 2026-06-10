@@ -54,7 +54,7 @@ Get the code and build:
     # Update CHANGELOG.md
     # Update version in main.cpp
     # Update version in docs/user.md
-    export AMP_SERVER_VERSION=20260609
+    export AMP_SERVER_VERSION=20260610
     export AMP_ARCH=$(uname -m)
     scripts/make-package.sh        
     # Move as needed
