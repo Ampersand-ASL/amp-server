@@ -40,3 +40,6 @@
 [submodule "g726-codec"]
 	path = g726-codec
 	url = https://github.com/brucemack/g726-codec.git
+[submodule "DECtalkMini"]
+	path = DECtalkMini
+	url = https://github.com/dectalk/DECtalkMini.git

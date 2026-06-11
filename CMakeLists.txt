@@ -519,6 +519,51 @@ target_include_directories(unit-test PRIVATE
   argparse/include
   g726-codec/src
   )
+target_link_libraries(unit-test -lasound -lcurl -lusb-1.0)
 
-  target_link_libraries(unit-test -lasound -lcurl -lusb-1.0)
+# ----- DECTalk Library -----
 
+set(NO_FILESYSTEM OFF)
+set(NO_CHARSET OFF)
+option(DECTALKMINI_NO_FILESYSTEM "Disable filesystem" ${NO_FILESYSTEM})
+option(DECTALKMINI_NO_CHARSET "Disable charset conversion" ${NO_CHARSET})
+option(DECTALKMINI_EXAMPLES "Build examples" ON)
+
+file(GLOB DTC_SOURCES DECtalkMini/src/*.c)
+
+add_library(dtc STATIC ${DTC_SOURCES})
+
+target_include_directories(dtc PUBLIC 
+  DECtalkMini/include
+)
+target_compile_definitions(dtc PRIVATE
+	"_REENTRANT"
+	"NOMME"
+	"LTSSIM"
+	"TTSSIM"
+	"ANSI"
+	"BLD_DECTALK_DLL"
+	"ENGLISH"
+	"ENGLISH_US"
+	"ACCESS32"
+	"TYPING_MODE"
+	"ACNA"
+	"DISABLE_AUDIO"
+	"SINGLE_THREADED"
+)
+target_compile_definitions(dtc PUBLIC
+	"DT_EXTERN="
+)
+
+add_executable(dec-talk-1 EXCLUDE_FROM_ALL
+  DECtalkMini/main.c 
+)
+# NOTE: Compiler optimizations are turned on
+target_compile_options(dec-talk-1 PRIVATE -Wall -Wpedantic -g -O3 -mtune=native)
+target_include_directories(dec-talk-1 PRIVATE 
+  DECtalkMini/include 
+)
+target_link_libraries(dec-talk-1 PRIVATE 
+  dtc
+  m
+)
