@@ -439,28 +439,6 @@ add_executable(unit-test EXCLUDE_FROM_ALL
   ${OBJECT0}
   ${OBJECT1}
   ${OBJECT2}
-  # Audio clips
-  amp-core/clips/resource_amp_core_clips_clip_0_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_0_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_1_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_1_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_2_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_2_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_3_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_3_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_4_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_4_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_5_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_5_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_6_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_6_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_7_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_7_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_8_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_8_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_9_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_9_end_raw.c
-  amp-core/clips/resource_amp_core_clips_clip_calling_node_raw.c
   kc1fsz-tools-cpp/src/Common.cpp
   kc1fsz-tools-cpp/src/NetUtils.cpp
   kc1fsz-tools-cpp/src/DTMFDetector2.cpp
@@ -532,6 +510,9 @@ option(DECTALKMINI_EXAMPLES "Build examples" ON)
 file(GLOB DTC_SOURCES DECtalkMini/src/*.c)
 
 add_library(dtc STATIC ${DTC_SOURCES})
+
+# Optimization on, compiler warnings off
+target_compile_options(dtc PRIVATE -g -O3 -mtune=native -w)
 
 target_include_directories(dtc PUBLIC 
   DECtalkMini/include

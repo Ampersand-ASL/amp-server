@@ -1,5 +1,9 @@
 # Change Log
 
+## 20260626
+
+* Silence compiler warnings on DecTalk library.
+
 ## 20260610
 
 * Changed internal timing to use a monotonic clock instead of a real-time clock.
