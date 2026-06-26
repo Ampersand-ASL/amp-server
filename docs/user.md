@@ -120,18 +120,24 @@ Create a service file called /lib/systemd/system/amp-server.service that looks
 something like this:
 
     [Unit]
-    Description=AMP Server
-    After=network.target
-    StartLimitIntervalSec=0
+    Description=Ampersand ASL Server
+    # Make sure that all USB devices are initialized before starting to avoid
+    # any race conditions on reboot.
+    After=network.target systemd-udev-settle.service sound.target
+    Wants=network.target systemd-udev-settle.service sound.target
+    # Avoid restart thrashing
+    StartLimitIntervalSec=10
 
     [Service]
     Type=simple
     Restart=always
-    RestartSec=1
+    RestartSec=5
     # Change to your id, best not to run as root
     User=bruce
     # Can add an optional password here by including --httppwd "YOURPASSWORD"
     ExecStart=/usr/bin/amp-server
+    # Suggested by Tom KJ7T to resolve reboot race condition
+    ExecStartPre=/bin/sleep 10
     WorkingDirectory=/tmp
     RestrictRealtime=off
     # Make the process real-time with high priority
