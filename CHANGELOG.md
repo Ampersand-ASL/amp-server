@@ -3,6 +3,8 @@
 ## 20260626
 
 * Silence compiler warnings on DecTalk library.
+* Cleaned up mixer gain enumeration bug that was creating a slow 
+configuration page as reported by Tom KJ7T.
 
 ## 20260610
 

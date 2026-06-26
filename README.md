@@ -124,3 +124,13 @@ Ran these commands to disable PipeWire:
         systemctl --user --now disable pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
         systemctl --user mask pipewire.socket pipewire.service wireplumber.service pipewire-pulse.socket pipewire-pulse.service
 
+# Arduino UNO Q
+
+        Install jumper 
+        Plug in USB
+        arduino-flasher-cli flash latest
+        Unplug USB
+        Remove jumper
+        Start App Lab
+        Plug in USB
+        
